@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>[Paper Title] - Structured Reading HTML</title>
+  <style>
+    :root{color-scheme:light;--bg:#f6f7f9;--paper:#fff;--ink:#1b1f24;--muted:#667085;--line:#d8dde6;--soft:#eef2f7;--accent:#0f6b6e;--warn:#7a4d10}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Arial,sans-serif;line-height:1.65}
+    a{color:var(--accent);text-underline-offset:3px}
+    main{width:min(1120px,calc(100% - 32px));margin:0 auto;padding:28px 0 48px}
+    header{background:var(--paper);border-bottom:1px solid var(--line)}
+    header .inner{width:min(1120px,calc(100% - 32px));margin:auto;padding:16px 0;display:flex;justify-content:space-between;gap:16px;align-items:center}
+    .brand{display:flex;flex-direction:column}.brand span{color:var(--muted);font-size:.9rem}
+    nav{display:flex;gap:12px;flex-wrap:wrap;font-size:.92rem}
+    section{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:18px;margin:16px 0;overflow-x:auto}
+    .hero{padding:28px}.hero h1{margin:0 0 10px;font-size:clamp(1.7rem,2.4vw,2.35rem);line-height:1.2;letter-spacing:0}.hero p{max-width:860px;color:var(--muted)}
+    .meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:18px}.meta div{border:1px solid var(--line);background:var(--soft);border-radius:6px;padding:10px 12px}.meta b{display:block;color:var(--muted);font-size:.78rem}
+    h2,h3{letter-spacing:0}h2{margin-top:0;font-size:1.25rem}h3{margin:18px 0 8px}
+    table{width:100%;border-collapse:collapse;margin:12px 0;font-size:.94rem}th,td{border:1px solid var(--line);padding:8px 10px;vertical-align:top}th{background:var(--soft);text-align:left}
+    figure{margin:16px 0;padding:12px;border:1px solid var(--line);border-radius:8px;background:#fbfcfe}figure img{display:block;max-width:100%;height:auto;margin:auto}figcaption{margin-top:8px;color:var(--muted);font-size:.92rem}
+    code{background:#f1f4f8;border:1px solid #e3e8ef;border-radius:4px;padding:1px 5px;font-family:Consolas,"Cascadia Mono",monospace;font-size:.92em}
+    .callout{border-left:4px solid var(--accent);background:#eef8f8;padding:12px 14px;margin:12px 0}.callout.warn{border-left-color:var(--warn);background:#fff6e6}
+    .tag{display:inline-flex;border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:2px 8px;margin:2px;color:var(--muted);font-size:.86rem}
+    @media(max-width:760px){header .inner{align-items:flex-start;flex-direction:column}.meta{grid-template-columns:1fr}table{min-width:680px}}
+    @media print{body{background:#fff}header,nav{display:none}main{width:100%;padding:0}section{break-inside:avoid}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="inner">
+      <div class="brand">
+        <strong>Structured Paper Reading</strong>
+        <span>[Paper Type] · [Generated Date]</span>
+      </div>
+      <nav>
+        <a href="#takeaways">要点</a>
+        <a href="#map">阅读地图</a>
+        <a href="#figures">图表</a>
+        <a href="#directions">方向</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <section class="hero">
+      <h1>[Paper Title]</h1>
+      <p>[One-paragraph reading orientation.]</p>
+      <div class="meta">
+        <div><b>Paper type</b><span>[survey/method/benchmark/system]</span></div>
+        <div><b>Source PDF</b><span><code>[path]</code></span></div>
+        <div><b>Extraction</b><span>[ok/partial/manual-check]</span></div>
+        <div><b>Focus</b><span>[user focus or auto]</span></div>
+      </div>
+    </section>
+    <section id="takeaways">
+      <h2>Quick Takeaways</h2>
+      <ul>
+        <li>[Takeaway]</li>
+      </ul>
+    </section>
+    <section id="map">
+      <h2>Reading Map</h2>
+      <p>[Taxonomy map for surveys, method map for algorithm papers, or benchmark/system map.]</p>
+    </section>
+    <section id="figures">
+      <h2>Important Figures And Tables</h2>
+      <figure>
+        <img src="assets/[figure-file].png" alt="[Figure description]">
+        <figcaption>[Figure number/caption]. Source page: [n]. Why it matters: [reason].</figcaption>
+      </figure>
+    </section>
+    <section id="directions">
+      <h2>Challenges And Future Directions</h2>
+      <p>[Open problems and entry points.]</p>
+    </section>
+  </main>
+</body>
+</html>
