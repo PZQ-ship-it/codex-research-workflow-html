@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Codex Research Workflow HTML Kit</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/styles/note.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="inner">
+      <div class="brand">
+        <strong>Codex Research Workflow HTML Kit</strong>
+        <span>开发、论文、实验、图表和审阅的一套可复用骨架</span>
+      </div>
+      <nav class="nav" aria-label="主导航">
+        <a href="docs/codex-collaboration.html">协作约定</a>
+        <a href="docs/fact-sources.html">事实源</a>
+        <a href="docs/experiment-pipeline.html">实验</a>
+        <a href="docs/figure-workflow.html">图表</a>
+        <a href="docs/review-workflow.html">审阅</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="hero">
+      <h1>把一次性 AI 辅助，升级成可复用的科研工程流水线</h1>
+      <p>这个仓库存放 HTML-first 笔记、模板和 repo-local Codex skills。核心思想是先固定事实源和边界，再让代码、实验、图表、论文围绕同一套事实源迭代，最后用 PDF 与浏览器级验收收口。</p>
+      <div class="meta">
+        <div><b>状态</b><span class="status ok">starter kit</span></div>
+        <div><b>记录格式</b><span>HTML notes</span></div>
+        <div><b>Skill 位置</b><span><code>skills/</code></span></div>
+        <div><b>适用场景</b><span>科研原型 / 毕设 / 系统论文</span></div>
+      </div>
+    </section>
+
+    <section class="grid" aria-label="工作流入口">
+      <article class="card">
+        <h2><a href="docs/codex-collaboration.html">1. Codex 协作约定</a></h2>
+        <p>给后续 Codex 会话的项目入门路径、事实边界、术语口径和更新顺序。</p>
+      </article>
+      <article class="card">
+        <h2><a href="docs/fact-sources.html">2. 事实源与论文同步</a></h2>
+        <p>用 claim manifest、term mapping、document hub 控制论文事实，不让正文漂移。</p>
+      </article>
+      <article class="card">
+        <h2><a href="docs/experiment-pipeline.html">3. 可恢复实验流水线</a></h2>
+        <p>大规模 LLM 跑批中的分片、断点续传、重试、日志和模型切换规范。</p>
+      </article>
+      <article class="card">
+        <h2><a href="docs/figure-workflow.html">4. 图表生成与同步</a></h2>
+        <p>从 CSV 到论文级 PNG/PDF，再到 LaTeX 图目录和视觉验收。</p>
+      </article>
+      <article class="card">
+        <h2><a href="docs/review-workflow.html">5. 终稿审阅</a></h2>
+        <p>把源码检查、编译检查、PDF 文本抽取和关键页截图合成一张提交前清单。</p>
+      </article>
+      <article class="card">
+        <h2><a href="docs/skills-catalog.html">6. Repo-local Skills</a></h2>
+        <p>五个已提炼的 Codex skill，可复制到 <code>$CODEX_HOME/skills</code> 后复用。</p>
+      </article>
+    </section>
+
+    <section class="section">
+      <h2>模板入口</h2>
+      <table>
+        <thead>
+          <tr><th>模板</th><th>用途</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><a href="templates/claim-manifest.html">claim-manifest.html</a></td><td>记录论文声明、事实源、状态和影响章节。</td></tr>
+          <tr><td><a href="templates/experiment-manifest.html">experiment-manifest.html</a></td><td>记录实验配置、分片、指标、产物和恢复策略。</td></tr>
+          <tr><td><a href="templates/figure-manifest.html">figure-manifest.html</a></td><td>记录图表输入、脚本、输出、LaTeX 引用和检查结果。</td></tr>
+          <tr><td><a href="templates/pdf-review-report.html">pdf-review-report.html</a></td><td>记录 PDF 终稿编译、页面渲染、术语和图表审查。</td></tr>
+          <tr><td><a href="templates/decision-log.html">decision-log.html</a></td><td>记录重要设计决策、备选方案、依据和后续动作。</td></tr>
+          <tr><td><a href="templates/run-log.html">run-log.html</a></td><td>记录长任务执行过程、错误、恢复点和验收证据。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <p class="footer">本仓库刻意不存放 API key、原始私有日志或大型生成产物。复制到新项目时，先改事实源和术语边界，再复用流程。</p>
+  </main>
+</body>
+</html>

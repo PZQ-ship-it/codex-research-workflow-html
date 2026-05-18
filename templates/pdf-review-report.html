@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PDF Review Report Template</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/styles/note.css">
+</head>
+<body>
+  <header class="site-header"><div class="inner"><div class="brand"><strong>PDF Review Report Template</strong><span>LaTeX 终稿检查记录</span></div><nav class="nav"><a href="../index.html">首页</a></nav></div></header>
+  <main class="page">
+    <section class="hero">
+      <h1>PDF Review Report</h1>
+      <p>用于记录提交前 PDF 检查，包括编译、文本抽取、关键页渲染、术语和人工确认项。</p>
+      <div class="meta">
+        <div><b>PDF</b><span>[path]</span></div>
+        <div><b>Source commit</b><span>[git sha]</span></div>
+        <div><b>Status</b><span class="status warn">needs review</span></div>
+        <div><b>Reviewer</b><span>[name]</span></div>
+      </div>
+    </section>
+    <section class="section">
+      <h2>Automated Checks</h2>
+      <table>
+        <thead><tr><th>检查</th><th>命令/证据</th><th>结果</th><th>备注</th></tr></thead>
+        <tbody>
+          <tr><td>Compile</td><td><code>[latexmk command]</code></td><td>[pass/fail]</td><td>[warnings]</td></tr>
+          <tr><td>Text extraction</td><td><code>[tool/path]</code></td><td>[pass/fail]</td><td>[terms]</td></tr>
+          <tr><td>Page renders</td><td><code>[image paths]</code></td><td>[pass/fail]</td><td>[key pages]</td></tr>
+          <tr><td>References</td><td><code>[log/search]</code></td><td>[pass/fail]</td><td>[missing cites]</td></tr>
+        </tbody>
+      </table>
+    </section>
+    <section class="section">
+      <h2>Manual Confirmations</h2>
+      <ul>
+        <li>[ ] 查重率与送审资格。</li>
+        <li>[ ] 封面、个人信息、日期、签名页。</li>
+        <li>[ ] 摘要、贡献、实验结论、局限性人工通读。</li>
+        <li>[ ] 图表、参考文献、致谢最终人工抽查。</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

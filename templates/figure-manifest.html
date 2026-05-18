@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Figure Manifest Template</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/styles/note.css">
+</head>
+<body>
+  <header class="site-header"><div class="inner"><div class="brand"><strong>Figure Manifest Template</strong><span>论文图表产物登记表</span></div><nav class="nav"><a href="../index.html">首页</a></nav></div></header>
+  <main class="page">
+    <section class="hero">
+      <h1>Figure Manifest</h1>
+      <p>用于记录图表输入数据、生成脚本、输出文件、LaTeX 引用和视觉验收。</p>
+      <div class="meta">
+        <div><b>Figure ID</b><span>[fig_x_y]</span></div>
+        <div><b>Status</b><span class="status warn">draft</span></div>
+        <div><b>Script</b><span>[path]</span></div>
+        <div><b>LaTeX target</b><span>[path]</span></div>
+      </div>
+    </section>
+    <section class="section">
+      <h2>Inputs And Outputs</h2>
+      <table>
+        <thead><tr><th>类型</th><th>路径</th><th>备注</th></tr></thead>
+        <tbody>
+          <tr><td>Input CSV</td><td><code>[path]</code></td><td>[version/commit]</td></tr>
+          <tr><td>Output PNG</td><td><code>[path]</code></td><td>[dpi]</td></tr>
+          <tr><td>Output PDF</td><td><code>[path]</code></td><td>[vector/raster]</td></tr>
+          <tr><td>Summary</td><td><code>[path]</code></td><td>[aggregation checks]</td></tr>
+        </tbody>
+      </table>
+    </section>
+    <section class="section">
+      <h2>Visual QA</h2>
+      <ul>
+        <li>[ ] 中文字体正常。</li>
+        <li>[ ] 标签、图例、数字不重叠。</li>
+        <li>[ ] 图表指标可追溯。</li>
+        <li>[ ] 插入 LaTeX 后页面不越界。</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Claim Manifest Template</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/styles/note.css">
+</head>
+<body>
+  <header class="site-header"><div class="inner"><div class="brand"><strong>Claim Manifest Template</strong><span>论文声明与事实源登记表</span></div><nav class="nav"><a href="../index.html">首页</a></nav></div></header>
+  <main class="page">
+    <section class="hero">
+      <h1>Claim Manifest</h1>
+      <p>用于记录论文中的关键声明、指标、事实来源和同步状态。每次实验或数据变化后先更新这里，再更新正文。</p>
+      <div class="meta">
+        <div><b>Owner</b><span>[name]</span></div>
+        <div><b>Status</b><span class="status warn">draft</span></div>
+        <div><b>Last updated</b><span>[yyyy-mm-dd]</span></div>
+        <div><b>Source commit</b><span>[git sha]</span></div>
+      </div>
+    </section>
+    <section class="section">
+      <h2>Claims</h2>
+      <table>
+        <thead><tr><th>ID</th><th>声明</th><th>事实源</th><th>影响位置</th><th>状态</th><th>边界</th></tr></thead>
+        <tbody>
+          <tr><td>C-001</td><td>[可写入论文的一句话声明]</td><td>[CSV/report/log]</td><td>[chapter/figure/table]</td><td>[draft/verified/superseded]</td><td>[适用边界或失败样本]</td></tr>
+        </tbody>
+      </table>
+    </section>
+    <section class="section">
+      <h2>Sync Checklist</h2>
+      <ul>
+        <li>[ ] 更新术语映射。</li>
+        <li>[ ] 更新正文相关章节。</li>
+        <li>[ ] 更新图表和 caption。</li>
+        <li>[ ] 搜索旧口径残留。</li>
+        <li>[ ] 编译或渲染最终产物。</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

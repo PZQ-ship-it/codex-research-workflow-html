@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thesis Figure Pipeline"
+  short_description: "Turn experiment tables into thesis figures"
+  default_prompt: "Use $thesis-figure-pipeline to generate paper-ready figures from result CSVs."

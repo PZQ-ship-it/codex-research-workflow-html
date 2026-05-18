@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><title>Benchmark Checklist</title></head>
+<body>
+<h1>Resilient Benchmark Checklist</h1>
+<ol>
+  <li>Define matrix: models, profiles, modes, seeds, metrics.</li>
+  <li>Define resume key and uniqueness constraints.</li>
+  <li>Write append-only results and skip completed keys on startup.</li>
+  <li>Separate tested-agent model from simulator and evaluator models.</li>
+  <li>Use retry/backoff only for transient failures.</li>
+  <li>Persist status, manifest, logs, and partial summaries.</li>
+  <li>Audit failed, skipped, and partial rows before computing paper metrics.</li>
+</ol>
+<h2>Minimum Result Columns</h2>
+<p><code>run_id, model, profile_id, mode, seed, status, metric..., error_type, transcript_path, created_at</code></p>
+</body>
+</html>

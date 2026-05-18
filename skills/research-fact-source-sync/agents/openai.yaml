@@ -1,0 +1,4 @@
+interface:
+  display_name: "Research Fact Source Sync"
+  short_description: "Sync research facts into papers safely"
+  default_prompt: "Use $research-fact-source-sync to update a paper from changed experiment facts."

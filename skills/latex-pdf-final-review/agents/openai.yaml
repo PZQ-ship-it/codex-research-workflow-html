@@ -1,0 +1,4 @@
+interface:
+  display_name: "LaTeX PDF Final Review"
+  short_description: "Review final LaTeX PDFs before submission"
+  default_prompt: "Use $latex-pdf-final-review to check a compiled thesis PDF and source tree."

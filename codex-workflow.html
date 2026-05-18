@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Codex 使用入口</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/styles/note.css">
+</head>
+<body>
+  <header class="site-header"><div class="inner"><div class="brand"><strong>Codex 使用入口</strong><span>新会话优先阅读</span></div><nav class="nav"><a href="index.html">首页</a></nav></div></header>
+  <main class="page">
+    <section class="hero">
+      <h1>使用本仓库时的默认工作顺序</h1>
+      <p>先理解协作契约和事实源，再进入具体实验、图表或论文审阅任务。不要绕过事实源直接改正文结论。</p>
+    </section>
+    <section class="section">
+      <h2>推荐顺序</h2>
+      <ol>
+        <li>阅读 <a href="docs/codex-collaboration.html">Codex 协作约定</a>。</li>
+        <li>确认 <a href="docs/fact-sources.html">事实源与同步纪律</a>。</li>
+        <li>按任务选择实验、图表、审阅或 HTML 笔记模板。</li>
+        <li>若要让 Codex 自动进入工作流，复制相应 <code>skills/*</code> 到 <code>$CODEX_HOME/skills</code> 并重启 Codex。</li>
+      </ol>
+    </section>
+    <section class="section">
+      <h2>边界</h2>
+      <ul>
+        <li>不把未验证实验结果写成定论。</li>
+        <li>不把 LLM 生成内容当作事实候选来源。</li>
+        <li>不复制 API key、私有日志、大型 PDF 渲染产物到本模板仓库。</li>
+        <li>所有可复用记录优先使用 HTML；Codex skill 自身保留必需的 <code>SKILL.md</code>。</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

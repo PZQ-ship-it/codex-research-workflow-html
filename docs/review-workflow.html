@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>终稿审阅工作流</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/styles/note.css">
+  <script defer src="../assets/scripts/toc.js"></script>
+</head>
+<body>
+  <header class="site-header"><div class="inner"><div class="brand"><strong>终稿审阅工作流</strong><span>源码、事实、PDF 页面一起验收</span></div><nav class="nav"><a href="../index.html">首页</a><a href="../templates/pdf-review-report.html">PDF 模板</a></nav></div></header>
+  <main class="page">
+    <section class="hero">
+      <h1>论文审阅要落到最终 PDF</h1>
+      <p>LaTeX 源码没有错，不等于最终 PDF 没有问题。终稿检查要覆盖编译、文本抽取、页面渲染、图表引用、术语一致性和人工确认项。</p>
+    </section>
+    <nav class="toc" data-toc><h2>目录</h2></nav>
+    <section class="section">
+      <h2>自动检查</h2>
+      <ul>
+        <li>编译日志：error、undefined references、missing citations、overfull hbox。</li>
+        <li>文本抽取：摘要、目录、关键词、图表题、指标口径和术语。</li>
+        <li>关键词检索：旧术语、过度声称、未同步模型名、占位符。</li>
+        <li>页面渲染：封面、摘要、目录、关键架构图、实验图表、结论页。</li>
+      </ul>
+    </section>
+    <section class="section">
+      <h2>人工确认</h2>
+      <ul>
+        <li>查重率、送审资格、导师意见和学院系统信息。</li>
+        <li>最终 PDF 通读，尤其是摘要、贡献、实验结论和局限性。</li>
+        <li>参考文献格式和重复项抽查。</li>
+        <li>答辩或盲审意见需要另建逐条回复表。</li>
+      </ul>
+    </section>
+    <section class="section">
+      <h2>记录方式</h2>
+      <p>每轮终稿检查都应保存一份 review report，记录 PDF 路径、源码 commit、检查命令、发现问题、修复状态和剩余风险。</p>
+    </section>
+  </main>
+</body>
+</html>

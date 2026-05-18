@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>事实源与论文同步</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/styles/note.css">
+  <script defer src="../assets/scripts/toc.js"></script>
+</head>
+<body>
+  <header class="site-header"><div class="inner"><div class="brand"><strong>事实源与论文同步</strong><span>先改事实源，再改正文</span></div><nav class="nav"><a href="../index.html">首页</a><a href="../templates/claim-manifest.html">Claim 模板</a></nav></div></header>
+  <main class="page">
+    <section class="hero">
+      <h1>不要让论文正文成为唯一事实源</h1>
+      <p>正文适合叙述，manifest 适合约束。科研项目越复杂，越需要把声明、指标、术语、实验状态和影响章节拆出来维护。</p>
+    </section>
+    <nav class="toc" data-toc><h2>目录</h2></nav>
+    <section class="section">
+      <h2>事实源层级</h2>
+      <table>
+        <thead><tr><th>层级</th><th>内容</th><th>作用</th></tr></thead>
+        <tbody>
+          <tr><td>Claim manifest</td><td>论文声明、数值、状态、出处</td><td>防止实验结果和正文描述不一致。</td></tr>
+          <tr><td>Term mapping</td><td>术语、工程标识、中文写法</td><td>防止一个概念在不同章节有多个名字。</td></tr>
+          <tr><td>Document hub</td><td>受影响文档、同步清单</td><td>支持一次性长更新。</td></tr>
+          <tr><td>Evidence reports</td><td>实验摘要、日志、审计样例</td><td>支撑正文中的结论和图表。</td></tr>
+        </tbody>
+      </table>
+    </section>
+    <section class="section">
+      <h2>同步流程</h2>
+      <ol>
+        <li>识别本次变更影响哪些声明、指标、术语、图表和章节。</li>
+        <li>更新或创建 manifest 和 term mapping。</li>
+        <li>按 document hub 同步论文正文、图表说明、摘要、结论和附录。</li>
+        <li>做关键词检索，确认旧口径没有残留。</li>
+        <li>编译或渲染最终产物，记录检查结果。</li>
+      </ol>
+    </section>
+    <section class="section">
+      <h2>防过度声称</h2>
+      <ul>
+        <li>把“已覆盖”与“已人工逐条确认”分开写。</li>
+        <li>把“主实验”和“扩展实验 / pilot / 压力测试”分开写。</li>
+        <li>把“事实候选来源”和“语言解释来源”分开写。</li>
+        <li>失败样本和适用边界进入正文或局限性，不藏在日志里。</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>可恢复实验流水线</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/styles/note.css">
+  <script defer src="../assets/scripts/toc.js"></script>
+</head>
+<body>
+  <header class="site-header"><div class="inner"><div class="brand"><strong>可恢复实验流水线</strong><span>大规模 LLM 跑批不靠运气</span></div><nav class="nav"><a href="../index.html">首页</a><a href="../templates/experiment-manifest.html">实验模板</a></nav></div></header>
+  <main class="page">
+    <section class="hero">
+      <h1>长任务必须能中断、恢复和审计</h1>
+      <p>当实验涉及多模型、多样本、多模式和外部 API 时，断点续传、分片、重试、status 文件和 manifest 是基本设施。</p>
+    </section>
+    <nav class="toc" data-toc><h2>目录</h2></nav>
+    <section class="section">
+      <h2>推荐产物</h2>
+      <table>
+        <thead><tr><th>产物</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td><code>experiment_manifest.json/html</code></td><td>记录模型、数据集、模式、指标和恢复策略。</td></tr>
+          <tr><td><code>results.csv</code></td><td>追加写入结果，用组合键跳过已完成任务。</td></tr>
+          <tr><td><code>status.html</code></td><td>记录完成数、失败数、待重试项和最近错误。</td></tr>
+          <tr><td><code>logs/</code></td><td>保存每个分片或 case 的错误和摘要。</td></tr>
+        </tbody>
+      </table>
+    </section>
+    <section class="section">
+      <h2>执行纪律</h2>
+      <ul>
+        <li>结果实时 append，不在最后一次性写出。</li>
+        <li>启动时读取历史结果，跳过已完成组合键。</li>
+        <li>API 错误使用指数退避，区分限流、连接错误和不可恢复输入错误。</li>
+        <li>被测模型和模拟器模型分开配置，避免成本失控。</li>
+        <li>所有随机扩增样本要保存 seed、生成提示和审计字段。</li>
+      </ul>
+    </section>
+    <section class="section">
+      <h2>验收问题</h2>
+      <ol>
+        <li>失败后重启是否会跳过已完成任务？</li>
+        <li>任意一条论文指标是否能追溯到 CSV 行和 case 日志？</li>
+        <li>模型切换是否只影响被测对象，不污染 simulator / evaluator？</li>
+        <li>异常样本是否有解释，而不是被静默丢弃？</li>
+      </ol>
+    </section>
+  </main>
+</body>
+</html>

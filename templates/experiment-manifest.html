@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Experiment Manifest Template</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/styles/note.css">
+</head>
+<body>
+  <header class="site-header"><div class="inner"><div class="brand"><strong>Experiment Manifest Template</strong><span>可恢复实验登记表</span></div><nav class="nav"><a href="../index.html">首页</a></nav></div></header>
+  <main class="page">
+    <section class="hero">
+      <h1>Experiment Manifest</h1>
+      <p>用于大规模跑批前定义实验边界、组合键、恢复策略和验收产物。</p>
+      <div class="meta">
+        <div><b>Experiment</b><span>[name]</span></div>
+        <div><b>Dataset</b><span>[dataset/version]</span></div>
+        <div><b>Status</b><span class="status warn">planned</span></div>
+        <div><b>Run root</b><span>[path]</span></div>
+      </div>
+    </section>
+    <section class="section">
+      <h2>Configuration</h2>
+      <table>
+        <tbody>
+          <tr><th>Models</th><td>[tested models]</td></tr>
+          <tr><th>Modes</th><td>[baseline/direct/cot/full/ablation]</td></tr>
+          <tr><th>Primary metrics</th><td>[MAE/F1/success/process metrics]</td></tr>
+          <tr><th>Resume key</th><td>[model, profile_id, mode]</td></tr>
+          <tr><th>Simulator/evaluator boundary</th><td>[fixed cheap model / deterministic evaluator]</td></tr>
+        </tbody>
+      </table>
+    </section>
+    <section class="section">
+      <h2>Artifacts</h2>
+      <ul>
+        <li>Results CSV: <code>[path]</code></li>
+        <li>Status page: <code>[path]</code></li>
+        <li>Logs: <code>[path]</code></li>
+        <li>Summary: <code>[path]</code></li>
+      </ul>
+    </section>
+    <section class="section">
+      <h2>Recovery Notes</h2>
+      <p>[How to restart, skip completed rows, retry failed rows, and verify completeness.]</p>
+    </section>
+  </main>
+</body>
+</html>

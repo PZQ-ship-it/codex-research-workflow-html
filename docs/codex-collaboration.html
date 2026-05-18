@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Codex 协作约定</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/styles/note.css">
+  <script defer src="../assets/scripts/toc.js"></script>
+</head>
+<body>
+  <header class="site-header"><div class="inner"><div class="brand"><strong>Codex 协作约定</strong><span>让新会话快速进入同一工作语境</span></div><nav class="nav"><a href="../index.html">首页</a><a href="skills-catalog.html">Skills</a></nav></div></header>
+  <main class="page">
+    <section class="hero">
+      <h1>协作契约先于任务执行</h1>
+      <p>每个项目都应有一个稳定入口，告诉 Codex 项目目标、事实源、术语边界、执行优先级和禁止夸大的地方。</p>
+      <div class="meta">
+        <div><b>适用</b><span>长期科研 / 毕设 / 论文工程</span></div>
+        <div><b>输入</b><span>项目说明、代码结构、论文结构</span></div>
+        <div><b>输出</b><span>可复用协作约定</span></div>
+        <div><b>状态</b><span class="status ok">可复用</span></div>
+      </div>
+    </section>
+    <nav class="toc" data-toc><h2>目录</h2></nav>
+    <section class="section">
+      <h2>最小协作契约</h2>
+      <ul>
+        <li>项目目标：一句话说明当前工作服务什么交付物。</li>
+        <li>贡献主线：把贡献拆成有限维度，避免每次改稿重塑叙事。</li>
+        <li>优先事实源：列出机器可读 manifest、hub、术语映射和审计报告。</li>
+        <li>工作顺序：规定先读什么，再改什么，最后如何验收。</li>
+        <li>边界：明确哪些说法不能写，哪些数据不能外推。</li>
+      </ul>
+    </section>
+    <section class="section">
+      <h2>推荐提示词骨架</h2>
+      <pre><code>你进入本项目后，请先阅读协作入口。
+本项目当前目标是：[交付目标]。
+优先事实源为：[manifest / hub / term mapping / reports]。
+若涉及论文更新，请先判断影响范围，再做一次性长更新。
+若涉及实验或图表，请保留可恢复日志、manifest 和验收证据。
+禁止：[不可夸大的贡献、不可使用的数据、不可直接生成的事实]。</code></pre>
+    </section>
+    <section class="section">
+      <h2>复用经验</h2>
+      <p>把 Codex 从“回答问题的人”变成“进入项目后遵守规则的协作者”。这会减少上下文漂移，也能让后续代码、图表、论文改动围绕同一组事实收敛。</p>
+    </section>
+  </main>
+</body>
+</html>

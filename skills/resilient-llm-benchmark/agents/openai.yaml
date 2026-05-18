@@ -1,0 +1,4 @@
+interface:
+  display_name: "Resilient LLM Benchmark"
+  short_description: "Run recoverable multi-model LLM benchmarks"
+  default_prompt: "Use $resilient-llm-benchmark to plan and run a resumable LLM evaluation."

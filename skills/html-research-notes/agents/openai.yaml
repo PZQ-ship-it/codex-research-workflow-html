@@ -1,0 +1,4 @@
+interface:
+  display_name: "HTML Research Notes"
+  short_description: "Create structured research notes as HTML"
+  default_prompt: "Use $html-research-notes to capture this workflow as linked HTML notes."
