@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prompt 触发句式</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/styles/note.css">
+  <script defer src="../assets/scripts/toc.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="inner">
+      <div class="brand">
+        <strong>Prompt 触发句式</strong>
+        <span>让 Codex 知道该调什么工具、交付什么证据</span>
+      </div>
+      <nav class="nav">
+        <a href="../index.html">首页</a>
+        <a href="human-ai-use-playbook.html">手册</a>
+        <a href="codex-tool-map.html">工具地图</a>
+        <a href="workflow-recipes-for-humans.html">Recipes</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="hero">
+      <h1>好 prompt 的关键是“触发正确动作”</h1>
+      <p>你不需要控制每个细节，但要告诉 Codex：先探索还是直接改、是否联网、是否需要浏览器/PDF 验收、是否要沉淀成 skill、是否允许并行 agent。</p>
+    </section>
+
+    <nav class="toc" data-toc><h2>目录</h2></nav>
+
+    <section class="section">
+      <h2>先探索再修改</h2>
+      <div class="recipe">
+        <h3>适用</h3>
+        <p>代码仓库不熟、论文口径复杂、你担心它改错文件。</p>
+        <pre><code>请先用只读方式探索：读项目入口、相关配置、最近提交和可能受影响文件。
+确认当前实现形状后，再给出最小改动方案并实施。
+不要在探索阶段改文件。</code></pre>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>联网查官方来源</h2>
+      <div class="recipe">
+        <h3>适用</h3>
+        <p>API、模型、法律、价格、规则、产品能力这类会变的信息。</p>
+        <pre><code>这件事可能已经变化，请联网查证。
+优先官方文档或一手来源；回答里给出链接和日期/版本信息。
+如果官方文档和本仓库实现冲突，请指出冲突，不要直接改。</code></pre>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>触发 skill</h2>
+      <div class="recipe">
+        <h3>显式触发</h3>
+        <pre><code>请使用 $pdf 检查这个论文 PDF 的版式和关键页。
+请使用 $skill-creator，把这套重复工作流沉淀成一个 skill。</code></pre>
+        <h3>隐式触发</h3>
+        <pre><code>请把这段对话整理成结构化 Notion 决策记录。
+请用 Playwright 打开本地页面并截图验收。</code></pre>
+      </div>
+      <p class="callout">显式触发适合你很确定要用哪个 skill；隐式触发适合你只描述任务，让 Codex 根据 skill description 自己匹配。</p>
+    </section>
+
+    <section class="section">
+      <h2>要求真实验收</h2>
+      <div class="recipe">
+        <h3>代码</h3>
+        <pre><code>改完请运行相关测试或静态检查。
+如果不能运行，请说明原因、缺口和替代验证。</code></pre>
+        <h3>网页/HTML</h3>
+        <pre><code>请用 Playwright 在桌面和移动视口打开页面。
+保存截图，检查 console 是否有 error/warning，并确认没有横向溢出。</code></pre>
+        <h3>论文/PDF</h3>
+        <pre><code>请编译 LaTeX 或读取现有 PDF。
+抽取文本检查术语和指标，再渲染关键页检查图表与版式。</code></pre>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>要求可恢复长任务</h2>
+      <div class="recipe">
+        <pre><code>这是长跑批任务，请设计为可恢复：
+- 结果 append 写入；
+- 启动时跳过已完成组合键；
+- 保存 manifest/status/logs；
+- API 错误做指数退避；
+- 汇总前检查失败和缺失行。</code></pre>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>请求 subagents</h2>
+      <div class="recipe">
+        <pre><code>这个任务可以并行。请 spawn 3 个 subagents：
+1. explorer：只读检查代码结构和风险；
+2. explorer：只读检查论文事实和术语；
+3. worker：在不重叠文件范围内实现图表同步。
+最后汇总每个 agent 的结论、变更文件和剩余风险。</code></pre>
+      </div>
+      <p class="callout warn">只在并行收益明显时要求 subagents。它们会消耗更多 token 和时间；并行写同一文件容易冲突。</p>
+    </section>
+
+    <section class="section">
+      <h2>References</h2>
+      <ul class="source-list">
+        <li><a href="https://developers.openai.com/codex/skills">Codex Skills: explicit and implicit invocation</a></li>
+        <li><a href="https://developers.openai.com/codex/subagents">Codex Subagents</a></li>
+        <li><a href="https://developers.openai.com/api/docs/guides/tools-web-search">OpenAI Web search tool</a></li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

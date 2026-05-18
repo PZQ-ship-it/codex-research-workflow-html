@@ -2,7 +2,8 @@
   const toc = document.querySelector("[data-toc]");
   if (!toc) return;
 
-  const headings = Array.from(document.querySelectorAll("main h2, main h3"));
+  const headings = Array.from(document.querySelectorAll("main h2, main h3"))
+    .filter((heading) => !heading.closest("[data-toc]"));
   if (!headings.length) return;
 
   const list = document.createElement("ol");

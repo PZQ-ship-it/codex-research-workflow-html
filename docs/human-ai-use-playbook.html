@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>给人看的 AI 使用手册</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/styles/note.css">
+  <script defer src="../assets/scripts/toc.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="inner">
+      <div class="brand">
+        <strong>给人看的 AI 使用手册</strong>
+        <span>知道什么时候让 Codex 调工具，比把 prompt 写长更重要</span>
+      </div>
+      <nav class="nav">
+        <a href="../index.html">首页</a>
+        <a href="codex-tool-map.html">工具地图</a>
+        <a href="prompt-trigger-patterns.html">触发句式</a>
+        <a href="workflow-recipes-for-humans.html">Recipes</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="hero">
+      <h1>第二套东西：给人看的 AI 工具使用方法论</h1>
+      <p>前一套 skills/templates 是给 AI 执行的封装，优点是零上手门槛，缺点是灵活度低。这里这一套是给人看的：帮助你判断任务需要哪类工具、如何在 prompt 中触发、如何要求证据、什么时候沉淀成 skill。</p>
+      <div class="meta">
+        <div><b>读者</b><span>项目 owner / 学生 / 研究者</span></div>
+        <div><b>目标</b><span>学会调度 Codex 能力</span></div>
+        <div><b>关系</b><span>人类 playbook + AI skills</span></div>
+        <div><b>状态</b><span class="status ok">human-facing</span></div>
+      </div>
+    </section>
+
+    <nav class="toc" data-toc><h2>目录</h2></nav>
+
+    <section class="section">
+      <h2>核心判断</h2>
+      <div class="grid three">
+        <article class="card">
+          <h2>只问模型</h2>
+          <p>适合稳定知识、概念解释、帮你拆问题。不要让它凭记忆给最新事实、价格、规则、论文细节。</p>
+        </article>
+        <article class="card">
+          <h2>让模型调工具</h2>
+          <p>适合需要读仓库、跑命令、联网查证、看 PDF、截图验收、改文件的任务。prompt 里要点名证据。</p>
+        </article>
+        <article class="card">
+          <h2>沉淀成 skill</h2>
+          <p>适合重复出现、有固定顺序、容易出错的工作流，例如终稿审阅、图表同步、可恢复跑批。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>一个实用路由口诀</h2>
+      <ol>
+        <li>事实会变吗？会变就要求联网或读项目事实源。</li>
+        <li>答案依赖仓库吗？依赖就先让 Codex 用 <code>rg</code> / shell 读代码。</li>
+        <li>会改文件吗？要求“先说明改动点，再小范围补丁修改，最后跑验证”。</li>
+        <li>有视觉/版式吗？要求 Playwright、PDF 渲染或截图证据。</li>
+        <li>任务会重复吗？要求用 <code>$skill-creator</code> 沉淀成 skill。</li>
+        <li>任务可并行吗？明确要求 spawn subagents，否则 Codex 通常不应自行派生。</li>
+      </ol>
+      <p class="callout">对你的项目来说，最常用的组合是：先读 <code>CODEX.md</code> 和事实源，再跑实验或生成图表，最后用 PDF/Playwright 级验收把结果关上。</p>
+    </section>
+
+    <section class="section">
+      <h2>本手册页面</h2>
+      <table>
+        <thead><tr><th>页面</th><th>解决什么问题</th></tr></thead>
+        <tbody>
+          <tr><td><a href="codex-tool-map.html">codex-tool-map.html</a></td><td>按工具/能力列出触发方式、证据和误用。</td></tr>
+          <tr><td><a href="prompt-trigger-patterns.html">prompt-trigger-patterns.html</a></td><td>给出可复用的 prompt 触发句式。</td></tr>
+          <tr><td><a href="workflow-recipes-for-humans.html">workflow-recipes-for-humans.html</a></td><td>面向开发、论文、作图、审阅、长跑批的完整 recipes。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>官方依据</h2>
+      <p>OpenAI 官方文档把 Codex 定位为可承担开发、测试、审查、调试、迁移等软件任务的 coding agent；skills 用于把工作流封装成可复用能力；MCP 用于连接外部工具和上下文；subagents 适合明确要求的并行工作。下面各页把这些机制翻译成人类可操作的 prompt 方法。</p>
+      <ul class="source-list">
+        <li><a href="https://developers.openai.com/codex/use-cases">OpenAI Codex use cases</a></li>
+        <li><a href="https://developers.openai.com/codex/skills">OpenAI Codex skills</a></li>
+        <li><a href="https://developers.openai.com/codex/mcp">OpenAI Codex MCP</a></li>
+        <li><a href="https://developers.openai.com/codex/subagents">OpenAI Codex subagents</a></li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

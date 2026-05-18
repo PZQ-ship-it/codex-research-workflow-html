@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Human Workflow Recipes</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/styles/note.css">
+  <script defer src="../assets/scripts/toc.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="inner">
+      <div class="brand">
+        <strong>Human Workflow Recipes</strong>
+        <span>可直接复制给 Codex 的任务提示</span>
+      </div>
+      <nav class="nav">
+        <a href="../index.html">首页</a>
+        <a href="human-ai-use-playbook.html">手册</a>
+        <a href="codex-tool-map.html">工具地图</a>
+        <a href="prompt-trigger-patterns.html">触发句式</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="hero">
+      <h1>从“请帮我做”到“请按证据闭环做”</h1>
+      <p>下面这些 recipes 是给人的 prompt 模板。复制后替换路径、目标和验收标准即可。</p>
+    </section>
+
+    <nav class="toc" data-toc><h2>目录</h2></nav>
+
+    <section class="section">
+      <h2>开发任务</h2>
+      <div class="recipe">
+        <pre><code>目标：[一句话说明功能/bug]
+请先探索相关入口、测试和现有模式，再实施最小改动。
+要求：
+- 不改无关文件；
+- 用补丁方式编辑；
+- 改完运行相关测试；
+- 最后说明变更文件、验证命令和剩余风险。</code></pre>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>论文事实同步</h2>
+      <div class="recipe">
+        <pre><code>目标：根据 [实验/数据/事实源路径] 更新论文相关表述。
+请先读项目协作入口、claim manifest、term mapping 和受影响章节。
+先更新事实源，再一次性同步正文、图表说明、摘要/结论中受影响的表述。
+最后搜索旧术语、旧数字和过度声称，并给出检查证据。</code></pre>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>实验跑批</h2>
+      <div class="recipe">
+        <pre><code>目标：运行 [benchmark name]。
+请把 runner 设计成可恢复：
+- 组合键为 [model, profile_id, mode]；
+- append 写结果；
+- status/manifest/logs 全部落盘；
+- API 错误重试，输入错误单独标记；
+- 汇总前检查缺失和失败。
+完成后生成论文可引用 summary，但不要夸大 partial run。</code></pre>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>作图与论文同步</h2>
+      <div class="recipe">
+        <pre><code>目标：从 [CSV/result path] 生成 [figure id]。
+请更新或创建绘图脚本：
+- 固定输入、输出、LaTeX 图目录；
+- 中文字体、标签映射、方法顺序和色板集中配置；
+- 输出 PNG + PDF；
+- 写 summary；
+- 同步到 LaTeX 后渲染关键页截图验收。</code></pre>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>LaTeX / PDF 终稿审阅</h2>
+      <div class="recipe">
+        <pre><code>目标：检查 [PDF 或 LaTeX root] 是否可提交。
+请执行终稿审阅：
+- 编译或确认最新 PDF；
+- 检查 error、引用、图片、overfull warning；
+- 抽取文本查术语、指标、旧口径；
+- 渲染封面、摘要、目录、关键图表和结论页；
+- 把自动检查和人工确认项分开列出。</code></pre>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>HTML 笔记/文档</h2>
+      <div class="recipe">
+        <pre><code>目标：把 [对话/流程/决策] 整理成 HTML 文档。
+要求：
+- 不使用 Markdown；
+- 有元数据、导航、内部链接和 references；
+- 样式适合阅读和打印；
+- 用 Playwright 做桌面/移动截图验收；
+- 链接检查通过。</code></pre>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>把工作流沉淀成 skill</h2>
+      <div class="recipe">
+        <pre><code>这个任务重复出现且容易遗漏步骤。请使用 $skill-creator 创建一个 skill。
+要求：
+- description 写清楚触发场景和边界；
+- SKILL.md 保持精简；
+- 详细清单放 references；
+- 可复用模板放 assets；
+- 运行 quick_validate.py；
+- 给出安装/重启说明。</code></pre>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>References</h2>
+      <ul class="source-list">
+        <li><a href="https://developers.openai.com/codex/use-cases">Codex use cases</a></li>
+        <li><a href="https://developers.openai.com/codex/skills">Codex skills</a></li>
+        <li><a href="https://developers.openai.com/codex/mcp">Codex MCP</a></li>
+        <li><a href="https://developers.openai.com/codex/subagents">Codex subagents</a></li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
