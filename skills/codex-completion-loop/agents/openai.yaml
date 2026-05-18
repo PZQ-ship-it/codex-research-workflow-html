@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Completion Loop"
+  short_description: "Drive a task to completion with evidence"
+  default_prompt: "Use $codex-completion-loop to implement this task and finish with verification evidence."

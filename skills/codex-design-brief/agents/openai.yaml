@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Design Brief"
+  short_description: "Capture lightweight product and UI decisions"
+  default_prompt: "Use $codex-design-brief to create or update the design decision source."

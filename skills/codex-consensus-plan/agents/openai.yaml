@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Consensus Plan"
+  short_description: "Create a decision-complete implementation plan"
+  default_prompt: "Use $codex-consensus-plan to turn this request into an implementation-ready plan."

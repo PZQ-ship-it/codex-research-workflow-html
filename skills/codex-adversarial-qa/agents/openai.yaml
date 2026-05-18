@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Adversarial QA"
+  short_description: "Stress-test work with hostile scenarios and fixes"
+  default_prompt: "Use $codex-adversarial-qa to find weak points and verify fixes."

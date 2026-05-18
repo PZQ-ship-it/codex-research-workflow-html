@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Deep Interview"
+  short_description: "Clarify ambiguous work before planning or editing"
+  default_prompt: "Use $codex-deep-interview to clarify this request before implementation."

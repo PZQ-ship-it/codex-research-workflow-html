@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>oh-my-codex 到 Windows Codex for VS Code 的部分迁移</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/styles/note.css">
+  <script defer src="../assets/scripts/toc.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="inner">
+      <div class="brand">
+        <strong>oh-my-codex 迁移研究</strong>
+        <span>把 CLI runtime 的好想法拆成 VS Code Codex 可直接使用的 skills 和 prompt 方法</span>
+      </div>
+      <nav class="nav">
+        <a href="../index.html">首页</a>
+        <a href="human-ai-use-playbook.html">AI 使用手册</a>
+        <a href="codex-tool-map.html">工具地图</a>
+        <a href="prompt-trigger-patterns.html">触发句式</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="hero">
+      <h1>不要照搬 OMX runtime，把可复用工作流迁移成 Codex 原生能力</h1>
+      <p><code>oh-my-codex</code> 很有价值，但它的强项是 Codex CLI 上的多 agent 编排、tmux/runtime 状态和 hooks。Windows + VS Code 场景下，第一版最稳的做法是只迁移思想和 skill 表面：让 Codex IDE 能用 <code>$codex-...</code> 直接触发。</p>
+      <div class="meta">
+        <div><b>upstream commit</b><span><code>ffef59333bccc0fc3175439f1c4892522412d29e</code></span></div>
+        <div><b>npm version</b><span><code>oh-my-codex@0.17.3</code></span></div>
+        <div><b>本地研究副本</b><span><code>D:\工作流优化\vendor\oh-my-codex</code></span></div>
+        <div><b>迁移策略</b><span class="status ok">VS Code native v1</span></div>
+      </div>
+    </section>
+
+    <nav class="toc" data-toc><h2>目录</h2></nav>
+
+    <section class="section">
+      <h2>结论</h2>
+      <p>可以迁移一部分，而且值得迁移；但不要在原生 Windows 的 VS Code 交互里直接依赖 <code>omx setup</code>、tmux team runtime、<code>.omx/state</code> 或 OMX hooks。第一版迁移目标是：</p>
+      <ul>
+        <li>把成熟的工作流压缩成 Codex skills，放在本仓库 <code>skills/</code> 作为 canonical source。</li>
+        <li>验证后复制到 <code>C:\Users\Administrator\.codex\skills</code>，让 VS Code Codex 聊天里可以显式调用。</li>
+        <li>把人类需要理解的边界、安装风险和使用方式写成 HTML 文档，而不是藏在 prompt 里。</li>
+      </ul>
+      <p class="callout warn">本次没有运行 <code>npm install -g oh-my-codex</code>、<code>omx setup</code>、<code>omx update</code>，也没有安装 OMX hook。upstream 只作为静态研究来源。</p>
+    </section>
+
+    <section class="section">
+      <h2>迁移矩阵</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>OMX 能力</th>
+            <th>迁移判断</th>
+            <th>VS Code Codex 落地方式</th>
+            <th>注意事项</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>$deep-interview</code></td>
+            <td><span class="status ok">直接迁移</span></td>
+            <td><code>$codex-deep-interview</code>：先查事实，再一问一答澄清偏好，最后给 handoff brief。</td>
+            <td>去掉 <code>omx question</code> 和 <code>.omx/specs</code> 强依赖。</td>
+          </tr>
+          <tr>
+            <td><code>$ralplan</code> / consensus plan</td>
+            <td><span class="status ok">直接迁移</span></td>
+            <td><code>$codex-consensus-plan</code>：输出 decision-complete plan、测试和假设。</td>
+            <td>适合你常用的“先计划，再实现”。</td>
+          </tr>
+          <tr>
+            <td><code>$ralph</code></td>
+            <td><span class="status ok">直接迁移</span></td>
+            <td><code>$codex-completion-loop</code>：实现、验证、修复、交付证据。</td>
+            <td>不使用 OMX 持久状态；依赖当前 Codex 会话和本地验证。</td>
+          </tr>
+          <tr>
+            <td><code>$visual-ralph</code></td>
+            <td><span class="status ok">直接迁移</span></td>
+            <td><code>$codex-visual-acceptance</code>：Playwright/PDF/screenshot 验收 UI、HTML、图表。</td>
+            <td>非常适合你当前 HTML 笔记和论文作图工作流。</td>
+          </tr>
+          <tr>
+            <td><code>$ultraqa</code> / code review</td>
+            <td><span class="status ok">直接迁移</span></td>
+            <td><code>$codex-adversarial-qa</code>：用 hostile scenarios 检查代码、论文、图表、跑批。</td>
+            <td>报告必须带证据，不把猜测当 finding。</td>
+          </tr>
+          <tr>
+            <td><code>$design</code></td>
+            <td><span class="status ok">直接迁移</span></td>
+            <td><code>$codex-design-brief</code>：维护轻量设计/决策源。</td>
+            <td>可与 Figma skill 或 HTML notes 并用。</td>
+          </tr>
+          <tr>
+            <td><code>$team</code></td>
+            <td><span class="status warn">改造迁移</span></td>
+            <td>在 VS Code 中改成“显式请求 Codex subagents”的 prompt recipe。</td>
+            <td>不搬 tmux panes、team state、worker mailbox；并行只在明确有收益时使用。</td>
+          </tr>
+          <tr>
+            <td>tmux HUD / durable panes / psmux</td>
+            <td><span class="status blocked">v1 不迁移</span></td>
+            <td>保留为 WSL2/CLI 实验方向。</td>
+            <td>upstream 也把 native Windows 视为次要路径。</td>
+          </tr>
+          <tr>
+            <td><code>omx setup</code> / native hooks / <code>.omx/state</code></td>
+            <td><span class="status blocked">v1 不迁移</span></td>
+            <td>不修改 Codex hooks，不写 OMX runtime 状态。</td>
+            <td>避免与现有 <code>C:\Users\Administrator\.codex</code> 配置互相覆盖。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>新增 VS Code 原生 skills</h2>
+      <p>本次新增 6 个不与 upstream 冲突的 skill 名称，canonical source 位于本仓库 <code>skills/</code>，并在验证后复制到全局 Codex skills 目录：</p>
+      <ul>
+        <li><code>$codex-deep-interview</code>：需求澄清，先探索事实，再问偏好。</li>
+        <li><code>$codex-consensus-plan</code>：生成可直接执行的计划。</li>
+        <li><code>$codex-completion-loop</code>：执行到有证据的完成状态。</li>
+        <li><code>$codex-visual-acceptance</code>：浏览器/PDF/截图级视觉验收。</li>
+        <li><code>$codex-adversarial-qa</code>：用反例和极端场景压测结果。</li>
+        <li><code>$codex-design-brief</code>：沉淀轻量设计与决策源。</li>
+      </ul>
+      <p>在 VS Code Codex 中可以这样触发：</p>
+      <pre><code>$codex-deep-interview "帮我澄清这个论文图表重做任务，先不要改文件"
+
+$codex-consensus-plan "为 HTML 工作流仓库增加一页高级 Codex runtime 模式说明"
+
+$codex-completion-loop "按已批准计划实现并给出验证证据"
+
+$codex-visual-acceptance "检查这个 HTML 页面桌面和移动端是否有布局问题"
+
+$codex-adversarial-qa "审查这次论文 fact sync 是否还有术语和指标不一致"
+
+$codex-design-brief "为这个研究笔记网站补一个轻量 DESIGN 决策源"</code></pre>
+    </section>
+
+    <section class="section">
+      <h2>为什么不直接完整安装 OMX</h2>
+      <p>OMX 的 README 明确说它主要为 macOS/Linux + Codex CLI 调优，原生 Windows 和 Codex App 不是默认体验；同时它的 team runtime 强依赖 tmux/psmux、状态目录、hooks 和长期运行的终端环境。这些能力很强，但不适合作为你当前 Windows VS Code Codex 交互的默认底座。</p>
+      <p>官方 Codex 文档提供了更稳的原生入口：IDE extension、CLI、skills、plugins、hooks、AGENTS.md 和 MCP。v1 选择 skills + HTML playbook，是因为这两者最容易被 VS Code 交互界面直接使用，也最容易复制到别的科研项目。</p>
+    </section>
+
+    <section class="section">
+      <h2>后续可选升级</h2>
+      <ol>
+        <li>如果你想试完整 OMX runtime，在 WSL2 中单独安装和测试，不污染 Windows 主 Codex 配置。</li>
+        <li>如果这 6 个 skill 稳定，可以把它们打包成 repo-local Codex plugin，方便一键分发。</li>
+        <li>如果某个 workflow 反复扩张，再拆出专门 HTML 页面或更细的 skill。</li>
+      </ol>
+    </section>
+
+    <section class="section">
+      <h2>References</h2>
+      <ul class="source-list">
+        <li><a href="https://github.com/Yeachan-Heo/oh-my-codex">Yeachan-Heo/oh-my-codex</a></li>
+        <li><a href="https://developers.openai.com/codex/ide/features">OpenAI Codex IDE features</a></li>
+        <li><a href="https://developers.openai.com/codex/skills">OpenAI Codex skills</a></li>
+        <li><a href="https://developers.openai.com/codex/plugins/build">OpenAI Codex plugins</a></li>
+        <li><a href="https://developers.openai.com/codex/hooks">OpenAI Codex hooks</a></li>
+        <li><a href="https://developers.openai.com/codex/guides/agents-md">OpenAI AGENTS.md guide</a></li>
+        <li><a href="https://developers.openai.com/codex/windows">OpenAI Codex on Windows</a></li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

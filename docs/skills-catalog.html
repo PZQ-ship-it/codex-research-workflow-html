@@ -6,23 +6,61 @@
   <title>Repo-local Skills Catalog</title>
   <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../assets/styles/note.css">
+  <script defer src="../assets/scripts/toc.js"></script>
 </head>
 <body>
-  <header class="site-header"><div class="inner"><div class="brand"><strong>Repo-local Skills Catalog</strong><span>可复制到 Codex skills 目录的工作流</span></div><nav class="nav"><a href="../index.html">首页</a></nav></div></header>
+  <header class="site-header">
+    <div class="inner">
+      <div class="brand">
+        <strong>Repo-local Skills Catalog</strong>
+        <span>可复制到 Codex skills 目录的 AI-facing 工作流</span>
+      </div>
+      <nav class="nav">
+        <a href="../index.html">首页</a>
+        <a href="oh-my-codex-vscode-migration.html">OMX 迁移</a>
+      </nav>
+    </div>
+  </header>
+
   <main class="page">
     <section class="hero">
-      <h1>五个从实际项目中提炼出来的 skills</h1>
-      <p>这些 skill 先保存在本仓库中。若要让 Codex 自动发现，可复制对应目录到 <code>C:\Users\Administrator\.codex\skills</code>，然后重启 Codex。</p>
+      <h1>科研工作流 skills + VS Code 原生 Codex skills</h1>
+      <p>这些 skill 先保存在本仓库中。若要让 Codex for VS Code 自动发现，可以复制对应目录到 <code>C:\Users\Administrator\.codex\skills</code>，然后重启 VS Code / Codex extension。</p>
+      <div class="meta">
+        <div><b>canonical source</b><span><code>skills/</code></span></div>
+        <div><b>安装目标</b><span><code>$CODEX_HOME/skills</code></span></div>
+        <div><b>格式</b><span><code>SKILL.md</code> + <code>agents/openai.yaml</code></span></div>
+        <div><b>状态</b><span class="status ok">validated locally</span></div>
+      </div>
     </section>
+
+    <nav class="toc" data-toc><h2>目录</h2></nav>
+
     <section class="section">
+      <h2>科研项目骨架 skills</h2>
       <table>
         <thead><tr><th>Skill</th><th>触发场景</th></tr></thead>
         <tbody>
-          <tr><td><code>research-fact-source-sync</code></td><td>实验事实、指标、术语变化后，需要同步论文正文、图表和证据。</td></tr>
-          <tr><td><code>resilient-llm-benchmark</code></td><td>多模型、多样本、多模式 LLM 跑批，需要断点续传和恢复。</td></tr>
-          <tr><td><code>thesis-figure-pipeline</code></td><td>从实验 CSV 生成论文级图表，并同步到 LaTeX。</td></tr>
+          <tr><td><code>research-fact-source-sync</code></td><td>实验事实、指标、术语变化后，需要同步论文正文、图表和证据边界。</td></tr>
+          <tr><td><code>resilient-llm-benchmark</code></td><td>多模型、多样本、多模式 LLM 跑批，需要断点续传、重试、分片和日志。</td></tr>
+          <tr><td><code>thesis-figure-pipeline</code></td><td>从实验 CSV 生成论文级图表，并同步到 LaTeX 图目录与引用。</td></tr>
           <tr><td><code>latex-pdf-final-review</code></td><td>LaTeX 论文提交前做 PDF 级终稿审阅。</td></tr>
           <tr><td><code>html-research-notes</code></td><td>用 HTML 而不是 Markdown 创建结构化科研笔记或模板。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>OMX-inspired VS Code skills</h2>
+      <table>
+        <thead><tr><th>Skill</th><th>触发场景</th></tr></thead>
+        <tbody>
+          <tr><td><code>codex-deep-interview</code></td><td>需求含糊、边界不清、可能有多种实现路径时，先澄清再计划或执行。</td></tr>
+          <tr><td><code>codex-consensus-plan</code></td><td>需要一份可以直接交给实现者执行的 decision-complete plan。</td></tr>
+          <tr><td><code>codex-completion-loop</code></td><td>希望 Codex 从实现一路推进到验证证据，而不是只给建议。</td></tr>
+          <tr><td><code>codex-visual-acceptance</code></td><td>HTML、UI、图表或 PDF 需要 Playwright、PDF 渲染或截图验收。</td></tr>
+          <tr><td><code>codex-adversarial-qa</code></td><td>需要用边界情况、反例、审稿人视角压测代码、论文、图表或跑批流程。</td></tr>
+          <tr><td><code>codex-design-brief</code></td><td>实现前需要沉淀产品、UI、文档或工作流的轻量设计决策源。</td></tr>
         </tbody>
       </table>
     </section>
