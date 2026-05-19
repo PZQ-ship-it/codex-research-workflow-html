@@ -1,0 +1,4 @@
+interface:
+  display_name: "Academic Paper Reviewer"
+  short_description: "评审学术论文，输出有证据、有优先级、可答辩的修改报告。"
+  default_prompt: "Use $academic-paper-reviewer to review this thesis and produce a rigorous revision-oriented report."
