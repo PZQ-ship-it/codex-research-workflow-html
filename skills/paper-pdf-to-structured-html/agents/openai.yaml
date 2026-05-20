@@ -1,4 +1,4 @@
 interface:
   display_name: "Paper PDF to HTML"
-  short_description: "Turn research PDFs into structured readable HTML"
-  default_prompt: "Use $paper-pdf-to-structured-html to convert this research paper PDF into a structured, readable HTML digest with important figures."
+  short_description: "Turn research PDFs into self-contained HTML digests"
+  default_prompt: "Use $paper-pdf-to-structured-html to convert this research paper PDF into a self-contained HTML digest that can be read instead of the original paper."
