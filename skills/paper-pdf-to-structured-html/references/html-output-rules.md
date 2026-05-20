@@ -38,6 +38,24 @@ Use stable anchor IDs for:
 
 Every navigation target must contain explanatory content. A section with only a list of page references, a figure without interpretation, or "read Section X" fails this requirement.
 
+## Structure Map / Taxonomy GPS Requirements
+
+For any survey, review, tutorial, position, system, or benchmark paper with an overview/taxonomy figure, the structure map must explain the paper's logic, not only reproduce the figure.
+
+The section should include:
+
+- the paper's stated organization from the introduction or section overview;
+- the organizing principle behind the figure;
+- a hierarchy explanation: top-level categories, sub-branches, examples, datasets/metrics, applications;
+- parallel/sibling groups under the same criterion;
+- upstream/downstream or pipeline relationships when present;
+- cross-cutting layers such as datasets, metrics, simulators, transfer, limitations, or evaluation protocols;
+- one paragraph explaining how the taxonomy supports the paper's central thesis.
+
+Use relationship labels such as `foundation`, `capability`, `task`, `evaluation`, `transfer`, `application`, or `open problem` when they clarify the map. If a relationship is inferred from layout rather than stated by the authors, mark it as an inference.
+
+Anti-pattern: a `Taxonomy GPS` section that contains only an overview image plus a caption. That does not satisfy the standalone reading contract.
+
 ## Visual Asset Handling
 
 For each included figure or table image:
@@ -73,6 +91,7 @@ Before final delivery, verify that the HTML answers these questions without open
 - What methods, systems, datasets, metrics, or experiments are central?
 - What are the paper's main claims, evidence, limitations, and future directions?
 - Which figures/tables are essential, and what should the reader learn from each?
+- If the paper has a taxonomy or overview figure, what logic does the figure encode: hierarchy, parallel groups, upstream/downstream relations, and cross-cutting axes?
 - What was omitted or marked uncertain?
 
 ## Validation
@@ -87,3 +106,4 @@ Before final delivery:
 - confirm tables do not create accidental horizontal overflow beyond intentional table scrolling.
 - spot-check content coverage against the paper outline or coverage ledger;
 - ensure no navigation section is only a pointer to the PDF.
+- ensure any taxonomy/overview figure is accompanied by a detailed logic interpretation, not only a caption.

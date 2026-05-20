@@ -14,6 +14,7 @@ Use this skill to turn a research paper PDF into a navigable HTML reading artifa
 The generated HTML must be a paper-replacement digest for normal study:
 
 - Explain every major section or taxonomy branch in the HTML itself. Page references are provenance, not substitutes for content.
+- For survey/review papers, a taxonomy or overview figure is not enough by itself. The `Taxonomy GPS` section must explain the logic behind the figure: organizing principle, argument flow, parallel groups, upstream/downstream dependencies, cross-cutting axes, and how the branches support the paper's thesis.
 - Include enough branch/method detail that a reader can answer: what problem is addressed, how it works, what examples or representative works are used, what datasets/metrics/results support it, what limitations remain, and how it connects to the paper's thesis.
 - Avoid "read Section X", "see page Y", or "the paper discusses..." as the main content. If a section is named, summarize its actual substance immediately.
 - Prefer concise paraphrase and structured synthesis over long quotation. Do not paste full paper sections.
@@ -43,13 +44,18 @@ The generated HTML must be a paper-replacement digest for normal study:
    - list all major paper sections, subsections, taxonomy branches, experiments, datasets, tables, and challenge/future-direction sections;
    - mark each as `full`, `condensed`, `figure/table only`, or `omitted`;
    - only omit low-value details such as boilerplate references, author biographies, or repetitive examples, and record why in `manifest.json`.
-6. Select important visual assets:
+6. Build a taxonomy/structure logic map for survey, review, tutorial, and system papers:
+   - extract the paper's stated article organization from the introduction and section openings;
+   - identify which nodes in the overview figure are parallel alternatives, which are prerequisites/foundations, which are downstream tasks, and which are cross-cutting evaluation or transfer layers;
+   - distinguish author-stated relationships from inferred relationships, and mark uncertain links as inferred or manual-check;
+   - use this logic map as prose in the `Taxonomy GPS`, not only as a hidden planning note.
+7. Select important visual assets:
    - include taxonomy diagrams, architecture/method overview figures, algorithm flow diagrams, comparison tables, main result plots, dataset/metric tables, and challenge/future-direction diagrams;
    - prefer extracted embedded images when sharp;
    - fall back to page crops or full-page renders when the figure cannot be isolated cleanly;
    - always include the source page and caption/provenance near the image.
-7. Generate standalone HTML from `assets/paper-digest-template.html` or the repo's existing HTML note style.
-8. Validate the HTML visually with Playwright or browser screenshots when layout quality matters. Check broken images, clipped tables, figure readability, mobile width, print behavior, and whether the page contains actual explanatory content for every navigation target.
+8. Generate standalone HTML from `assets/paper-digest-template.html` or the repo's existing HTML note style.
+9. Validate the HTML visually with Playwright or browser screenshots when layout quality matters. Check broken images, clipped tables, figure readability, mobile width, print behavior, and whether the page contains actual explanatory content for every navigation target.
 
 ## Type-Specific Output
 
@@ -57,7 +63,7 @@ For survey/review papers, build the HTML around:
 
 - boundary from title and abstract;
 - contributions and article structure from the introduction;
-- taxonomy tree as the central navigation object;
+- taxonomy tree as the central navigation object, with an explicit interpretation of the tree's logic: section order, hierarchy depth, parallel branches, upstream/downstream relations, cross-cutting axes, and why the survey uses this organization;
 - branch-by-branch explanation, not just branch cards: include the branch's motivation, core techniques, representative works, datasets/metrics, strengths, weaknesses, and open problems;
 - comparison tables, datasets, and evaluation metrics with explanatory text that interprets what the table means;
 - frequently cited foundational papers with why each matters;
@@ -93,6 +99,7 @@ The initial HTML should already include a useful first-pass explanation of every
 - Do not treat OCR/extracted text as layout truth. Render the relevant PDF pages when figures, tables, formulas, or multi-column structure matter.
 - Do not include every extracted image. Curate images for reading value and record why each one was included.
 - Do not flatten a survey into a generic summary. Preserve the taxonomy and comparison structure.
+- Do not paste a taxonomy or overview figure as the entire `Taxonomy GPS`. The GPS must teach the reader how to read the structure and what logical relationships the figure encodes.
 - Do not flatten an algorithm paper into background prose. Preserve the method pipeline, assumptions, experiments, and ablations.
 - Do not deliver a navigation shell whose main value is telling the reader where to look in the PDF. Every link and section in the HTML must contain substantive explanation.
 - Do not use "guide", "reading route", or "what to read next" sections to replace the content itself.
