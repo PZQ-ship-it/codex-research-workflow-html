@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Native Subagent Team"
+  short_description: "Coordinate explicit native Codex subagents safely"
+  default_prompt: "Use $codex-native-subagent-team to split this task into safe native subagent lanes."

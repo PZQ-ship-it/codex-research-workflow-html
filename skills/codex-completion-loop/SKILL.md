@@ -7,6 +7,8 @@ description: Use when the user wants Codex to carry a task through implementatio
 
 Drive the task to a real stopping point: implemented, verified, and explained with evidence.
 
+This is the native Codex adaptation of OMX `$ralph` plus the practical parts of `$ultrawork` and `$ultragoal`: keep persistence, evidence, retry discipline, and goal awareness; omit OMX mode state, tmux panes, `.omx/ultragoal` ledgers, and Stop-hook continuation.
+
 ## Workflow
 
 1. Define done.
@@ -22,8 +24,13 @@ Drive the task to a real stopping point: implemented, verified, and explained wi
    - If the worktree is dirty, touch only the intended scope.
 4. Escalate only when useful.
    - Use subagents only if the user explicitly asks for them or the current environment permits that workflow and parallel work is genuinely helpful.
+   - Prefer `$codex-native-subagent-team` for explicit native subagent coordination.
    - Use browser/PDF/screenshot tools when output quality cannot be proven by text checks alone.
-5. Finalize with evidence.
+5. Keep goal state honest when goal tools are active.
+   - Use current goal status as focus and accounting, not as proof of completion.
+   - Mark a goal complete only after the requested outcome and evidence are actually satisfied.
+   - If a durable ledger is needed, write a normal repo/vault note instead of pretending to mutate OMX `.omx/ultragoal` state.
+6. Finalize with evidence.
    - Summarize what changed.
    - List commands, screenshots, generated files, or checks that prove completion.
    - Mention any unrun checks or remaining risks.
@@ -33,6 +40,7 @@ Drive the task to a real stopping point: implemented, verified, and explained wi
 - If a command fails, inspect the error and try a bounded fix.
 - If external credentials, missing data, or unavailable services block completion, report the blocker and preserve all useful intermediate work.
 - Do not invent successful verification.
+- If the same blocker repeats after bounded attempts, stop with diagnosis, evidence, and the next owner/action.
 
 ## References
 

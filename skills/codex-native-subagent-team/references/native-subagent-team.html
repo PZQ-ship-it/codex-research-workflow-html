@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Codex Native Subagent Team Recipe</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.6; max-width: 880px; margin: 40px auto; padding: 0 20px; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    pre { background: #f6f8fa; border: 1px solid #d0d7de; padding: 16px; overflow: auto; }
+    h1, h2 { line-height: 1.25; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #d0d7de; padding: 8px; vertical-align: top; }
+  </style>
+</head>
+<body>
+  <h1>Codex Native Subagent Team Recipe</h1>
+  <p>Use this recipe when the user explicitly authorizes native subagents or parallel delegation. It adapts OMX <code>$team</code> discipline without copying tmux, hooks, or <code>.omx/state</code>.</p>
+
+  <h2>Lane Selection</h2>
+  <table>
+    <thead><tr><th>Lane</th><th>Use for</th><th>Avoid when</th></tr></thead>
+    <tbody>
+      <tr><td><code>explorer</code></td><td>Specific repo questions, file/symbol mapping, implementation discovery.</td><td>The answer blocks the immediate next local action.</td></tr>
+      <tr><td><code>worker</code></td><td>Bounded edits with clear file ownership and disjoint write scope.</td><td>Multiple workers would edit the same files or broad behavior.</td></tr>
+      <tr><td>main thread</td><td>Critical path, shared-file edits, integration, final verification.</td><td>The work is independent and can safely run in parallel.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Good Prompt</h2>
+  <pre><code>Use native subagents for these independent lanes.
+
+Main thread:
+- Owns updating docs/codex-advanced-config-and-usage.md.
+- Will not duplicate the delegated repo inventory.
+
+Explorer A:
+- Goal: find all repo-local Codex skills and summarize their trigger scenarios.
+- Scope: read-only, skills/ and docs/ only.
+- Output: concise table with paths and gaps.
+
+Explorer B:
+- Goal: inspect docs for stale OMX migration claims.
+- Scope: read-only, docs/*.html and docs/*.md.
+- Output: findings with file paths and suggested edits.
+
+Integration:
+- Main thread merges findings, edits docs, and runs a final rg sanity check.</code></pre>
+
+  <h2>Bad Prompt</h2>
+  <pre><code>Spawn several agents to improve the repo.</code></pre>
+  <p>This is bad because the agents have no ownership boundary, no output contract, and no verification target.</p>
+
+  <h2>Final Report Checklist</h2>
+  <ul>
+    <li>Main-thread changes are listed.</li>
+    <li>Each subagent contribution is summarized separately.</li>
+    <li>Verification commands or artifact checks are included.</li>
+    <li>Unrun checks and residual risk are explicit.</li>
+  </ul>
+</body>
+</html>

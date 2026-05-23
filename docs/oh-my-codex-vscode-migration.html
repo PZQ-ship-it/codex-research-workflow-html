@@ -29,9 +29,9 @@
       <h1>不要照搬 OMX runtime，把可复用工作流迁移成 Codex 原生能力</h1>
       <p><code>oh-my-codex</code> 很有价值，但它的强项是 Codex CLI 上的多 agent 编排、tmux/runtime 状态和 hooks。Windows + VS Code 场景下，第一版最稳的做法是只迁移思想和 skill 表面：让 Codex IDE 能用 <code>$codex-...</code> 直接触发。</p>
       <div class="meta">
-        <div><b>upstream commit</b><span><code>ffef59333bccc0fc3175439f1c4892522412d29e</code></span></div>
-        <div><b>npm version</b><span><code>oh-my-codex@0.17.3</code></span></div>
-        <div><b>本地研究副本</b><span><code>D:\工作流优化\vendor\oh-my-codex</code></span></div>
+        <div><b>upstream commit</b><span><code>8b91c570689f89bdea38830dd9e3bbc2cba89122</code></span></div>
+        <div><b>npm version</b><span><code>oh-my-codex@0.18.1</code></span></div>
+        <div><b>本地研究副本</b><span><code>.codex-local\oh-my-codex\repo</code></span></div>
         <div><b>迁移策略</b><span class="status ok">VS Code native v1</span></div>
       </div>
     </section>
@@ -99,8 +99,8 @@
           </tr>
           <tr>
             <td><code>$team</code></td>
-            <td><span class="status warn">改造迁移</span></td>
-            <td>在 VS Code 中改成“显式请求 Codex subagents”的 prompt recipe。</td>
+            <td><span class="status ok">改造迁移</span></td>
+            <td><code>$codex-native-subagent-team</code>：在用户明确要求 subagents/parallel agents 时，拆成 native subagent lanes。</td>
             <td>不搬 tmux panes、team state、worker mailbox；并行只在明确有收益时使用。</td>
           </tr>
           <tr>
@@ -121,13 +121,14 @@
 
     <section class="section">
       <h2>新增 VS Code 原生 skills</h2>
-      <p>本次新增 6 个不与 upstream 冲突的 skill 名称，canonical source 位于本仓库 <code>skills/</code>，并在验证后复制到全局 Codex skills 目录：</p>
+      <p>本次新增 7 个不与 upstream 冲突的 skill 名称，canonical source 位于本仓库 <code>skills/</code>，并在验证后复制到全局 Codex skills 目录：</p>
       <ul>
         <li><code>$codex-deep-interview</code>：需求澄清，先探索事实，再问偏好。</li>
         <li><code>$codex-consensus-plan</code>：生成可直接执行的计划。</li>
         <li><code>$codex-completion-loop</code>：执行到有证据的完成状态。</li>
         <li><code>$codex-visual-acceptance</code>：浏览器/PDF/截图级视觉验收。</li>
         <li><code>$codex-adversarial-qa</code>：用反例和极端场景压测结果。</li>
+        <li><code>$codex-native-subagent-team</code>：把 OMX <code>$team</code> 改造成显式 native subagent 并行协作。</li>
         <li><code>$codex-design-brief</code>：沉淀轻量设计与决策源。</li>
       </ul>
       <p>在 VS Code Codex 中可以这样触发：</p>
@@ -140,6 +141,8 @@ $codex-completion-loop "按已批准计划实现并给出验证证据"
 $codex-visual-acceptance "检查这个 HTML 页面桌面和移动端是否有布局问题"
 
 $codex-adversarial-qa "审查这次论文 fact sync 是否还有术语和指标不一致"
+
+$codex-native-subagent-team "这个任务可以并行，请拆出主线程 critical path 和两个只读 explorer lane"
 
 $codex-design-brief "为这个研究笔记网站补一个轻量 DESIGN 决策源"</code></pre>
     </section>

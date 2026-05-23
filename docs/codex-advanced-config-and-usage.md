@@ -513,6 +513,22 @@ developer_instructions = """
 - 写 `developer_instructions` 时要规定输出格式和非目标，减少 subagent 跑偏。
 - 给 worker 类 agent 明确文件所有权，避免多个 agent 同时编辑同一批文件。
 
+#### OMX `$team` 到 native subagents 的迁移
+
+当前建议把 OMX `$team` 的工作纪律迁移到 `$codex-native-subagent-team`，而不是复制 tmux panes、worker mailbox 或 `.omx/state`：
+
+```text
+$codex-native-subagent-team "这个任务适合并行。请先拆出主线程 critical path 和 2 个只读 explorer lane，再继续主线程工作。"
+```
+
+迁移原则：
+
+- 必须由用户明确要求 subagents、parallel agents、delegation 或 team-style split，才启动 native subagents。
+- 主线程先保留 critical path；只把不阻塞下一步的旁路调查、验证或 disjoint edit 交给 subagent。
+- 每个 subagent 都要有明确 scope、文件所有权、输出格式和非目标。
+- 不把 `$team` 迁移成自动 fanout；当前 native Codex subagent 是显式协作工具，不是 OMX runtime。
+- 不迁移 OMX 的 tmux、Stop-hook continuation、`.omx/state/team`、worker mailbox；这些保留给 WSL2 OMX runtime。
+
 参考：
 
 - Official Codex Subagents: https://developers.openai.com/codex/subagents
@@ -820,6 +836,152 @@ codex -c 'default_permissions="workspace-net"'
 
 - Official Codex Permissions: https://developers.openai.com/codex/permissions
 
+### oh-my-codex / OMX in WSL2
+
+`oh-my-codex` 是 OpenAI Codex CLI 的 workflow layer。官方 README 当前把 macOS/Linux + Codex CLI 作为推荐默认路径；原生 Windows 不是默认体验，Windows 上更适合放到 WSL2 里单独跑完整 OMX runtime。
+
+本机配置要点：
+
+- Windows 功能需要启用 `Microsoft-Windows-Subsystem-Linux` 和 `VirtualMachinePlatform`。
+- BIOS/固件虚拟化要开启；可用 `systeminfo` 查看 Hyper-V requirements。
+- 如果刚启用功能后 `LxssManager` 服务不存在，或 Ubuntu 注册报 `0x8007019e`，先重启 Windows，再继续安装。
+- Ubuntu/Debian 内建议安装 `tmux`，OMX 的 durable team runtime 会用到它。
+
+官方安装目标：
+
+```bash
+npm install -g @openai/codex
+npm install -g oh-my-codex
+omx setup
+```
+
+当前 npm 包要求 Node.js `>=20`。安装后至少做：
+
+```bash
+omx doctor
+codex login status
+omx exec --skip-git-repo-check -C . "Reply with exactly OMX-EXEC-OK"
+```
+
+本仓库提供了重启后续装脚本：
+
+```powershell
+.\tools\setup-oh-my-codex-wsl2.ps1
+```
+
+脚本会检查/启用 WSL2 前置项，安装 Ubuntu 24.04、Node.js 20、`tmux`、`@openai/codex` 和 `oh-my-codex`，然后运行 `omx setup` 与 `omx doctor`。如果 Codex 登录态不存在，最后的真实执行 smoke test 需要先在 WSL 中手动 `codex login`。
+
+自动化结束后需要人工完成：
+
+```bash
+codex login
+codex login status
+omx doctor
+omx exec --skip-git-repo-check -C . "Reply with exactly OMX-EXEC-OK"
+```
+
+如果使用自定义 provider、代理、MCP token 或额外环境变量，不要从 Windows 复制凭据文件；在 WSL 内手动写入 `~/.codex/config.toml`、`~/.bashrc` 或其他 WSL-local 配置，并避免把 token 写进仓库脚本或文档。
+
+#### OMX 日常使用速查
+
+OMX 不替代 Codex CLI；它是在 Codex 之上增加 prompts、skills、hooks、HUD、team runtime 和 `.omx/` 状态层。日常使用时不要把它当成一堆 shell 子命令来手动操作一整天，而是先启动一个 OMX 管理的 Codex 会话，然后在会话里用 `$...` workflow keywords。
+
+每次开始本项目工作，先进入项目目录，避免在 `/mnt/c/Windows/system32` 这类宿主系统目录下生成 `.omx/` 状态：
+
+```bash
+cd /mnt/d/工作流优化/codex-research-workflow-html
+```
+
+健康检查与真实调用 smoke test：
+
+```bash
+omx doctor
+codex login status
+omx exec --skip-git-repo-check -C . "Reply with exactly OMX-EXEC-OK"
+```
+
+`omx doctor` 只能证明 OMX 文件、hooks、skills 和本地 runtime wiring 看起来正常；`omx exec` 才能证明当前 shell/profile 下的 Codex auth、provider、base URL 和模型请求真的可用。
+
+启动交互式会话：
+
+```bash
+omx --high
+```
+
+官方 README 的强启动示例是：
+
+```bash
+omx --madmax --high
+```
+
+但 `--madmax` 会绕过 Codex approvals 和 sandbox，只适合你明确信任的本地仓库与命令环境。第一次排障或处理陌生仓库时，优先用不带 `--madmax` 的启动方式。
+
+进入 OMX/Codex 会话后，常用 workflow keywords 是直接发给 Codex 的消息，不是在 shell 里执行：
+
+```text
+$deep-interview "澄清这个需求的范围、边界和非目标"
+$ralplan "基于澄清结果形成可执行计划并审查取舍"
+$ultragoal "把已批准计划转成可持续执行和检查点"
+```
+
+推荐顺序：
+
+1. 需求不清楚：先用 `$deep-interview`。
+2. 需要方案、风险、取舍：用 `$ralplan`。
+3. 已经批准计划，要长期推进到完成：用 `$ultragoal`。
+4. 某个 Ultragoal story 真的适合并行拆分时，再用 `$team`。
+5. 只需要一个持续推进的单负责人闭环时，用 `$ralph`。
+
+常用运维命令：
+
+```bash
+omx status
+omx cancel
+omx update
+omx doctor --team
+omx team status <team-name>
+omx team shutdown <team-name>
+```
+
+如果 `omx exec` 出现 `401 Unauthorized`，优先检查当前 shell 中 Codex 实际使用的 `~/.codex/config.toml`、`CODEX_HOME`、provider/base URL 和 API key 是否匹配。使用 OpenAI-compatible proxy 时，必须确保自定义 base URL 在当前 WSL 配置中真的生效；否则 proxy key 会被发到默认 OpenAI endpoint 并报 invalid key。
+
+#### 同步 Windows 全局 Codex 配置到 WSL
+
+不要把 `C:\Users\Administrator\.codex` 整个覆盖到 WSL。Windows 全局目录里通常包含 `auth.json`、`.sandbox-secrets`、session/log/sqlite 数据库、运行时状态和 Windows-only 路径；这些不应复制到 Linux `~/.codex`，也可能覆盖 `omx setup` 刚写入的 WSL hooks、skills、agents 和 config。
+
+本仓库提供安全同步脚本：
+
+```powershell
+.\tools\sync-codex-global-to-wsl.ps1
+```
+
+同步策略：
+
+- 先备份 WSL `~/.codex` 到 `~/.codex/backups/windows-global-sync-<timestamp>`。
+- 排除 `auth.json`、`.env`、`.sandbox-secrets`、sqlite、logs、sessions、runtime 等凭据和运行态。
+- `config.toml` 不覆盖 WSL 生效配置，只在安全检查通过时复制为 `config.windows-global.reference.toml` 供人工参考。
+- `skills`、`rules`、`memories` 采用不覆盖已有文件的合并式复制。
+- `plugins` 默认不复制；如只想保留 Windows 插件作参考，可加 `-IncludePluginReference`，目标目录是 `plugins-windows-reference`。
+- `AGENTS.md` 不是机械覆盖，而是在 WSL `AGENTS.md` 前插入 `WINDOWS-GLOBAL-AGENTS-SYNC` 区块，并声明环境适用性。
+
+AGENTS 合并原则：
+
+- 语言、工作风格、安全边界、文档习惯等通用偏好可以继承。
+- Windows 路径、PowerShell 命令、VS Code UI、桌面/browser automation 等只作为宿主侧参考，不能自动当成 WSL 命令。
+- WSL 内优先使用 Linux 路径和工具，例如 `~/.codex`、`/mnt/d/...`、`bash`、`apt`、`tmux`。
+- 与 OMX 生成的 WSL config/hooks/skills/AGENTS 区块冲突时，OMX-managed 内容优先。
+
+同步结束后需要人工复核：
+
+```bash
+sed -n '1,120p' ~/.codex/AGENTS.md
+less ~/.codex/config.windows-global.reference.toml
+vi ~/.codex/config.toml
+omx doctor
+```
+
+只把 `config.windows-global.reference.toml` 中确实适合 Linux/WSL 的设置手动迁移进生效的 `~/.codex/config.toml`。Windows-only path、PowerShell 命令和桌面环境配置不要直接照搬。
+
 ### Hooks
 
 Hooks 用于在 Codex 生命周期中运行确定性脚本，例如检查用户 prompt 是否误贴了密钥、拦截危险 shell 命令、在任务结束前提醒补充验证。官方文档当前说明：hooks 默认启用；如果要关闭，可在 `config.toml` 中设置：
@@ -1104,6 +1266,7 @@ codex --add-dir ../other-research-repo "对比两个研究工作流仓库的 ski
 | `codex-consensus-plan` | 需要先拿到决策完备计划，再开始改代码/论文/实验/文档。 |
 | `codex-completion-loop` | 用户明确希望一路做到实现、验证、交付证据，不停在半成品。 |
 | `codex-adversarial-qa` | 对方案、论文 claim、实验 pipeline、prompt、UI 做敌意场景测试。 |
+| `codex-native-subagent-team` | 用户明确要求 subagents/parallel agents/team-style split 时，安全拆分 native Codex 并行任务。 |
 | `project-briefing-room` | 面向 stakeholder 做项目状态 briefing，再引出澄清和下一步计划。 |
 | `codex-design-brief` | 产品、UI、文档或流程需要轻量设计 brief/决策源。 |
 

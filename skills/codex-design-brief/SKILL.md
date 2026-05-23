@@ -7,6 +7,8 @@ description: Use when product, UI, documentation, or workflow decisions need a l
 
 Capture the design decision source before building or changing a user-facing workflow.
 
+This is the native Codex adaptation of OMX `$design`: keep a lightweight decision source that guides implementation and review; omit OMX runtime state and automatic follow-up modes.
+
 ## Workflow
 
 1. Inspect existing design sources.
@@ -28,10 +30,18 @@ Capture the design decision source before building or changing a user-facing wor
    - Update it when decisions change.
 5. Verify the result.
    - For UI or HTML, pair with `$codex-visual-acceptance`.
+   - For implementation planning, pair with `$codex-consensus-plan`.
+   - For execution, pair with `$codex-completion-loop`.
 
 ## Output
 
 Produce or update a brief in the user's requested format. If no format is specified, use a concise Markdown or HTML note consistent with the repo.
+
+## Boundaries
+
+- Keep the brief short enough to be used during implementation.
+- Separate confirmed behavior from recommendations.
+- Do not invent brand/product requirements that the user did not ask for.
 
 ## References
 
