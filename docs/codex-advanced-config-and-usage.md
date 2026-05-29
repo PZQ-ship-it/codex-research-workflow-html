@@ -1244,6 +1244,7 @@ codex --add-dir ../other-research-repo "对比两个研究工作流仓库的 ski
 | `latex-pdf-final-review` | LaTeX 论文/毕业论文提交前最终检查：编译、引用、术语、图表、PDF 页面和 layout warnings。 |
 | `research-fact-source-sync` | 根据代码、数据、benchmark、manifest 更新论文事实，避免实验结果和论文文字脱节。 |
 | `thesis-figure-pipeline` | 从实验表生成论文/毕业论文图，处理 CJK 字体、标签映射、PNG/PDF 输出和 LaTeX 同步。 |
+| `openrouter-icu-image` | 通过 OpenRouter ICU 同步生成或编辑图片，适合文档封面、插图、产品图和视觉素材草案。 |
 
 #### 资料检索与证据综合
 
