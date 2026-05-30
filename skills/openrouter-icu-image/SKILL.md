@@ -18,6 +18,19 @@ description: Generate or edit images synchronously through OpenRouter ICU's Open
 7. Save outputs under a user-requested path when provided; otherwise use a clear local output path such as `output/openrouter-icu/<slug>.png`.
 8. After generation, verify the file exists and render or show it when useful.
 
+## Manuscript-to-PPT Academic Figures
+
+When this skill is used inside `manuscript-to-ppt-workflow` for a source-derived academic diagram, do not improvise the image prompt.
+
+Require a confirmed `align/academic_figure_prompt_v*.md` with:
+
+```yaml
+stage: academic_figure_prompt
+stage_status: confirmed
+```
+
+Use the confirmed English visual prompt from that artifact as the image prompt. Keep model, size, quality, output path, and other API controls outside the prompt. If no confirmed prompt artifact exists, route back to `academic-figure-prompt` and stop.
+
 ## Preferred CLI
 
 Use `scripts/openrouter_icu_image.py` for most tasks. It uses only the Python 3 standard library, handles streaming SSE, validates core parameters, avoids accidental requests without an API key, and writes decoded images only after image payload fields are present.

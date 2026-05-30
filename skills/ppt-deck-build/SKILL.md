@@ -1,6 +1,6 @@
 ---
 name: ppt-deck-build
-description: Generate an editable PPTX draft from confirmed PPT workflow artifacts. Use only after confirmed production brief, fact ledger, storyboard, template inventory, asset decisions, and layout plan exist; stop before render QA.
+description: Generate an editable PPTX draft from confirmed PPT workflow artifacts. Use only after confirmed production brief, fact ledger, storyboard, template inventory, asset decisions, layout plan, and any required academic figure prompt/generated visual assets exist; stop before render QA.
 ---
 
 # PPT Deck Build
@@ -17,6 +17,8 @@ Do not proceed unless confirmed artifacts exist:
 - `align/PPT_asset_audit_v*.md`
 - `align/ppt_layout_plan_v*.json`
 - template inventory or equivalent confirmed template policy
+
+If `align/visual_enrichment_plan_v*.md` marks `requires_academic_figure_prompt: true`, also require a confirmed `align/academic_figure_prompt_v*.md` and either approved generated image files or an explicit user decision to build without them.
 
 Use native agent `ppt_template_automation` when available. This stage must not accept the deck as final.
 
@@ -42,6 +44,7 @@ requires_confirmed:
   - fact_ledger
   - storyboard
   - asset_layout_plan
+  - academic_figure_prompt_when_required
 allowed_next_stage: ppt-render-qa-loop
 confirmed_by: <user/date or empty>
 ```
@@ -59,4 +62,3 @@ Record slide count, template mapping, assets used, generated image provenance, k
 After generating the draft PPTX and manifest, stop and ask the user to inspect or confirm readiness for render QA. Do not run PowerPoint COM render QA in the same turn.
 
 When the user confirms, update only the deck build manifest to `stage_status: confirmed`, record `confirmed_by`, then stop again.
-

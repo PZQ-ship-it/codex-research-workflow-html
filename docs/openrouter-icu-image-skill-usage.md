@@ -146,6 +146,15 @@ python skills\openrouter-icu-image\scripts\openrouter_icu_image.py generate `
 
 图片 prompt 只描述视觉目标，不要把 API 参数、文件路径、key、模型名混进 prompt。
 
+在 `manuscript-to-ppt-workflow` 中生成源事实驱动的学术图时，不要直接临场写 prompt 后生图。必须先通过 `academic-figure-prompt` 产出并确认：
+
+```text
+align/academic_figure_prompt_v*.md
+stage_status: confirmed
+```
+
+然后 `openrouter-icu-image` 只使用该 artifact 中已确认的英文视觉 prompt；模型、尺寸、质量、输出路径仍作为 API/CLI 参数单独设置。
+
 建议包含：
 
 - 主体：人物、产品、场景或图形对象。

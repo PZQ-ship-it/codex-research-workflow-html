@@ -1,6 +1,6 @@
 ---
 name: manuscript-to-ppt-workflow
-description: "Thin stage orchestrator for manuscript, thesis, paper, report, LaTeX project, asset folder, experiment output, or proposal to editable PPTX. Use to route the user through mandatory human-confirmed stages: production brief, material/fact ledger, storyboard, asset/layout plan, deck build, and render QA. This skill must stop after every stage artifact and never auto-advance."
+description: "Thin stage orchestrator for manuscript, thesis, paper, report, LaTeX project, asset folder, experiment output, or proposal to editable PPTX. Use to route the user through mandatory human-confirmed stages: production brief, material/fact ledger, storyboard, asset/layout plan, optional academic figure prompt, deck build, and render QA. This skill must stop after every stage artifact and never auto-advance."
 ---
 
 # Manuscript To PPT Workflow
@@ -21,8 +21,9 @@ Run stages in this order:
 | 2 | `ppt-material-fact-ledger` | confirmed production brief | `align/material_inventory_v*.md`, `align/fact_ledger_v*.md` |
 | 3 | `ppt-storyboard-stage` | confirmed brief and fact ledger | `align/PPT_storyboard_v*.md` |
 | 4 | `ppt-asset-layout-plan` | confirmed brief, fact ledger, storyboard | template inventory, asset audit, visual plan, layout plan |
-| 5 | `ppt-deck-build` | confirmed upstream artifacts and layout plan | editable PPTX draft and build manifest |
-| 6 | `ppt-render-qa-loop` | confirmed deck build manifest | rendered screenshots and QA report |
+| 5 | `academic-figure-prompt` | confirmed asset/layout plan that requires generated academic visuals | `align/academic_figure_prompt_v*.md` |
+| 6 | `ppt-deck-build` | confirmed upstream artifacts, layout plan, and any required figure prompt/assets | editable PPTX draft and build manifest |
+| 7 | `ppt-render-qa-loop` | confirmed deck build manifest | rendered screenshots and QA report |
 
 Default stage gate:
 
@@ -38,15 +39,19 @@ Codex may write `draft`. Only the user may cause `confirmed`.
 2. If the brief is confirmed but no confirmed fact ledger exists, route to `ppt-material-fact-ledger`.
 3. If facts are confirmed but no confirmed storyboard exists, route to `ppt-storyboard-stage`.
 4. If storyboard is confirmed but no confirmed asset/layout plan exists, route to `ppt-asset-layout-plan`.
-5. If asset/layout plan is confirmed but no confirmed deck build exists, route to `ppt-deck-build`.
-6. If deck build is confirmed but no render QA report exists, route to `ppt-render-qa-loop`.
-7. If render QA fails, route defects back to the responsible earlier stage. Do not silently repair in the QA stage.
+5. If the confirmed asset/layout plan says an AI-generated academic visual or image2/gpt-image academic prompt is required, and no confirmed `align/academic_figure_prompt_v*.md` exists, route to `academic-figure-prompt`.
+6. If the academic figure prompt is confirmed and the user asks to generate the image asset, route to `openrouter-icu-image`; do not generate images in the same turn that drafts the prompt.
+7. If all required prompt/assets are confirmed but no confirmed deck build exists, route to `ppt-deck-build`.
+8. If deck build is confirmed but no render QA report exists, route to `ppt-render-qa-loop`.
+9. If render QA fails, route defects back to the responsible earlier stage. Do not silently repair in the QA stage.
 
 ## Non-Negotiable Stop Rule
 
-Do not execute two stages in one assistant turn. Do not combine production brief, fact extraction, storyboard, asset planning, deck generation, and QA into a single run.
+Do not execute two stages in one assistant turn. Do not combine production brief, fact extraction, storyboard, asset planning, academic figure prompt drafting, image generation, deck generation, and QA into a single run.
 
 The only allowed same-turn action after writing a stage artifact is to summarize the artifact path, list open decisions, and ask the user to confirm or revise.
+
+Generated academic visuals have two gates: first confirm `academic-figure-prompt`, then run `openrouter-icu-image` only when the user approves image generation. Do not let Codex invent visual content to fill missing research facts.
 
 ## Agents
 

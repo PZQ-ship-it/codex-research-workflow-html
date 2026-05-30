@@ -1,0 +1,4 @@
+interface:
+  display_name: "Academic Figure Prompt"
+  short_description: "Align and draft academic figure image prompts"
+  default_prompt: "Use $academic-figure-prompt to align an academic figure intent and palette, write a draft English image prompt artifact, then stop for confirmation."

@@ -21,22 +21,52 @@ function Get-RepoRoot($Cwd) {
     return (Resolve-Path -LiteralPath $Cwd).Path
 }
 
+function Get-ArtifactFiles($RepoRoot, [string]$Pattern) {
+    $pathPattern = $Pattern.Replace('/', [System.IO.Path]::DirectorySeparatorChar)
+    $parent = Split-Path -Parent $pathPattern
+    $leaf = Split-Path -Leaf $pathPattern
+    $searchRoot = if ([string]::IsNullOrWhiteSpace($parent)) {
+        $RepoRoot
+    }
+    else {
+        Join-Path $RepoRoot $parent
+    }
+    if (-not (Test-Path -LiteralPath $searchRoot)) {
+        return @()
+    }
+    return @(Get-ChildItem -LiteralPath $searchRoot -Filter $leaf -File -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending)
+}
+
 function Test-ConfirmedArtifact($RepoRoot, [string[]]$Patterns, [string[]]$AcceptedStatuses) {
     foreach ($pattern in $Patterns) {
-        $files = Get-ChildItem -Path $RepoRoot -Filter (Split-Path -Leaf $pattern) -Recurse -File -ErrorAction SilentlyContinue |
-            Where-Object {
-                $repoUri = New-Object System.Uri(($RepoRoot.TrimEnd('\') + '\'))
-                $fileUri = New-Object System.Uri($_.FullName)
-                $rel = [System.Uri]::UnescapeDataString($repoUri.MakeRelativeUri($fileUri).ToString()).Replace('\', '/')
-                $rel -like $pattern
-            } |
-            Sort-Object LastWriteTime -Descending
+        $files = Get-ArtifactFiles $RepoRoot $pattern
 
         foreach ($file in $files) {
-            $text = Get-Content -Raw -LiteralPath $file.FullName -ErrorAction SilentlyContinue
+            $text = [string](Get-Content -Raw -LiteralPath $file.FullName -ErrorAction SilentlyContinue)
+            $text = $text.TrimStart([char]0xFEFF)
             foreach ($status in $AcceptedStatuses) {
                 $escapedStatus = [regex]::Escape($status)
                 if ($text -match "(?im)^\s*(stage_status|status)\s*:\s*$escapedStatus\s*$") {
+                    return $true
+                }
+            }
+        }
+    }
+    return $false
+}
+
+function Test-ArtifactKeyValue($RepoRoot, [string[]]$Patterns, [string]$Key, [string[]]$AcceptedValues) {
+    foreach ($pattern in $Patterns) {
+        $files = Get-ArtifactFiles $RepoRoot $pattern
+
+        foreach ($file in $files) {
+            $text = [string](Get-Content -Raw -LiteralPath $file.FullName -ErrorAction SilentlyContinue)
+            $text = $text.TrimStart([char]0xFEFF)
+            foreach ($value in $AcceptedValues) {
+                $escapedKey = [regex]::Escape($Key)
+                $escapedValue = [regex]::Escape($value)
+                if ($text -match "(?im)^\s*$escapedKey\s*:\s*$escapedValue\s*$") {
                     return $true
                 }
             }
@@ -53,6 +83,7 @@ function Deny($Reason) {
             permissionDecisionReason = $Reason
         }
     }
+    exit 0
 }
 
 function Get-ToolText($Event) {
@@ -82,6 +113,9 @@ function Get-TargetStage($ToolText) {
     }
     if ($normalized -match '(?i)align/(template_inventory|template_layout_map|PPT_asset_audit|PPT_asset_manifest|visual_enrichment_plan|ppt_layout_plan)_v.*\.(md|csv|json)') {
         return "asset_layout_plan"
+    }
+    if ($normalized -match '(?i)align/academic_figure_prompt_v.*\.md') {
+        return "academic_figure_prompt"
     }
     if ($normalized -match '(?i)(generated_pptx_test/|align/ppt_deck_build_manifest_v.*\.md|\.pptx\b)') {
         return "deck_build"
@@ -136,7 +170,9 @@ $hasBrief = Test-ConfirmedArtifact $repoRoot @("align/ppt_production_brief_v*.md
 $hasFacts = Test-ConfirmedArtifact $repoRoot @("align/fact_ledger_v*.md") @("confirmed")
 $hasStoryboard = Test-ConfirmedArtifact $repoRoot @("align/PPT_storyboard_v*.md") @("confirmed")
 $hasAssetPlan = Test-ConfirmedArtifact $repoRoot @("align/PPT_asset_audit_v*.md", "align/visual_enrichment_plan_v*.md") @("confirmed")
+$hasAcademicFigurePrompt = Test-ConfirmedArtifact $repoRoot @("align/academic_figure_prompt_v*.md") @("confirmed")
 $hasDeckBuild = Test-ConfirmedArtifact $repoRoot @("align/ppt_deck_build_manifest_v*.md") @("confirmed")
+$requiresAcademicFigurePrompt = Test-ArtifactKeyValue $repoRoot @("align/visual_enrichment_plan_v*.md") "requires_academic_figure_prompt" @("true", "yes")
 
 switch ($targetStage) {
     "material_fact_ledger" {
@@ -154,9 +190,17 @@ switch ($targetStage) {
             Deny "PPT stage gate blocked asset/layout output: confirmed brief, fact ledger, and storyboard are required first."
         }
     }
+    "academic_figure_prompt" {
+        if (-not ($hasBrief -and $hasFacts -and $hasStoryboard -and $hasAssetPlan)) {
+            Deny "PPT stage gate blocked academic figure prompt output: confirmed brief, fact ledger, storyboard, and asset/layout plan are required first."
+        }
+    }
     "deck_build" {
         if (-not ($hasBrief -and $hasFacts -and $hasStoryboard -and $hasAssetPlan)) {
             Deny "PPT stage gate blocked PPTX/deck output: confirmed brief, fact ledger, storyboard, and asset/layout plan are required first."
+        }
+        if ($requiresAcademicFigurePrompt -and -not $hasAcademicFigurePrompt) {
+            Deny "PPT stage gate blocked PPTX/deck output: visual enrichment plan requires a confirmed academic figure prompt first."
         }
     }
     "render_qa" {
