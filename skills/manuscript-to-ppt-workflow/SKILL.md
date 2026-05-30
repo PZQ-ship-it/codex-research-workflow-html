@@ -1,13 +1,13 @@
 ---
 name: manuscript-to-ppt-workflow
-description: "Use when the user wants to turn a manuscript, thesis, paper, report, proposal, or long document into a presentation workflow: fact ledger, PPT storyboard, asset audit, template-based PPTX draft, and optional Figma layout polish. Use for portable multi-agent PPT generation and defense/conference presentation preparation."
+description: "Use when the user wants to turn a manuscript, thesis, paper, report, proposal, or long document into a presentation workflow: intent alignment, production brief, fact ledger, PPT storyboard, asset audit, template-based PPTX draft, and optional Figma layout polish. Use for portable multi-agent PPT generation and defense/conference presentation preparation."
 ---
 
 # Manuscript to PPT Workflow
 
 ## Overview
 
-This skill orchestrates a portable multi-agent workflow for turning a manuscript into a presentation. It does not replace the specialist agents; it decides which agents are needed, in what order, what files they exchange, and how to verify the final PPTX/visual outputs.
+This skill orchestrates a portable multi-agent workflow for turning a manuscript into a presentation. It starts by synchronizing intent with the user, then decides which specialist agents are needed, in what order, what files they exchange, and how to verify the final PPTX/visual outputs.
 
 Use it when the user wants an end-to-end or reusable workflow, not just a one-off slide edit.
 
@@ -15,25 +15,30 @@ Use it when the user wants an end-to-end or reusable workflow, not just a one-of
 
 Default order:
 
+0. Intent synchronization and production brief
 1. Fact extraction
 2. Storyboard generation
 3. Asset audit
 4. Template/PPTX automation
 5. Figma layout polish
-6. Final validation and handoff
+6. Script and QA, if requested
+7. Final validation and handoff
 
 Hard dependencies:
 
-- Storyboard depends on fact ledger unless the source is already structured and short.
-- Asset audit depends on storyboard.
-- PPTX automation depends on storyboard and asset audit.
-- Figma polish depends on a PPTX draft, screenshots, or a page plan.
+- Intent synchronization depends on available user context, local files, and any explicit runtime configuration.
+- Fact extraction depends on the production brief unless the user already provides complete runtime configuration.
+- Storyboard depends on both the production brief and fact ledger unless the source is already structured and short.
+- Asset audit depends on storyboard and production brief.
+- PPTX automation depends on production brief, storyboard, and asset audit.
+- Figma polish depends on production brief, a PPTX draft, screenshots, or a page plan.
 - Script/QA generation, if requested, should happen after storyboard is mostly frozen and facts are locked.
 
 ## Agent Loading
 
 Load only the agent reference needed for the current phase:
 
+- Intent synchronization: `references/agents/ppt_production_alignment_agent_spec.md`; this agent uses the `codex-deep-interview` workflow.
 - Fact extraction: `references/agents/fact_extraction_agent_spec.md`
 - Storyboard: `references/agents/storyboard_agent_spec.md`
 - Asset audit: `references/agents/asset_audit_agent_spec.md`
@@ -64,6 +69,8 @@ Fact extraction is the workflow's source of truth. It prevents storyboard, asset
 
 Ask for missing inputs only when they cannot be inferred safely.
 
+Before running downstream agents, convert runtime inputs, inferred project facts, defaults, and user preferences into a durable production brief.
+
 Required for full pipeline:
 
 - `source_materials`: manuscript/PDF/LaTeX/Markdown/DOCX/HTML.
@@ -83,6 +90,7 @@ Recommended:
 - `must_avoid`
 - `validation_policy`
 - `figma_policy`: disabled, optional, required, or fallback-only
+- `intent_sync_policy`: ask-first, infer-and-record, or skip-only-if-brief-provided
 
 ## Directory Policy
 
@@ -118,9 +126,51 @@ This skill itself can be globally installed after validation because it is only 
 
 ## Workflow Details
 
+### 0. Intent Sync and Production Brief
+
+Load `references/agents/ppt_production_alignment_agent_spec.md`.
+
+This agent uses the `codex-deep-interview` workflow before content generation, but it must adapt questions to the project instead of asking a fixed checklist:
+
+1. Ground in available context first: inspect user request, source paths, existing storyboard/asset files, template files, screenshots, and prior alignment notes.
+2. Separate discoverable facts from preference decisions.
+3. Infer low-risk defaults when the answer is obvious from project context.
+4. Ask exactly one concise clarification question only when a missing preference changes scope, risk, visual style, editability, or acceptance criteria.
+5. Write the synchronized intent to `align/ppt_production_brief_v*.md`.
+
+Produce:
+
+- `align/ppt_production_brief_v*.md`
+- optionally `align/workflow_runtime_config_v*.yaml`
+- optionally `align/user_confirmation_points_v*.md`
+
+The production brief must include:
+
+- source materials and template files
+- project type, audience, duration, page count, and language
+- narrative strategy and technical depth
+- visual style, aspect ratio, editability policy, and asset strategy
+- Figma policy and fallback policy
+- deliverables: PPTX, screenshots, script, QA, manifests, validation notes
+- non-goals, decision boundaries, acceptance criteria, and human confirmation points
+- defaults accepted by the agent and open questions
+
+Do not skip this phase for a full manuscript-to-PPT run unless the user provides an existing production brief or explicitly asks for a narrow downstream-only task.
+
+Validation:
+
+- The brief distinguishes confirmed decisions from inferred defaults.
+- High-impact preferences are either confirmed or listed as human confirmation points.
+- Downstream agents can read the brief as the stable run configuration.
+
 ### 1. Fact Ledger
 
 Load `references/agents/fact_extraction_agent_spec.md`.
+
+Inputs:
+
+- production brief
+- source materials
 
 Produce:
 
@@ -151,6 +201,7 @@ Load `references/agents/storyboard_agent_spec.md`.
 
 Inputs:
 
+- production brief
 - fact ledger
 - source materials if needed
 - target duration/page count/audience
@@ -181,6 +232,7 @@ Load `references/agents/asset_audit_agent_spec.md`.
 
 Inputs:
 
+- production brief
 - storyboard
 - fact ledger
 - source figures/assets/template
@@ -203,6 +255,7 @@ Load `references/agents/template_automation_agent_spec.md`.
 
 Inputs:
 
+- production brief
 - storyboard
 - asset manifest
 - template PPTX if available
@@ -227,6 +280,7 @@ Load `references/agents/figma_layout_polish_agent_spec.md` only when visual poli
 
 Inputs:
 
+- production brief
 - PPTX draft
 - rendered screenshots
 - page plan
@@ -265,6 +319,7 @@ If rate-limited:
 
 A complete run should leave:
 
+- `align/ppt_production_brief_v*.md`
 - `align/fact_ledger_v*.md`
 - `align/PPT_storyboard_v*.md`
 - `align/PPT_asset_audit_v*.md` and/or CSV manifest
@@ -277,6 +332,7 @@ A complete run should leave:
 
 Before calling the workflow done, verify:
 
+- A production brief exists, and assumptions/open questions are recorded.
 - Facts, contributions, experiment claims, and limitations do not conflict across artifacts.
 - Slide count and timing match the target.
 - PPTX opens and renders.
@@ -298,7 +354,8 @@ Runtime configuration:
 - asset_dirs: <optional dirs>
 - output_dir: <project output dir>
 - figma_policy: <disabled|optional|required|fallback-only>
+- intent_sync_policy: <ask-first|infer-and-record|skip-only-if-brief-provided>
 
 Task:
-Run the manuscript-to-PPT workflow. Produce fact ledger, storyboard, asset audit, PPTX draft, and optional Figma polish artifacts. Keep facts grounded in source material and verify PPTX/rendered outputs.
+Run the manuscript-to-PPT workflow. First use codex-deep-interview style intent synchronization and save `align/ppt_production_brief_v*.md`, then produce fact ledger, storyboard, asset audit, PPTX draft, and optional Figma polish artifacts. Keep facts grounded in source material and verify PPTX/rendered outputs.
 ```
