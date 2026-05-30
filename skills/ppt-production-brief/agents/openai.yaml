@@ -1,0 +1,4 @@
+interface:
+  display_name: "PPT Production Brief"
+  short_description: "Confirm PPT intent and stop at a brief"
+  default_prompt: "Use $ppt-production-brief to interview me and produce a draft production brief, then stop for confirmation."

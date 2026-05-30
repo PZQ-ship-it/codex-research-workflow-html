@@ -1,7 +1,7 @@
 interface:
   display_name: "Manuscript to PPT Workflow"
-  short_description: "PPT-native workflow from flexible research materials"
-  default_prompt: "Use $manuscript-to-ppt-workflow to start with codex-deep-interview, confirm the production brief, inventory the available material bundle, ground facts, inspect the PPTX template, optionally use OpenRouter ICU Image for source-grounded visual enrichment, delegate storyboard and python-pptx PPTX automation to native agents, then run PowerPoint COM render QA before accepting the deck."
+  short_description: "Route staged PPT workflow with hard stops"
+  default_prompt: "Use $manuscript-to-ppt-workflow to route me to the next PPT stage, then stop for confirmation before continuing."
 dependencies:
   tools:
     - type: "local"

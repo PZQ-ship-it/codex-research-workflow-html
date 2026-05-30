@@ -1,0 +1,4 @@
+interface:
+  display_name: "PPT Asset Layout Plan"
+  short_description: "Plan slide assets and editable layouts"
+  default_prompt: "Use $ppt-asset-layout-plan to decide assets, visual enrichment, and layout mapping, then stop for confirmation."

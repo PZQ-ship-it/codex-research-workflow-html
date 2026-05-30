@@ -1,0 +1,31 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .codex/hooks/ppt_stage_gate.ps1",
+            "command_windows": "powershell -NoProfile -ExecutionPolicy Bypass -File .codex\\hooks\\ppt_stage_gate.ps1",
+            "timeout": 30,
+            "statusMessage": "Checking PPT stage context"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|apply_patch|Edit|Write|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .codex/hooks/ppt_stage_gate.ps1",
+            "command_windows": "powershell -NoProfile -ExecutionPolicy Bypass -File .codex\\hooks\\ppt_stage_gate.ps1",
+            "timeout": 30,
+            "statusMessage": "Checking PPT stage gate"
+          }
+        ]
+      }
+    ]
+  }
+}

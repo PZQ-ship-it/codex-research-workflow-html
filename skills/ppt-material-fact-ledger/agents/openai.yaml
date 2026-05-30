@@ -1,0 +1,4 @@
+interface:
+  display_name: "PPT Material Fact Ledger"
+  short_description: "Inventory materials and ground slide facts"
+  default_prompt: "Use $ppt-material-fact-ledger to build the material inventory and fact ledger from a confirmed brief, then stop for confirmation."

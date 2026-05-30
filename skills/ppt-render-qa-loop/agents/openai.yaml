@@ -1,0 +1,4 @@
+interface:
+  display_name: "PPT Render QA Loop"
+  short_description: "Render PPTX pages and block bad decks"
+  default_prompt: "Use $ppt-render-qa-loop to render the PPTX, report visual defects, and stop for acceptance or repair."

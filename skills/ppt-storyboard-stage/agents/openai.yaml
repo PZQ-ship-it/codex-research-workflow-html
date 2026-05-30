@@ -1,0 +1,4 @@
+interface:
+  display_name: "PPT Storyboard Stage"
+  short_description: "Create a confirmed slide storyboard"
+  default_prompt: "Use $ppt-storyboard-stage to create a storyboard from confirmed upstream artifacts, then stop for review."
