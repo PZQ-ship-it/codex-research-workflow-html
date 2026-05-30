@@ -7,39 +7,70 @@ description: "Use when the user wants to turn a manuscript, thesis, paper, repor
 
 ## Role
 
-This skill is an orchestration layer. It routes a manuscript-to-presentation job through specialist agent specs, keeps their dependencies ordered, and verifies that durable handoff files are produced.
+This skill is an orchestration layer. It routes a manuscript-to-presentation job through native custom agents when available, keeps their dependencies ordered, and verifies that durable handoff files are produced.
 
-Do not treat this skill as the detailed prompt for every phase. Load the relevant external agent spec only when that phase begins.
+Do not treat this skill as the detailed prompt for every phase. Use native custom agents for execution, and load the external Markdown agent spec only as fallback or supplementary guidance.
 
-## Agent Specs
+## Native Agents
 
-Find agent specs outside this skill folder, in the nearest available agent directory:
+Prefer Codex native custom agents from the nearest available agent directory:
+
+1. Project-local: `.codex/agents/`
+2. User-global: `~/.codex/agents/`
+
+Use these native agent names:
+
+| Phase | Native agent name | Native TOML |
+|---|---|---|
+| Intent alignment | `ppt_production_alignment` | `ppt-production-alignment.toml` |
+| Fact extraction | `manuscript_fact_extraction` | `manuscript-fact-extraction.toml` |
+| Storyboard | `ppt_storyboard` | `ppt-storyboard.toml` |
+| Asset audit | `ppt_asset_audit` | `ppt-asset-audit.toml` |
+| PPTX automation | `ppt_template_automation` | `ppt-template-automation.toml` |
+| Figma polish | `figma_layout_polish` | `figma-layout-polish.toml` |
+
+When native subagent tools are available and `subagent_policy` permits it, spawn the relevant custom agent by its native agent name. If the runtime does not expose native subagents or a custom agent is unavailable, execute the phase locally using the fallback Markdown spec.
+
+## Fallback Agent Specs
+
+Find fallback Markdown agent specs outside this skill folder, in the nearest available agent directory:
 
 1. Project-local: `agent/`
 2. Repository-local: `<repo>/agent/`
-3. User-global: `C:/Users/zzt/.codex/agent/`
+3. User-global: `~/.codex/agent/`
 
-Use these files:
+Use these files as supplementary guidance:
 
-| Phase | Agent ID | Spec file |
+| Phase | Legacy Agent ID | Spec file |
 |---|---|---|
 | Intent alignment | `ppt-production-alignment-agent` | `ppt_production_alignment_agent_spec.md` |
 | Fact extraction | `manuscript-fact-extraction-agent` | `fact_extraction_agent_spec.md` |
-| Storyboard | `ppt-storyboard-agent` | `agents_storyboard_agent_spec.md` |
-| Asset audit | `ppt-asset-audit-agent` | `agents_asset_audit_agent_spec.md` |
+| Storyboard | `storyboard-agent` | `agents_storyboard_agent_spec.md` |
+| Asset audit | `asset-audit-agent` | `agents_asset_audit_agent_spec.md` |
 | PPTX automation | `ppt-template-automation-agent` | `template_automation_agent_spec.md` |
 | Figma polish | `figma-layout-polish-agent` | `figma_layout_polish_agent_spec.md` |
 
-If an agent spec cannot be found, report the missing file and continue only when the phase can be safely handled from existing context.
+If neither the native agent nor the fallback spec can be found, report the missing role and continue only when the phase can be safely handled from existing context.
 
 Also load `agent_collaboration_standard.md` when coordinating multiple agents, planning parallel work, or resolving handoffs. Use the workflow skill as the leader and each agent as a bounded lane.
+
+## Native Subagent Rules
+
+- The main thread is always the workflow leader; it owns dependency ordering, integration, verification, and user-facing truth.
+- Use native custom agents for full workflow runs when `subagent_policy` is `native-when-available` or `native-required`.
+- Use local execution when `subagent_policy` is `local-only`, when native tools are unavailable, or when a phase is on the immediate critical path and delegation would only add latency.
+- Spawn dependent phases only after required handoff files exist: production brief -> fact ledger -> storyboard -> asset audit -> PPTX draft -> Figma polish.
+- Parallelism is allowed only for independent sidecar work with disjoint write scopes, such as template feasibility while fact extraction runs after a production brief exists.
+- If a native custom agent is unavailable, use built-in `explorer` for fact/asset investigation and built-in `worker` for bounded PPTX/Figma edits, or execute locally.
+- Every delegated lane must return changed files, assumptions, risks, and integration evidence.
+- Do not treat subagent completion as workflow completion; inspect outputs and run the smallest meaningful verification.
 
 ## Collaboration Model
 
 The main thread is the workflow leader:
 
 - It owns the critical path, final integration, conflict resolution, and user-facing truth.
-- It may delegate or simulate agent lanes, but it must inspect their outputs before passing them downstream.
+- It may delegate to native custom agents or simulate agent lanes locally, but it must inspect their outputs before passing them downstream.
 - It must not treat an agent output as complete until the relevant handoff file exists and the smallest meaningful verification has run.
 
 Each agent is a lane:
@@ -95,6 +126,7 @@ Recommended:
 - `editability_policy`: prefer_editable, mixed, or allow_whole_page_images
 - `validation_policy`
 - `intent_sync_policy`: ask-first, infer-and-record, or skip-only-if-brief-provided
+- `subagent_policy`: native-when-available, native-required, local-only, or ask-first
 
 ## Directory Policy
 
@@ -112,7 +144,7 @@ Keep this skill folder limited to orchestration metadata. Do not put project-spe
 
 ### 0. Intent Alignment
 
-Load `ppt_production_alignment_agent_spec.md`.
+Prefer native agent `ppt_production_alignment`. If unavailable, load `ppt_production_alignment_agent_spec.md`.
 
 This phase uses `codex-deep-interview` principles, but it must adapt questions to project context instead of asking a fixed questionnaire.
 
@@ -125,7 +157,7 @@ Do not skip this phase for a full manuscript-to-PPT run unless the user provides
 
 ### 1. Fact Extraction
 
-Load `fact_extraction_agent_spec.md`.
+Prefer native agent `manuscript_fact_extraction`. If unavailable, load `fact_extraction_agent_spec.md`.
 
 Produce:
 
@@ -136,7 +168,7 @@ The fact ledger is the source of truth for contributions, methods, systems, expe
 
 ### 2. Storyboard
 
-Load `agents_storyboard_agent_spec.md`.
+Prefer native agent `ppt_storyboard`. If unavailable, load `agents_storyboard_agent_spec.md`.
 
 Produce:
 
@@ -146,7 +178,7 @@ Each slide should have one core point, a visual strategy, asset needs, speaking 
 
 ### 3. Asset Audit
 
-Load `agents_asset_audit_agent_spec.md`.
+Prefer native agent `ppt_asset_audit`. If unavailable, load `agents_asset_audit_agent_spec.md`.
 
 Produce:
 
@@ -157,7 +189,7 @@ Every slide should have a reuse, redraw, generate, or omit decision.
 
 ### 4. PPTX Automation
 
-Load `template_automation_agent_spec.md`.
+Prefer native agent `ppt_template_automation`. If unavailable, load `template_automation_agent_spec.md`.
 
 Produce:
 
@@ -169,7 +201,7 @@ Validate slide count, aspect ratio, media embedding, and open/render behavior.
 
 ### 5. Figma Layout Polish
 
-Load `figma_layout_polish_agent_spec.md` only when visual polish is requested or needed.
+Prefer native agent `figma_layout_polish` only when visual polish is requested or needed. If unavailable, load `figma_layout_polish_agent_spec.md`.
 
 Before Figma work:
 
@@ -218,7 +250,8 @@ Runtime configuration:
 - output_dir: <project output dir>
 - figma_policy: <disabled|optional|required|fallback-only>
 - intent_sync_policy: <ask-first|infer-and-record|skip-only-if-brief-provided>
+- subagent_policy: <native-when-available|native-required|local-only|ask-first>
 
 Task:
-Run the manuscript-to-PPT workflow. Start with the production alignment agent, save `align/ppt_production_brief_v*.md`, then proceed through fact extraction, storyboard, asset audit, PPTX automation, optional Figma polish, and final validation.
+Run the manuscript-to-PPT workflow. Prefer native custom agents when available. Start with `ppt_production_alignment`, save `align/ppt_production_brief_v*.md`, then proceed through fact extraction, storyboard, asset audit, PPTX automation, optional Figma polish, and final validation.
 ```

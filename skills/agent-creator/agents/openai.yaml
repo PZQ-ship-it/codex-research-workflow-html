@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Creator"
+  short_description: "Create Codex native custom agents"
+  default_prompt: "Use $agent-creator to create or update a Codex native custom agent TOML that can be spawned by Codex."
