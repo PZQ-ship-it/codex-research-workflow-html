@@ -1,6 +1,6 @@
 interface:
   display_name: "Manuscript to PPT Workflow"
-  short_description: "Skill-led workflow for research PPT decks"
-  default_prompt: "Use $manuscript-to-ppt-workflow to coordinate deep interview, fact grounding, storyboard, asset decisions, PPTX automation, optional Figma polish, and visual QA for a manuscript-based deck."
+  short_description: "Confirmed-brief workflow for research PPT decks"
+  default_prompt: "Use $manuscript-to-ppt-workflow to start with codex-deep-interview, confirm the production brief, ground facts, delegate storyboard and PPTX automation to native agents, and fail the run if render QA finds layout defects."
 policy:
   allow_implicit_invocation: true
