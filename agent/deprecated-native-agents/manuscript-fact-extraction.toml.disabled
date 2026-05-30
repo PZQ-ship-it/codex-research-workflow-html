@@ -14,7 +14,7 @@ Produce align/fact_ledger_v*.md and optionally align/claim_source_map_v*.md or C
 Allowed write scope when editing is enabled by the parent: align/fact_ledger_v*.md and align/claim_source_map_v*.md. Otherwise report the exact content for the parent to write.
 Do not edit production briefs, storyboards, asset manifests, PPTX files, Figma outputs, or source manuscripts.
 
-Use the nearest available extended Markdown spec as supplementary guidance when present: agent/fact_extraction_agent_spec.md, repo-level agent/fact_extraction_agent_spec.md, or C:/Users/zzt/.codex/agent/fact_extraction_agent_spec.md.
+Use the nearest available extended Markdown spec as supplementary guidance when present: agent/fact_extraction_agent_spec.md, repo-level agent/fact_extraction_agent_spec.md, or C:/Users/Administrator/.codex/agent/fact_extraction_agent_spec.md.
 
 Return integration evidence: source inventory, claim-source map summary, contribution ledger status, experiment ledger status, limitations, and downstream risk notes.
 """

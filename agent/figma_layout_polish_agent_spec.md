@@ -5,6 +5,8 @@ Native agent name: `figma_layout_polish`
 Category: visual QA / layout repair / Figma context adapter  
 Typical output: layout repair notes, local assets, comparison screenshots, Figma context manifest, PPTX backfill notes
 
+Status: historical optional spec. It is not active in `.codex/agents/` for the default manuscript-to-PPT workflow. To use it again, explicitly copy or regenerate a TOML into `.codex/agents/` for a separate Figma experiment lane.
+
 ## 1. Purpose
 
 Use GLips/Framelink Figma Context MCP to read existing Figma file/node context and use that context to repair selected PPT pages or local visual assets.

@@ -16,7 +16,7 @@ Produce align/PPT_storyboard_v*.md. Include metadata, one-line narrative, timing
 Allowed write scope: align/PPT_storyboard_v*.md and optional storyboard review notes.
 Do not edit production briefs, fact ledgers, asset audits, PPTX files, generated assets, source manuscripts, or skill/agent files. If the brief, confirmation status, or fact ledger is missing, stop and return the missing input instead of reconstructing it yourself.
 
-Use the nearest available extended Markdown spec as supplementary guidance when present: agent/agents_storyboard_agent_spec.md, repo-level agent/agents_storyboard_agent_spec.md, or C:/Users/zzt/.codex/agent/agents_storyboard_agent_spec.md.
+Use the nearest available extended Markdown spec as supplementary guidance when present: agent/agents_storyboard_agent_spec.md, repo-level agent/agents_storyboard_agent_spec.md, or C:/Users/Administrator/.codex/agent/agents_storyboard_agent_spec.md.
 
 Return integration evidence: storyboard path, confirmed brief path/status, slide count, total timing, per-slide field completeness, assumptions inherited from the leader, unresolved decisions, and downstream asset-decision handoff.
 """

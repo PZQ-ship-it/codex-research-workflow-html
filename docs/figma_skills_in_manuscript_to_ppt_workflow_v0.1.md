@@ -42,7 +42,7 @@ Use this matrix when deciding whether a Figma-related task should use the open-s
 |---|---|---|---|
 | Read Figma file/node structure, text, layout, colors, components, and styles | Open-source | GLips/Framelink `get_figma_data` | This is the main purpose of `figma-developer-mcp`; avoids official MCP read-call quota. |
 | Download Figma image/vector assets for local reuse | Open-source | GLips/Framelink `download_figma_images` | Writes only to local `image-dir`, not to Figma; suitable for PPTX/HTML asset workflows. |
-| Use a Figma file as template/style/design-system reference for a PPT deck | Open-source | `figma-context-mcp` + `figma_layout_polish` | The deck remains local and editable; Figma is a reference source. |
+| Use a Figma file as template/style/design-system reference for a PPT deck | Open-source, separate experiment | `figma-context-mcp` plus local PPTX/HTML/SVG tooling | The default PPT workflow does not spawn a Figma polish agent; Figma remains a reference source. |
 | Repair selected PPT slides using Figma-derived spacing, hierarchy, typography, or assets | Open-source first | GLips/Framelink context + local PPTX/HTML/SVG tooling | The repair should happen locally unless the user explicitly asks to edit Figma. |
 | Capture a live web app or local HTML UI into editable Figma layers | Official only | `generate_figma_design` / Code to canvas | This is an official remote MCP write/capture feature; GLips cannot create Figma layers. |
 | Create or edit native Figma frames, pages, components, variants, variables, styles, auto layout, or Slides content | Official only, explicit | `use_figma` + `figma-use` | Requires official write-to-canvas, Full seat for Figma file writes, and edit permission. |
@@ -115,11 +115,11 @@ Responsibilities:
 - download only needed assets into `generated_assets/figma/`
 - record source URL, file key, node id, asset paths, and limitations
 
-### `figma_layout_polish`
+### Historical `figma_layout_polish`
 
-This native agent is no longer a default Figma writer. Its role is now selected-page layout repair using Figma context.
+This native agent spec is retained as historical migration material under `agent/deprecated-native-agents/figma-layout-polish.toml.disabled`. It is not active in `.codex/agents/` and should not be part of the default manuscript-to-PPT lane.
 
-Responsibilities:
+If the workflow is deliberately changed to run a separate Figma experiment, its bounded role would be selected-page layout repair using Figma context:
 
 - consume GLips/Framelink context, downloaded images, PPTX screenshots, and page intent
 - propose or create local PPTX/layout fixes and local visual assets
@@ -156,7 +156,7 @@ Recommended order:
 3. `ppt_storyboard` creates the slide plan after facts are stable.
 4. Main thread decides assets and identifies any Figma reference nodes.
 5. `ppt_template_automation` generates editable PPTX draft.
-6. `figma_layout_polish` uses GLips/Framelink context for selected-page layout repair only when needed.
+6. Optional separate Figma experiment uses GLips/Framelink context only when explicitly requested.
 7. `codex-visual-acceptance` or equivalent render checks verify the deck.
 
 Do not route the whole deck through Figma.

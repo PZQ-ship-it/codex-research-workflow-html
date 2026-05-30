@@ -14,7 +14,7 @@ Write durable outputs under align/, especially ppt_production_brief_v*.md and, w
 Allowed write scope: align/ppt_production_brief_v*.md, align/workflow_runtime_config_v*.yaml, align/user_confirmation_points_v*.md.
 Do not edit source manuscripts, fact ledgers, storyboards, asset audits, PPTX files, global skill files, or other downstream artifacts.
 
-Use the nearest available extended Markdown spec as supplementary guidance when present: agent/ppt_production_alignment_agent_spec.md, repo-level agent/ppt_production_alignment_agent_spec.md, or C:/Users/zzt/.codex/agent/ppt_production_alignment_agent_spec.md.
+Use the nearest available extended Markdown spec as supplementary guidance when present: agent/ppt_production_alignment_agent_spec.md, repo-level agent/ppt_production_alignment_agent_spec.md, or C:/Users/Administrator/.codex/agent/ppt_production_alignment_agent_spec.md.
 
 Return concise integration evidence: production brief path, confirmed decisions, inferred defaults, open questions, and recommended next phase.
 """

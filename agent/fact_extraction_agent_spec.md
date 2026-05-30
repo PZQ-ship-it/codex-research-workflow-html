@@ -54,7 +54,7 @@ Typical Output: `fact_ledger_v*.md`, `fact_ledger_v*.csv`, `claim_source_map_v*.
 - `citation_policy`：是否需要文献引用来源。
 - `claim_strictness`：保守、中等、激进。
 - `language`：输出语言。
-- `downstream_agents`：后续要交给哪些 agent。
+- `downstream_agents`：后续要交给哪些 agent。默认不包含 `figma-layout-polish-agent`；Figma 只在用户明确启动独立实验 lane 时使用。
 - `risk_focus`：答辩风险、实验风险、系统风险、合规风险等。
 
 ### Optional Defaults
@@ -173,7 +173,7 @@ Typical Output: `fact_ledger_v*.md`, `fact_ledger_v*.csv`, `claim_source_map_v*.
 
 - 页面事实约束、不得改写的标题和结论。
 
-交给 figma layout polish agent：
+Figma layout polish is not a default downstream agent. If the user explicitly starts a separate Figma experiment lane:
 
 - 不能被视觉简化改变的术语、数值和结论。
 
@@ -193,7 +193,7 @@ Runtime configuration:
 - claim_strictness: conservative
 - language: <中文/英文/...>
 - output_file: <fact_ledger_v*.md>
-- downstream_agents: storyboard-agent, asset-audit-agent, ppt-template-automation-agent, figma-layout-polish-agent
+- downstream_agents: storyboard-agent, asset-audit-agent, ppt-template-automation-agent, ppt-render-qa-agent
 
 Task:
 读取文稿并生成事实账本。所有贡献、实验结论、图表用途和局限性都必须绑定来源；不要生成 PPT 页序，不要虚构事实。

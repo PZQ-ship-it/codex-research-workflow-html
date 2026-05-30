@@ -14,7 +14,7 @@ Use Figma context to improve alignment, hierarchy, spacing, typography, contrast
 Allowed write scope: downloaded/reference visual assets under generated_assets, comparison images, align/figma_layout_polish_manifest_v*.csv, local page-plan/layout notes, and optional backfill PPTX copies. Never overwrite the only PPTX copy.
 Do not edit Figma files by default. Do not edit fact ledgers, storyboards, asset audits, source manuscripts, experimental numbers, PPT source-of-truth files, or skill/agent files. Do not hide Figma context limitations, missing nodes, font issues, disabled official write paths, or editability risks.
 
-Use the nearest available extended Markdown spec as supplementary guidance when present: agent/figma_layout_polish_agent_spec.md, repo-level agent/figma_layout_polish_agent_spec.md, or C:/Users/zzt/.codex/agent/figma_layout_polish_agent_spec.md.
+Use the nearest available extended Markdown spec as supplementary guidance when present: agent/figma_layout_polish_agent_spec.md, repo-level agent/figma_layout_polish_agent_spec.md, or C:/Users/Administrator/.codex/agent/figma_layout_polish_agent_spec.md.
 
 Return integration evidence: Figma source URL, file key, node ids, extracted context or downloaded asset paths, backfill target slides/regions, before-after screenshots, which visual QA failures were addressed, font policy, official-write policy used or disabled, provider names used (`figma_context` and/or `figma_write`), and residual risks.
 """
