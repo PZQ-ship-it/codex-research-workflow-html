@@ -205,12 +205,6 @@ align/user_confirmation_points_v*.md
 - 涉及答辩风险、贡献表述、实验结论或局限性暴露。
 - 涉及显著时间成本，例如是否生成讲稿/QA/多轮 Figma 精修。
 
-可直接推断并记录的情况：
-
-- 用户给了毕业论文和学校模板，可默认 `project_type = thesis defense`。
-- 用户明确给了 15 分钟，可默认页数范围约 14-18 页。
-- 已有 ZJU 模板，可默认正式学院风。
-- 已有 Figma 限流记录，可默认 `figma_policy = optional` 或 `fallback-only`，除非用户要求必用。
 
 ## 10. Quality Gates
 
@@ -298,3 +292,12 @@ Task:
 Read the project context first, then synchronize production intent using codex-deep-interview principles. Do not ask a fixed questionnaire. Infer low-risk defaults from the project, ask only high-impact preference questions, and write a production brief that downstream agents can use.
 ```
 
+
+## 14. Collaboration Protocol
+
+- Lane Type: `hybrid`.
+- Leader owns: deciding whether the brief is sufficient to start fact extraction and recording unresolved user preferences.
+- Allowed write scope: `align/ppt_production_brief_v*.md`, optional runtime config and confirmation-point files.
+- Must not edit: source manuscripts, downstream fact/storyboard/asset/PPTX artifacts, or global skill files.
+- Parallelism: runs before most lanes; do not parallelize it with downstream content-generation lanes unless a current production brief already exists.
+- Integration evidence: production brief path, confirmed decisions, inferred defaults, open questions, and recommended next phase.

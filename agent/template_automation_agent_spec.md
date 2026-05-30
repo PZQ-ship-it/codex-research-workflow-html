@@ -210,3 +210,12 @@ Task:
 根据分镜和素材清单生成 PPTX 初稿。每页必须只有一个核心论点，并根据页面语义选择图形化表达。输出 PPTX、manifest 和验证摘要。
 ```
 
+
+## 13. Collaboration Protocol
+
+- Lane Type: `worker`.
+- Leader owns: deciding whether generated PPTX meets the production brief and whether visual polish is needed.
+- Allowed write scope: generation scripts in `exp/`, PPTX files in `generated_pptx_test/`, rendered screenshots, and generation manifests.
+- Must not edit: production brief, fact ledger, storyboard, or asset audit except to report incompatibilities.
+- Parallelism: can do template feasibility exploration after production brief exists; final PPTX generation depends on storyboard and asset audit.
+- Integration evidence: generated PPTX path, slide count, layout/template mapping, render/export status, and known defects.

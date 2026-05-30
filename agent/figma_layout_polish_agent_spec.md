@@ -354,3 +354,12 @@ Task:
 使用 Figma 对目标页面或区域进行排版精校优化，输出可回填的视觉资产、frame manifest、截图/对比图和验证结论。不要修改事实内容。
 ```
 
+
+## 16. Collaboration Protocol
+
+- Lane Type: `worker`.
+- Leader owns: selecting target pages/regions and accepting or rejecting Figma-generated assets before PPTX回填.
+- Allowed write scope: Figma frames/files, exported assets, `align/figma_layout_polish_manifest_v*.csv`, comparison images, and optional回填 PPTX copies.
+- Must not edit: fact ledger, storyboard, asset audit, or source manuscript; do not overwrite the only PPTX copy.
+- Parallelism: may select candidate pages after PPTX screenshots exist; final polish depends on PPTX draft and production brief.
+- Integration evidence: Figma file key, frame ids, exported asset paths,回填 target slides, before/after screenshots, font/limit disclosures.

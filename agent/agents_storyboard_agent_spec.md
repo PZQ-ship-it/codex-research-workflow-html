@@ -209,3 +209,12 @@ Runtime configuration:
 Task:
 Generate a complete PPT storyboard. Do not generate the PPT file. Do not write the full speech script. Do not audit image quality. Produce a structured Markdown file with module timing, page overview, and per-slide storyboard fields.
 ```
+
+## 14. Collaboration Protocol
+
+- Lane Type: `hybrid`.
+- Leader owns: freezing page order and deciding whether timing/page count tradeoffs need user confirmation.
+- Allowed write scope: `align/PPT_storyboard_v*.md` and optional storyboard review notes.
+- Must not edit: production brief, fact ledger, asset manifest, PPTX, or source manuscript.
+- Parallelism: can iterate with preliminary asset inventory only after fact ledger exists; final storyboard precedes final asset audit.
+- Integration evidence: slide list, per-slide core point, visual strategy, asset needs, timing, QA risk, and open decisions.

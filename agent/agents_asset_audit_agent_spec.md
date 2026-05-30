@@ -223,3 +223,12 @@ Runtime configuration:
 Task:
 Generate a complete asset audit for the storyboard. Do not generate PPT. Do not rewrite the storyboard. For each page, decide whether to reuse, lightly edit, redraw, create new, reject, or ask for confirmation. Produce a structured audit file for the PPT automation agent.
 ```
+
+## 14. Collaboration Protocol
+
+- Lane Type: `explorer`.
+- Leader owns: approving reuse/redraw/generate decisions before PPTX automation.
+- Allowed write scope: `align/PPT_asset_audit_v*.md`, optional `align/PPT_asset_manifest_v*.csv`, and asset notes.
+- Must not edit: storyboard, fact ledger, source manuscript, PPTX, or generated visual assets unless explicitly requested.
+- Parallelism: may begin preliminary inventory while storyboard is being refined; final audit depends on storyboard freeze.
+- Integration evidence: per-slide asset decision, source path, reuse/redraw rationale, quality risk, and missing assets.

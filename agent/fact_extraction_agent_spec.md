@@ -199,3 +199,12 @@ Task:
 读取文稿并生成事实账本。所有贡献、实验结论、图表用途和局限性都必须绑定来源；不要生成 PPT 页序，不要虚构事实。
 ```
 
+
+## 13. Collaboration Protocol
+
+- Lane Type: `explorer`.
+- Leader owns: selecting the authoritative fact ledger version and resolving conflicts with the production brief.
+- Allowed write scope: `align/fact_ledger_v*.md` and optional `align/claim_source_map_v*.md`.
+- Must not edit: production brief, storyboard, asset manifest, PPTX, or source manuscript.
+- Parallelism: may run alongside template feasibility checks after production brief exists; must complete before storyboard finalization.
+- Integration evidence: source inventory, claim-source map, contribution ledger, experiment ledger, limitations, and downstream risk notes.
