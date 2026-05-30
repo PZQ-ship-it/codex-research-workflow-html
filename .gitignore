@@ -14,4 +14,5 @@ node_modules/
 .codex-local/
 .omx/
 skills/anysearch/.env
+skills/figma-context-mcp/.env
 .env

@@ -1,6 +1,17 @@
 interface:
   display_name: "Manuscript to PPT Workflow"
-  short_description: "Confirmed-brief workflow for research PPT decks"
-  default_prompt: "Use $manuscript-to-ppt-workflow to start with codex-deep-interview, confirm the production brief, ground facts, delegate storyboard and PPTX automation to native agents, and fail the run if render QA finds layout defects."
+  short_description: "PPT-native workflow from flexible research materials"
+  default_prompt: "Use $manuscript-to-ppt-workflow to start with codex-deep-interview, confirm the production brief, inventory the available material bundle, ground facts, inspect the PPTX template, optionally use OpenRouter ICU Image for source-grounded visual enrichment, delegate storyboard and python-pptx PPTX automation to native agents, then run PowerPoint COM render QA before accepting the deck."
+dependencies:
+  tools:
+    - type: "local"
+      value: "python-pptx"
+      description: "Python library for inspecting and generating editable PPTX files"
+    - type: "local"
+      value: "PowerPoint COM"
+      description: "Windows PowerPoint automation for rendering slides to PNG/PDF during QA"
+    - type: "skill"
+      value: "openrouter-icu-image"
+      description: "Optional synchronous image generation/editing for source-grounded PPT visual enrichment"
 policy:
   allow_implicit_invocation: true

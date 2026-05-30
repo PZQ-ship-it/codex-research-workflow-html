@@ -1,0 +1,17 @@
+interface:
+  display_name: "Figma Context MCP"
+  short_description: "Route Figma reads and explicit writes"
+  default_prompt: "Use $figma-context-mcp to read a Figma file or node through GLips/Framelink, and route any approved official write/exempt operation through figma_write."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "figma_context"
+      description: "GLips/Framelink Figma Context MCP via figma-developer-mcp"
+      transport: "stdio"
+    - type: "mcp"
+      value: "figma_write"
+      description: "Official Figma MCP for explicit exempt/write operations only"
+      transport: "streamable_http"
+      url: "https://mcp.figma.com/mcp"
+policy:
+  allow_implicit_invocation: true
