@@ -1,6 +1,6 @@
-﻿interface:
+interface:
   display_name: "Manuscript to PPT Workflow"
-  short_description: "Multi-agent workflow for PPT generation"
-  default_prompt: "Use $manuscript-to-ppt-workflow to turn a manuscript into a fact ledger, storyboard, asset plan, PPTX draft, and polish plan."
+  short_description: "Skill-led workflow for research PPT decks"
+  default_prompt: "Use $manuscript-to-ppt-workflow to coordinate deep interview, fact grounding, storyboard, asset decisions, PPTX automation, optional Figma polish, and visual QA for a manuscript-based deck."
 policy:
   allow_implicit_invocation: true
