@@ -1,0 +1,4 @@
+interface:
+  display_name: "Human AI Async Work Planner"
+  short_description: "Plan useful human work while AI runs"
+  default_prompt: "Use $human-ai-async-work-planner to decide what I should do while this AI task runs."
