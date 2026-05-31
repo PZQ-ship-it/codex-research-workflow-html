@@ -1,0 +1,4 @@
+interface:
+  display_name: "PPT Defense Q&A"
+  short_description: "Plan defense Q&A and backup slides"
+  default_prompt: "Use $ppt-defense-qa-backup-stage to draft defense Q&A answers and backup slide plan, then stop for confirmation."

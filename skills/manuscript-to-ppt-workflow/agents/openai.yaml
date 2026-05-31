@@ -1,7 +1,7 @@
 interface:
   display_name: "Manuscript to PPT Workflow"
   short_description: "Route staged PPT workflow with hard stops"
-  default_prompt: "Use $manuscript-to-ppt-workflow to route me to the next PPT stage, then stop for confirmation before continuing."
+  default_prompt: "Use $manuscript-to-ppt-workflow to route me to the next required PPT stage, including notes, Q&A, and fidelity QA gates, then stop for confirmation before continuing."
 dependencies:
   tools:
     - type: "local"

@@ -1,4 +1,4 @@
 interface:
   display_name: "PPT Deck Build"
   short_description: "Build editable PPTX drafts from frozen plans"
-  default_prompt: "Use $ppt-deck-build to generate an editable PPTX draft from confirmed upstream artifacts, then stop before render QA."
+  default_prompt: "Use $ppt-deck-build to generate an editable PPTX draft from confirmed upstream artifacts including content fidelity QA, notes, and backup plan, then stop before render QA."

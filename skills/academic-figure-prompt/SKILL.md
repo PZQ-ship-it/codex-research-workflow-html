@@ -7,7 +7,7 @@ description: Create, review, or freeze detailed English prompts for AI image too
 
 This skill adapts the upstream `LigphiDonk/academic-figure-generator/academic-figure-prompt` workflow for this repo's staged PPT pipeline.
 
-Use it to turn confirmed research facts and slide intent into a high-density English image prompt. Do not call image generation from this skill. For `manuscript-to-ppt-workflow`, this is a human-alignment gate between asset/layout planning and `openrouter-icu-image`.
+Use it to turn confirmed research facts and slide intent into a high-density English image prompt. Do not call image generation from this skill. For `manuscript-to-ppt-workflow`, this is a human-alignment gate after asset/layout planning and before content fidelity QA checks the prompt.
 
 ## Required Inputs
 
@@ -44,12 +44,12 @@ requires_confirmed:
   - fact_ledger
   - storyboard
   - asset_layout_plan
-allowed_next_stage: openrouter-icu-image
+allowed_next_stage: ppt-content-fidelity-qa-stage
 confirmed_by: <user/date or empty>
 source_skill: https://github.com/LigphiDonk/academic-figure-generator/tree/main/academic-figure-prompt
 ```
 
-Use `stage_status: draft` until the user explicitly confirms the prompt. Stop after writing the draft. Do not call `openrouter-icu-image` in the same turn.
+Use `stage_status: draft` until the user explicitly confirms the prompt. Stop after writing the draft. Do not call `openrouter-icu-image` or run content fidelity QA in the same turn.
 
 ## Palette Alignment
 
@@ -131,4 +131,4 @@ Self-check:
 
 ## Handoff
 
-After the user confirms `stage_status: confirmed`, `openrouter-icu-image` may use the confirmed English prompt as the visual prompt. Keep API controls such as `model`, `size`, `quality`, `output_format`, and output path outside the image prompt.
+Inside `manuscript-to-ppt-workflow`, route the confirmed prompt through `ppt-content-fidelity-qa-stage` before using it for final image generation. After content fidelity QA is confirmed and the user approves image generation, `openrouter-icu-image` may use the confirmed English prompt as the visual prompt. Keep API controls such as `model`, `size`, `quality`, `output_format`, and output path outside the image prompt.

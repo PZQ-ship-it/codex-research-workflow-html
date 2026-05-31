@@ -108,14 +108,26 @@ function Get-TargetStage($ToolText) {
     if ($normalized -match '(?i)align/(material_inventory|material_manifest|fact_ledger|claim_source_map)_v.*\.(md|csv|json)') {
         return "material_fact_ledger"
     }
+    if ($normalized -match '(?i)align/ppt_defense_narrative_v.*\.md') {
+        return "defense_narrative"
+    }
     if ($normalized -match '(?i)align/PPT_storyboard_v.*\.md') {
         return "storyboard"
+    }
+    if ($normalized -match '(?i)align/ppt_speaker_notes_rehearsal_v.*\.md') {
+        return "speaker_notes_rehearsal"
+    }
+    if ($normalized -match '(?i)align/ppt_defense_qa_backup_v.*\.md') {
+        return "defense_qa_backup"
     }
     if ($normalized -match '(?i)align/(template_inventory|template_layout_map|PPT_asset_audit|PPT_asset_manifest|visual_enrichment_plan|ppt_layout_plan)_v.*\.(md|csv|json)') {
         return "asset_layout_plan"
     }
     if ($normalized -match '(?i)align/academic_figure_prompt_v.*\.md') {
         return "academic_figure_prompt"
+    }
+    if ($normalized -match '(?i)align/ppt_content_fidelity_qa_v.*\.md') {
+        return "content_fidelity_qa"
     }
     if ($normalized -match '(?i)(generated_pptx_test/|align/ppt_deck_build_manifest_v.*\.md|\.pptx\b)') {
         return "deck_build"
@@ -168,9 +180,13 @@ if (-not $targetStage) {
 
 $hasBrief = Test-ConfirmedArtifact $repoRoot @("align/ppt_production_brief_v*.md") @("confirmed")
 $hasFacts = Test-ConfirmedArtifact $repoRoot @("align/fact_ledger_v*.md") @("confirmed")
+$hasDefenseNarrative = Test-ConfirmedArtifact $repoRoot @("align/ppt_defense_narrative_v*.md") @("confirmed")
 $hasStoryboard = Test-ConfirmedArtifact $repoRoot @("align/PPT_storyboard_v*.md") @("confirmed")
+$hasSpeakerNotes = Test-ConfirmedArtifact $repoRoot @("align/ppt_speaker_notes_rehearsal_v*.md") @("confirmed")
+$hasDefenseQaBackup = Test-ConfirmedArtifact $repoRoot @("align/ppt_defense_qa_backup_v*.md") @("confirmed")
 $hasAssetPlan = Test-ConfirmedArtifact $repoRoot @("align/PPT_asset_audit_v*.md", "align/visual_enrichment_plan_v*.md") @("confirmed")
 $hasAcademicFigurePrompt = Test-ConfirmedArtifact $repoRoot @("align/academic_figure_prompt_v*.md") @("confirmed")
+$hasContentFidelityQa = Test-ConfirmedArtifact $repoRoot @("align/ppt_content_fidelity_qa_v*.md") @("confirmed")
 $hasDeckBuild = Test-ConfirmedArtifact $repoRoot @("align/ppt_deck_build_manifest_v*.md") @("confirmed")
 $requiresAcademicFigurePrompt = Test-ArtifactKeyValue $repoRoot @("align/visual_enrichment_plan_v*.md") "requires_academic_figure_prompt" @("true", "yes")
 
@@ -180,27 +196,53 @@ switch ($targetStage) {
             Deny "PPT stage gate blocked material/fact output: no confirmed align/ppt_production_brief_v*.md. Stop and confirm the production brief first."
         }
     }
-    "storyboard" {
+    "defense_narrative" {
         if (-not ($hasBrief -and $hasFacts)) {
-            Deny "PPT stage gate blocked storyboard output: confirmed production brief and fact ledger are required first."
+            Deny "PPT stage gate blocked defense narrative output: confirmed production brief and fact ledger are required first."
+        }
+    }
+    "storyboard" {
+        if (-not ($hasBrief -and $hasFacts -and $hasDefenseNarrative)) {
+            Deny "PPT stage gate blocked storyboard output: confirmed production brief, fact ledger, and defense narrative are required first."
+        }
+    }
+    "speaker_notes_rehearsal" {
+        if (-not ($hasBrief -and $hasFacts -and $hasDefenseNarrative -and $hasStoryboard)) {
+            Deny "PPT stage gate blocked speaker notes/rehearsal output: confirmed production brief, fact ledger, defense narrative, and storyboard are required first."
+        }
+    }
+    "defense_qa_backup" {
+        if (-not ($hasBrief -and $hasFacts -and $hasDefenseNarrative -and $hasStoryboard -and $hasSpeakerNotes)) {
+            Deny "PPT stage gate blocked defense Q&A/backup output: confirmed brief, fact ledger, defense narrative, storyboard, and speaker notes/rehearsal are required first."
         }
     }
     "asset_layout_plan" {
-        if (-not ($hasBrief -and $hasFacts -and $hasStoryboard)) {
-            Deny "PPT stage gate blocked asset/layout output: confirmed brief, fact ledger, and storyboard are required first."
+        if (-not ($hasBrief -and $hasFacts -and $hasDefenseNarrative -and $hasStoryboard -and $hasSpeakerNotes -and $hasDefenseQaBackup)) {
+            Deny "PPT stage gate blocked asset/layout output: confirmed brief, fact ledger, defense narrative, storyboard, speaker notes/rehearsal, and defense Q&A/backup plan are required first."
         }
     }
     "academic_figure_prompt" {
-        if (-not ($hasBrief -and $hasFacts -and $hasStoryboard -and $hasAssetPlan)) {
-            Deny "PPT stage gate blocked academic figure prompt output: confirmed brief, fact ledger, storyboard, and asset/layout plan are required first."
+        if (-not ($hasBrief -and $hasFacts -and $hasDefenseNarrative -and $hasStoryboard -and $hasSpeakerNotes -and $hasDefenseQaBackup -and $hasAssetPlan)) {
+            Deny "PPT stage gate blocked academic figure prompt output: confirmed brief, fact ledger, defense narrative, storyboard, speaker notes/rehearsal, defense Q&A/backup plan, and asset/layout plan are required first."
+        }
+    }
+    "content_fidelity_qa" {
+        if (-not ($hasBrief -and $hasFacts -and $hasDefenseNarrative -and $hasStoryboard -and $hasSpeakerNotes -and $hasDefenseQaBackup -and $hasAssetPlan)) {
+            Deny "PPT stage gate blocked content fidelity QA output: confirmed brief, fact ledger, defense narrative, storyboard, speaker notes/rehearsal, defense Q&A/backup plan, and asset/layout plan are required first."
+        }
+        if ($requiresAcademicFigurePrompt -and -not $hasAcademicFigurePrompt) {
+            Deny "PPT stage gate blocked content fidelity QA output: visual enrichment plan requires a confirmed academic figure prompt first."
         }
     }
     "deck_build" {
-        if (-not ($hasBrief -and $hasFacts -and $hasStoryboard -and $hasAssetPlan)) {
-            Deny "PPT stage gate blocked PPTX/deck output: confirmed brief, fact ledger, storyboard, and asset/layout plan are required first."
+        if (-not ($hasBrief -and $hasFacts -and $hasDefenseNarrative -and $hasStoryboard -and $hasSpeakerNotes -and $hasDefenseQaBackup -and $hasAssetPlan)) {
+            Deny "PPT stage gate blocked PPTX/deck output: confirmed brief, fact ledger, defense narrative, storyboard, speaker notes/rehearsal, defense Q&A/backup plan, and asset/layout plan are required first."
         }
         if ($requiresAcademicFigurePrompt -and -not $hasAcademicFigurePrompt) {
             Deny "PPT stage gate blocked PPTX/deck output: visual enrichment plan requires a confirmed academic figure prompt first."
+        }
+        if (-not $hasContentFidelityQa) {
+            Deny "PPT stage gate blocked PPTX/deck output: confirmed content fidelity QA is required first."
         }
     }
     "render_qa" {

@@ -1,0 +1,4 @@
+interface:
+  display_name: "PPT Content Fidelity QA"
+  short_description: "Verify PPT claims against source facts"
+  default_prompt: "Use $ppt-content-fidelity-qa-stage to verify confirmed PPT artifacts against the fact ledger, then stop for human confirmation or repair routing."

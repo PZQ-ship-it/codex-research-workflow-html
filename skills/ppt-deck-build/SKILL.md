@@ -1,6 +1,6 @@
 ---
 name: ppt-deck-build
-description: Generate an editable PPTX draft from confirmed PPT workflow artifacts. Use only after confirmed production brief, fact ledger, storyboard, template inventory, asset decisions, layout plan, and any required academic figure prompt/generated visual assets exist; stop before render QA.
+description: Generate an editable PPTX draft from confirmed PPT workflow artifacts. Use only after confirmed production brief, fact ledger, defense narrative, storyboard, speaker notes/rehearsal, defense Q&A/backup-slide plan, template inventory, asset decisions, layout plan, content fidelity QA, and any required academic figure prompt/generated visual assets exist; stop before render QA.
 ---
 
 # PPT Deck Build
@@ -13,10 +13,15 @@ Do not proceed unless confirmed artifacts exist:
 
 - `align/ppt_production_brief_v*.md`
 - `align/fact_ledger_v*.md`
+- `align/ppt_defense_narrative_v*.md`
 - `align/PPT_storyboard_v*.md`
+- `align/ppt_speaker_notes_rehearsal_v*.md`
+- `align/ppt_defense_qa_backup_v*.md`
 - `align/PPT_asset_audit_v*.md`
 - `align/ppt_layout_plan_v*.json`
+- `align/ppt_content_fidelity_qa_v*.md`
 - template inventory or equivalent confirmed template policy
+- template design rules when the asset/layout stage produced them
 
 If `align/visual_enrichment_plan_v*.md` marks `requires_academic_figure_prompt: true`, also require a confirmed `align/academic_figure_prompt_v*.md` and either approved generated image files or an explicit user decision to build without them.
 
@@ -42,9 +47,13 @@ stage_status: draft | confirmed
 requires_confirmed:
   - ppt_production_brief
   - fact_ledger
+  - defense_narrative
   - storyboard
+  - speaker_notes_rehearsal
+  - defense_qa_backup
   - asset_layout_plan
   - academic_figure_prompt_when_required
+  - content_fidelity_qa
 allowed_next_stage: ppt-render-qa-loop
 confirmed_by: <user/date or empty>
 ```
@@ -55,7 +64,15 @@ Use `stage_status: draft` until the user explicitly confirms the draft is ready 
 
 Prefer native editable PowerPoint objects: placeholders, text boxes, shapes, tables, charts, and inserted source or approved generated images. Avoid whole-page screenshots unless the confirmed brief accepts that tradeoff.
 
-Record slide count, template mapping, assets used, generated image provenance, known pre-render risks, and the exact PPTX path.
+Follow confirmed `align/template_design_rules_v*.md` when present: slide bounds, typography, palette, citation/source line placement, logo/header/footer rules, appendix/backup conventions, and forbidden patterns.
+
+Follow the visual production route from the asset/layout plan. Do not convert numeric result charts, evidence figures, or source tables into generated decorative images. If the preferred visual route fails, record the failure and use the confirmed fallback or stop for user confirmation.
+
+Add confirmed speaker notes to the PowerPoint notes pane when the generation engine supports it. If notes-pane writing is not available, preserve the confirmed notes artifact path in the manifest and mark the limitation explicitly.
+
+Build confirmed backup slides according to the Q&A/backup artifact and asset/layout plan. Keep backup-only slides separate from the main timed talk, using the confirmed placement policy: hidden, appendix, or after a Q&A separator.
+
+Record slide count, main-slide count, backup-slide count, notes insertion status, content fidelity QA artifact path/status, template design rules path/status, visual route outcomes, template mapping, assets used, generated image provenance, workflow state hash when available, known pre-render risks, and the exact PPTX path.
 
 ## Stop Rule
 

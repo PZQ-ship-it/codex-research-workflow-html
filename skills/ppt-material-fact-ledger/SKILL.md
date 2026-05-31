@@ -1,6 +1,6 @@
 ---
 name: ppt-material-fact-ledger
-description: Build the human-reviewable material inventory, source priority map, fact ledger, and claim-source map for a PPT workflow. Use after a confirmed `align/ppt_production_brief_v*.md` exists, and before storyboard, asset planning, PPTX generation, or render QA.
+description: Build the human-reviewable material inventory, source priority map, fact ledger, and claim-source map for a PPT workflow. Use after a confirmed `align/ppt_production_brief_v*.md` exists, and before defense narrative, storyboard, asset planning, PPTX generation, or render QA.
 ---
 
 # PPT Material Fact Ledger
@@ -26,7 +26,7 @@ Each Markdown output must include:
 stage: material_fact_ledger
 stage_status: draft | confirmed
 requires_confirmed: ppt_production_brief
-allowed_next_stage: ppt-storyboard-stage
+allowed_next_stage: ppt-defense-narrative-stage
 confirmed_by: <user/date or empty>
 ```
 
@@ -59,7 +59,6 @@ Do not invent baselines, metrics, figures, identities, or conclusions.
 
 ## Stop Rule
 
-After writing draft inventory/facts, stop and ask the user to review, correct, or confirm. Do not create storyboard, asset plan, or PPTX in the same turn.
+After writing draft inventory/facts, stop and ask the user to review, correct, or confirm. Do not create defense narrative, storyboard, asset plan, or PPTX in the same turn.
 
 When the user confirms, update only the relevant status blocks to `stage_status: confirmed`, record `confirmed_by`, then stop again.
-

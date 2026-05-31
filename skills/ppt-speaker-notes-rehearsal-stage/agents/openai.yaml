@@ -1,0 +1,4 @@
+interface:
+  display_name: "PPT Speaker Notes"
+  short_description: "Draft speaker notes and rehearsal plan"
+  default_prompt: "Use $ppt-speaker-notes-rehearsal-stage to draft speaker notes and rehearsal plan from confirmed storyboard, then stop for confirmation."

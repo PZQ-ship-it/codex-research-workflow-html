@@ -1,0 +1,4 @@
+interface:
+  display_name: "PPT Defense Narrative"
+  short_description: "Align defense storyline before storyboard"
+  default_prompt: "Use $ppt-defense-narrative-stage to create a defense narrative and action-title spine from confirmed facts, then stop for review."
