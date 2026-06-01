@@ -26,7 +26,7 @@ Run stages in this order:
 | 7 | `ppt-asset-layout-plan` | confirmed Q&A/backup artifact | template inventory, asset audit, visual plan, layout plan |
 | 8 | `academic-figure-prompt` | confirmed asset/layout plan that requires generated academic visuals | `align/academic_figure_prompt_v*.md` |
 | 9 | `ppt-content-fidelity-qa-stage` | confirmed upstream artifacts, layout plan, and any required figure prompt | `align/ppt_content_fidelity_qa_v*.md` |
-| 10 | `ppt-deck-build` | confirmed content fidelity QA, layout plan, notes, backup plan, and any required figure prompt/assets | editable PPTX draft and build manifest |
+| 10 | `ppt-deck-build` | confirmed content fidelity QA, layout plan, notes, backup plan, and any required figure prompt/assets | deck build work order, page-worker run, editable PPTX draft, and build manifest |
 | 11 | `ppt-render-qa-loop` | confirmed deck build manifest | rendered screenshots, QA report, and repair backlog when needed |
 
 Default stage gate:
@@ -50,9 +50,10 @@ Codex may write `draft`. Only the user may cause `confirmed`.
 9. If all required prompt artifacts are confirmed but no confirmed content fidelity QA exists, route to `ppt-content-fidelity-qa-stage`.
 10. If content fidelity QA is confirmed and the user asks to generate the image asset, route to `openrouter-icu-image`; do not generate images in the same turn that drafts the prompt or writes content fidelity QA.
 11. If content fidelity QA is blocked, route defects back to the responsible earlier stage. Do not generate a deck.
-12. If content fidelity QA is confirmed and all required generated assets are approved or explicitly waived, but no confirmed deck build exists, route to `ppt-deck-build`.
-13. If deck build is confirmed but no render QA report exists, route to `ppt-render-qa-loop`.
-14. If render QA fails, route defects back to the responsible earlier stage. Do not silently repair in the QA stage.
+12. If content fidelity QA is confirmed and all required generated assets are approved or explicitly waived, but no deck build work order exists, route to `ppt-deck-build` to draft the work order and then stop for confirmation.
+13. If the deck build work order is confirmed but no draft deck build manifest exists, route to `ppt-deck-build` to dispatch page workers in batches and assemble the editable PPTX draft, then stop.
+14. If deck build is confirmed but no render QA report exists, route to `ppt-render-qa-loop`.
+15. If render QA fails, route defects back to the responsible earlier stage. Do not silently repair in the QA stage.
 
 ## Non-Negotiable Stop Rule
 
@@ -62,6 +63,8 @@ The only allowed same-turn action after writing a stage artifact is to summarize
 
 Generated academic visuals have three gates: first confirm `academic-figure-prompt`, then confirm `ppt-content-fidelity-qa-stage`, then run `openrouter-icu-image` only when the user approves image generation. Do not let Codex invent visual content to fill missing research facts.
 
+Deck build has an internal dispatch gate: first draft the deck build work order and stop; only after user confirmation may Codex dispatch `ppt_page_build` workers. After page-worker assembly writes the editable PPTX draft and build manifest, stop again before render QA.
+
 Maintain `align/ppt_workflow_state.json` when practical. It is a resume aid, not a replacement for confirmed artifact checks. Optional Phase 2 artifacts such as `align/rehearsal_evidence_v*.md` and `align/template_design_rules_v*.md` should be recorded there when present.
 
 ## Agents
@@ -69,7 +72,8 @@ Maintain `align/ppt_workflow_state.json` when practical. It is a resume aid, not
 Native custom agents are bounded workers, not stage owners:
 
 - `ppt_storyboard`: used inside `ppt-storyboard-stage`.
-- `ppt_template_automation`: used inside `ppt-deck-build`.
+- `ppt_page_build`: used inside `ppt-deck-build`; each worker owns exactly one slide/page job.
+- `ppt_template_automation`: used inside `ppt-deck-build` only for deck-level assembly/template checks or a user-approved fallback.
 - `ppt_render_qa`: used inside `ppt-render-qa-loop`.
 
 Do not create agents for production alignment, fact extraction, defense narrative, speaker notes/rehearsal, defense Q&A/backup planning, content fidelity QA, or default asset audit. Those are human-review stage outputs.

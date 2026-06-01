@@ -72,6 +72,11 @@ STAGES = [
         "required_for_next": True,
     },
     {
+        "id": "deck_build_work_order",
+        "patterns": ["align/ppt_deck_build_work_order_v*.md"],
+        "required_for_next": True,
+    },
+    {
         "id": "deck_build",
         "patterns": ["align/ppt_deck_build_manifest_v*.md"],
         "required_for_next": True,
