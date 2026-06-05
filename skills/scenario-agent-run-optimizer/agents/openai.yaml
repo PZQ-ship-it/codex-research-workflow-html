@@ -1,0 +1,4 @@
+interface:
+  display_name: "Scenario Agent Run Optimizer"
+  short_description: "Diagnose agent runs from logs and propose optimizations."
+  default_prompt: "Use $scenario-agent-run-optimizer to analyze these agent logs/traces and propose evidence-backed fixes."

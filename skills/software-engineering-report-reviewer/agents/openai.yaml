@@ -1,0 +1,4 @@
+interface:
+  display_name: "Software Engineering Report Reviewer"
+  short_description: "Review software engineering report structure"
+  default_prompt: "Use $software-engineering-report-reviewer to review my software engineering report against requirements, design, implementation, testing, and evidence expectations."
