@@ -1,0 +1,4 @@
+interface:
+  display_name: "Paper Term Glossary Builder"
+  short_description: "Build verified nested paper glossaries"
+  default_prompt: "Use $paper-term-glossary-builder to extract difficult terms from this paper and generate a verified nested glossary."
