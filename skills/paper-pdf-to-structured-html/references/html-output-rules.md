@@ -70,6 +70,8 @@ For each included figure or table image:
 
 Do not include decorative images. Do not crop so tightly that labels become unreadable.
 
+Prefer precise crops for important single-page figures and compact tables when dependencies, bounding boxes, or visually checked coordinates are available. If PDF libraries are missing, first recover the environment as described in `SKILL.md` instead of immediately switching to full-page renders. Use full-page renders only when crops are unsafe or incomplete, such as multi-page tables, tightly attached captions/context, or uncertain coordinates after visual inspection. Record the reason in the manifest.
+
 ## Readability
 
 - Prefer concise explanatory paragraphs over dense bullet dumps, but include enough detail to replace normal PDF reading.

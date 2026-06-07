@@ -28,6 +28,7 @@ The generated HTML must be a paper-replacement digest for normal study:
    - `manifest.json` for extraction metadata;
    - `<paper-slug>.html` for the final artifact.
 2. Inspect the PDF with `scripts/inspect_paper_pdf.py` when possible:
+   - if the active Python cannot import the needed PDF libraries, first try to find or create a usable environment; do not silently downgrade to page-only rendering because the default interpreter is missing packages;
    - extract title-like metadata, outline, per-page text, candidate captions, references, and embedded images;
    - render figure-heavy pages if embedded image extraction is incomplete.
 3. Classify the paper type:
@@ -52,10 +53,35 @@ The generated HTML must be a paper-replacement digest for normal study:
 7. Select important visual assets:
    - include taxonomy diagrams, architecture/method overview figures, algorithm flow diagrams, comparison tables, main result plots, dataset/metric tables, and challenge/future-direction diagrams;
    - prefer extracted embedded images when sharp;
-   - fall back to page crops or full-page renders when the figure cannot be isolated cleanly;
+   - prefer precise figure/table crops when bounding boxes or visually checked coordinates are available;
+   - fall back to full-page renders only after dependency recovery and crop attempts are unsafe, incomplete, or likely to lose caption/table context;
    - always include the source page and caption/provenance near the image.
 8. Generate standalone HTML from `assets/paper-digest-template.html` or the repo's existing HTML note style.
 9. Validate the HTML visually with Playwright or browser screenshots when layout quality matters. Check broken images, clipped tables, figure readability, mobile width, print behavior, and whether the page contains actual explanatory content for every navigation target.
+
+## Environment And Asset Extraction Recovery
+
+Treat missing Python PDF dependencies as a recoverable setup problem, not as permission to skip precise extraction.
+
+1. Check the active interpreter and imports:
+   - `python --version`
+   - `python -c "import fitz, pdfplumber, pypdf; print('pdf deps ok')"`
+2. If imports fail, look for a newer installed Python or launcher entry (`py -0p` on Windows). Prefer Python 3.10+ when available.
+3. If no suitable ready environment exists, create a local virtual environment with the selected interpreter inside the work directory, for example `.venv`, then install the needed packages there:
+   - `<selected-python> -m venv output/paper-html/<paper-slug>/.venv`
+   - `output/paper-html/<paper-slug>/.venv/Scripts/python -m pip install --upgrade pip`
+   - `output/paper-html/<paper-slug>/.venv/Scripts/python -m pip install pymupdf pdfplumber pypdf`
+4. Run extraction scripts with the verified interpreter. Record the interpreter path, dependency status, extraction method, and any failures in `manifest.json`.
+5. Use Poppler `pdftotext` and full-page renders as a reliable baseline, but not as the first and only asset strategy when figure/table crops are important.
+
+Precise crops are preferred for single-page figures, overview diagrams, architecture diagrams, plots, and compact tables. Full-page renders are acceptable when:
+
+- a table spans pages and exact cropping would risk losing repeated headers, continuation labels, or final rows;
+- caption, labels, or surrounding explanatory text are too close to isolate safely;
+- the figure/table coordinates remain uncertain after dependency recovery and visual inspection;
+- the user explicitly prioritizes provenance over visual polish.
+
+When using full-page renders, explain in the manifest why crops were not used and identify which pages contain the relevant figure or table.
 
 ## Type-Specific Output
 
@@ -119,4 +145,4 @@ The initial HTML should already include a useful first-pass explanation of every
 python skills/paper-pdf-to-structured-html/scripts/inspect_paper_pdf.py paper.pdf --out output/paper-html/paper-slug
 ```
 
-Install missing optional dependencies only when extraction requires them: `pymupdf`, `pdfplumber`, `pypdf`, and Poppler utilities for page rendering.
+Install missing PDF dependencies before falling back to coarse extraction: `pymupdf`, `pdfplumber`, `pypdf`, and Poppler utilities for page rendering.
