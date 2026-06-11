@@ -51,7 +51,7 @@ Read `references/source-routing.md` before selecting a backend.
 
 - Use `public-browser-lite` by default for public pages and lightweight reports. Save public raw HTML/JSON-like captures under `raw/`, then normalize.
 - Use `zhihu-k-search` only as an optional convenience CLI when it is already installed or the user approves setup.
-- Use `zhihu-mcp` only when the user explicitly wants an ongoing Agent/MCP toolchain.
+- Use `zhihu-mcp` only when the user explicitly wants an ongoing Agent/MCP toolchain. For repeatable setup, read `references/zhihu-mcp-setup.md` and prefer `scripts/setup_zhihu_mcp.ps1`.
 - Use `MediaCrawler` only when scale matters and the user accepts external crawler setup.
 - Use `ZhihuApis` only when comment completeness is the key requirement and the user approves authorized local cookies.
 
@@ -114,5 +114,7 @@ Read `references/output-schema.md` before merging multiple backend outputs.
 ## Resources
 
 - `scripts/zhihu_public_intel.py`: planner, URL inspector, scaffold generator, schema printer, and JSON normalizer.
+- `scripts/setup_zhihu_mcp.ps1`: optional repeatable setup for the `zhihu_mcp` Codex MCP server in a private global skill runtime.
 - `references/source-routing.md`: backend selection and setup notes.
+- `references/zhihu-mcp-setup.md`: details for the optional MCP backend, cookie boundaries, and smoke tests.
 - `references/output-schema.md`: normalized JSONL fields and merge policy.

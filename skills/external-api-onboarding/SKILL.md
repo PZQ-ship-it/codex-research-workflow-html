@@ -1,0 +1,103 @@
+---
+name: external-api-onboarding
+description: Configure external API keys, OAuth MCP connections, browser-assisted provider console setup, private .env storage, Codex MCP config, and smoke tests without exposing secrets. Use when Codex is asked to set up or repair external provider access for skills, MCP servers, browser-use, AnySearch, OpenRouter ICU, Figma, Notion, GitHub, Hugging Face, Kaggle, or similar services.
+---
+
+# External API Onboarding
+
+## Overview
+
+Use this skill to turn "I need this external API/MCP to work" into a safe setup loop: identify the provider, find the official setup path, guide browser or OAuth steps with the user in control, store credentials privately, and run a minimal smoke test.
+
+This skill does not harvest, reveal, or bypass credentials. It keeps login, MFA, CAPTCHA, billing, and secret-copy actions human-approved.
+
+## Required Inputs
+
+- Provider or target skill/MCP, inferred from context when possible.
+- Desired access type: API key, OAuth MCP login, local stdio MCP, provider CLI login, or anonymous fallback.
+- Storage target: private skill `.env`, project-local `.env`, user environment, or Codex `config.toml`. Default to private user-level storage, never a committed repo file.
+- Smoke-test command or expected capability. Infer this for known providers; otherwise use official docs.
+
+Ask one concise question only when the answer changes privacy, cost, provider scope, or where credentials are stored.
+
+## Workflow
+
+1. Classify the setup.
+   - API key in `.env` or environment variable.
+   - Streamable HTTP MCP with OAuth or bearer token.
+   - Local stdio MCP that needs env vars.
+   - Browser-assisted provider console setup.
+   - Provider CLI login or no-auth fallback.
+2. Load the relevant references.
+   - Always follow `references/security-policy.md` before handling secrets or browser sessions.
+   - Use `references/provider-patterns.md` for known providers.
+   - For unknown or version-sensitive providers, search official docs or the provider console before acting.
+3. Discover the official setup path.
+   - Prefer provider docs, provider consoles, and official Codex/MCP docs.
+   - Avoid third-party key brokers, copied tokens from tutorials, and unofficial mirrors.
+   - If browser automation is useful, use it only to navigate and inspect non-secret UI. The user completes login, MFA, CAPTCHA, and secret reveal/copy steps.
+4. Configure locally.
+   - For API keys, prefer `scripts/set_env_secret.ps1` so the value is entered hidden and not printed.
+   - For MCP servers, prefer `codex mcp add ...` or explicit `config.toml` edits.
+   - For OAuth MCP, run `codex mcp login <server-name>` after the server is configured.
+   - Do not read, print, paste into chat, commit, or summarize secret values.
+5. Smoke test.
+   - Prefer dry-run, `whoami`, `list`, `doc`, or one cheap read-only request.
+   - For paid APIs or write-capable providers, ask before making a real request.
+   - Report only status: key present/missing, server configured, login required, request succeeded/failed, or blocker.
+6. Close the loop.
+   - Summarize provider, env var names, storage path, MCP server name, commands run, smoke-test result, and any restart needed.
+   - Never include secret values, cookies, auth headers, or copied browser storage.
+
+## Browser Assistance Rules
+
+Allowed:
+
+- Open the official provider docs or console.
+- Help the user find account, developer, API key, OAuth app, or MCP setup pages.
+- Click documented non-destructive controls after the user approves the goal.
+- Read non-secret labels such as key name, scope names, redirect URL fields, and status messages.
+- Wait while the user logs in, solves MFA/CAPTCHA, or copies a key into a local hidden prompt.
+
+Not allowed:
+
+- Bypass MFA, CAPTCHA, rate limits, paywalls, or account controls.
+- Reveal, copy into chat, log, screenshot, or extract secret key values.
+- Store cookies, browser storage, request headers, or session exports unless the user explicitly asks and the target workflow requires it.
+- Create broad admin/billing/write scopes when a narrower read scope is enough.
+- Delete, rotate, or regenerate credentials without explicit confirmation.
+
+## Secret Writer
+
+Use the bundled PowerShell helper for API-key style credentials:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\skills\external-api-onboarding\scripts\set_env_secret.ps1 `
+  -EnvFile "$env:USERPROFILE\.codex\skills\anysearch\.env" `
+  -Name ANYSEARCH_API_KEY
+```
+
+Dry-run example for validation only:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\skills\external-api-onboarding\scripts\set_env_secret.ps1 `
+  -EnvFile .\tmp\example.env `
+  -Name EXAMPLE_API_KEY `
+  -Value DUMMY_VALUE `
+  -AllowPlainValue `
+  -DryRun
+```
+
+Avoid `-Value` for real secrets because command lines can be persisted in shell history or process listings.
+
+## References
+
+- `references/security-policy.md`: required guardrails for secrets, OAuth, browser sessions, storage, and reporting.
+- `references/provider-patterns.md`: known provider routes, env var names, MCP command shapes, and smoke-test ideas.
+
+## Done Criteria
+
+- Credentials were stored only in the approved private target.
+- No secret value appears in chat, committed files, command output, or final summary.
+- MCP or env configuration is documented by server name, env var name, and path only.
+- A smoke test ran, or the blocker and next human action are clear.

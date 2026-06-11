@@ -90,7 +90,15 @@ Useful for:
 
 This is optional. Use only when the user explicitly wants an MCP toolchain.
 
-Typical setup:
+Preferred repeatable setup for Codex:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\skills\zhihu-public-intel\scripts\setup_zhihu_mcp.ps1
+```
+
+This installs into the user-level global skill runtime, creates an isolated venv, writes a safe default `config.json`, installs Playwright Chromium, and registers the `zhihu_mcp` Codex MCP server.
+
+Manual setup:
 
 ```powershell
 python -m venv .venv
@@ -99,7 +107,7 @@ python -m venv .venv
 .venv\Scripts\python mcp_server.py --test
 ```
 
-Keep `cookies.json` local and untracked.
+Keep `cookies.json` local and untracked. The bundled setup disables automatic Chrome cookie extraction by default; add an authorized Playwright-format `cookies.json` only when logged-in access is required and approved.
 
 ### MediaCrawler
 

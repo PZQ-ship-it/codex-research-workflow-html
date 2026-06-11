@@ -1,0 +1,4 @@
+interface:
+  display_name: "External API Onboarding"
+  short_description: "Configure APIs and MCP logins safely"
+  default_prompt: "Use $external-api-onboarding to configure a provider API key, MCP login, .env storage, and smoke test without exposing secrets."
