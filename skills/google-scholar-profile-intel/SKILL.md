@@ -1,13 +1,13 @@
 ---
 name: google-scholar-profile-intel
-description: Gather, crawl, and integrate scholar profile intelligence from Google Scholar author pages and open bibliographic sources without SerpApi. Use when Codex needs to collect or update a researcher profile, Google Scholar author publications, h-index/i10/citation summaries, coauthors, per-paper citation lists, OpenAlex enrichment, Apify actor inputs, normalized JSON/CSV outputs, or an evidence-backed scholar dossier.
+description: Gather and integrate scholar profile intelligence from open bibliographic sources by default, with Google Scholar scraping only as optional best-effort. Use when Codex needs a no-required-SerpApi/no-required-paid-scraper closure for researcher profiles, OpenAlex author candidates, public citation metrics, topic/institution enrichment, optional Google Scholar author/publication scraping, Apify actor inputs, normalized JSON/CSV outputs, or an evidence-backed scholar dossier.
 ---
 
 # Google Scholar Profile Intel
 
 ## Overview
 
-Use this skill to turn a scholar name, Google Scholar profile URL, or Scholar author ID into a structured researcher dossier. Route each request to the lightest reliable source that satisfies the user's actual need: local Scholar profile fetch, batch author IDs, deep per-paper citation crawling, managed Apify scraping, or OpenAlex enrichment.
+Use this skill to turn a scholar name, Google Scholar profile URL, Scholar author ID, or open bibliographic identifier into a structured researcher dossier. The default closure is OpenAlex-based and does not require SerpApi, Apify, Google Scholar scraping, private proxies, or API keys. Direct Google Scholar lanes are optional best-effort because Google Scholar has no official public API and can block automation.
 
 SerpApi is intentionally excluded. Do not ask for SerpApi keys or use SerpApi APIs in this skill.
 
@@ -33,17 +33,17 @@ python skills\google-scholar-profile-intel\scripts\scholar_profile_intel.py plan
   --needs profile,indices,publications,enrichment
 ```
 
-4. Execute only the required lane. Do not crawl citation pages when the user only needs profile or publication metadata.
+4. Execute only the required lane. Default to `openalex-author`; do not crawl Google Scholar citation pages when the user only needs a usable open-source dossier.
 
 ## Source Routing
 
 Use `references/source-routing.md` before choosing a data source.
 
-- `scholarly`: default local fallback for single-author Scholar profile, selected sections, publications, and coauthors. Use low request volume and expect blocking.
-- `scholar-scraper`: batch author IDs when the user wants a compact JSON of profile, citation history, coauthors, and publications.
-- `google-scholar-citation-crawler`: heavy lane for per-paper citation lists, caching, resume, Excel exports, and long-running runs.
+- `OpenAlex`: default open closure for author disambiguation, ORCID, institutions, topics, works count, cited-by count, and h-index/i10 fields.
+- `scholarly`: optional best-effort lane for single-author Google Scholar profile, selected sections, publications, and coauthors. Use only with `--allow-scholar-scrape`, low request volume, and expected blocking.
+- `scholar-scraper`: optional external crawler for batch author IDs when the user explicitly accepts setup and blocking risk.
+- `google-scholar-citation-crawler`: optional heavy lane for per-paper citation lists, caching, resume, Excel exports, and long-running runs.
 - `Apify Google Scholar Scraper`: managed paid/hosted lane when the user accepts Apify and needs reliability, residential proxies, or larger batches. Generate actor input first; do not spend credits without user approval.
-- `OpenAlex`: open enrichment and cross-check lane for author disambiguation, ORCID, institutions, topics, works count, cited-by count, and h-index/i10 fields.
 
 ## Common Commands
 
@@ -80,7 +80,7 @@ python skills\google-scholar-profile-intel\scripts\scholar_profile_intel.py apif
   --output output\scholars\hinton_apify_input.json
 ```
 
-Use `scholarly` only after preparing an isolated environment if it is not already installed:
+Use `scholarly` only after the user accepts best-effort Google Scholar scraping and after preparing an isolated environment if it is not already installed:
 
 ```powershell
 python -m venv output\scholars\.venv
@@ -92,6 +92,8 @@ output\scholars\.venv\Scripts\python skills\google-scholar-profile-intel\scripts
   --max-publications 100 `
   --output output\scholars\hinton_scholarly.json
 ```
+
+To include this optional lane in a plan, pass `--allow-scholar-scrape`.
 
 Print the normalized output contract:
 
@@ -115,6 +117,7 @@ Read `references/output-schema.md` before merging multiple sources. Always keep 
 ## Guardrails
 
 - Do not use SerpApi in this workflow.
+- Default work must remain useful through OpenAlex/open bibliographic sources without Google Scholar scraping, SerpApi, Apify, private proxies, or API keys.
 - Do not run high-volume Google Scholar scraping by default. Google Scholar has no official API and direct scraping is fragile.
 - Do not bypass CAPTCHAs automatically or pretend blocks are data absence. Pause and report the blocker.
 - Do not download paywalled PDFs or private content. Metadata and public links are enough unless the user provides authorized files.

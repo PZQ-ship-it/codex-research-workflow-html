@@ -1,21 +1,21 @@
 # Source Routing
 
-Use the lightest first-source lane that can satisfy the request. Do not start from a general web search when an official API, proceedings page, or maintained metadata repository exists.
+Use the lightest first-source lane that can satisfy the request. The default lane must work without required MCP servers, paid services, private credentials, or login-only review data. Do not start from a general web search when an official public API, proceedings page, or maintained metadata repository exists.
 
 ## Priority Matrix
 
 | Need | Primary route | Secondary route | Notes |
 |---|---|---|---|
-| Public reviews, scores, rebuttals, meta-reviews, decisions | OpenReview data tools | `openreview-py` custom script | Review visibility varies by venue and stage. |
-| OpenReview API usage help | `openreview/openreview-mcp` knowledge server | `openreview-py` docs/tests | This MCP helps write correct `openreview-py` code; it is not the same as a live review-data crawler. |
-| Multi-source paper corpus | `paper-search-mcp` | `scholar-megasearch`, `research30` | Use for broad search, dedupe, DOI recovery, OA PDF resolution, and text extraction. |
-| arXiv preprints | arXiv Atom API or `paper-search-mcp` | arXiv-specific MCP/skill | Respect arXiv rate limits and include `mailto`/polite user agent where possible. |
+| Public reviews, scores, rebuttals, meta-reviews, decisions | OpenReview public pages / visible public JSON | `openreview-py` custom script | Review visibility varies by venue and stage; missing public fields are blockers, not facts. |
+| OpenReview API usage help | `openreview-py` docs/tests | `openreview/openreview-mcp` knowledge server | MCP is optional guidance, not required for the base closure. |
+| Multi-source paper corpus | arXiv, Crossref, OpenAlex, Semantic Scholar, Unpaywall, official proceedings | optional `paper-search-mcp` | Use public sources for broad search, dedupe, DOI recovery, and OA PDF resolution first. |
+| arXiv preprints | arXiv Atom API | optional arXiv-specific MCP/skill | Respect arXiv rate limits and include `mailto`/polite user agent where possible. |
 | ACL/EMNLP/NAACL papers | ACL Anthology Python module / GitHub metadata | Static ACL Anthology pages | Official metadata includes papers, authors, venues, volumes, events, and PDFs. |
 | CVPR/ICCV/WACV papers | CVF Open Access pages | CVF crawler fallback | Static official pages usually expose title, authors, abstract, PDF, and BibTeX. |
 | ICML/AISTATS/COLT papers | PMLR volume pages / mlresearch GitHub | Static scraper fallback | Resolve the volume page before scraping. |
 | NeurIPS accepted papers | NeurIPS proceedings | OpenReview for reviews when hosted there | The proceedings and review venue can be separate evidence lanes. |
 | Citation/author/topic enrichment | OpenAlex and Semantic Scholar | Crossref, dblp | Use as enrichment/cross-check, not as the source of venue decisions. |
-| Open-access PDF acquisition | `paper-search-mcp`, Unpaywall, arXiv, PMC/Europe PMC, CORE | Venue official PDF URLs | Closed-access papers should be flagged, not bypassed. |
+| Open-access PDF acquisition | Unpaywall public endpoint, arXiv, PMC/Europe PMC, CORE, venue official PDF URLs | optional `paper-search-mcp` | Closed-access papers should be flagged, not bypassed. |
 
 ## OpenReview
 
@@ -28,7 +28,13 @@ Use OpenReview when the user asks for:
 - venue stats, acceptance rates, score distributions, or weakness clusters;
 - matching submissions to forum IDs.
 
-Preferred tools:
+Default route:
+
+- Capture only public OpenReview page/visible-note data by default.
+- Use `openreview-py` only when the user accepts local library setup or the public page shape is insufficient.
+- Do not require `openreview-mcp` for the base closure.
+
+Optional tools:
 
 - Third-party `openreview-mcp` from PyPI for MCP tools such as listing venues, searching submissions, getting reviews, meta-reviews, rebuttals, decisions, and venue stats.
 - Official `openreview-py` for custom scripts and careful API access.
@@ -38,7 +44,7 @@ Do not treat missing review fields as rejection evidence. First check whether th
 
 ## Paper Corpus and PDFs
 
-Use `paper-search-mcp` when the user asks for a topic corpus, broad literature scan, DOI recovery, open PDF acquisition, or text extraction. It is best used as a corpus builder rather than as the sole authority on conference acceptance or review decisions.
+Use public sources first when the user asks for a topic corpus, broad literature scan, DOI recovery, open PDF acquisition, or text extraction. `paper-search-mcp` is an optional convenience layer, not required for the narrowed closure, and is best used as a corpus builder rather than as the sole authority on conference acceptance or review decisions.
 
 Good tasks:
 

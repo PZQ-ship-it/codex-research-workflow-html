@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code Model Benchmark Intel"
+  short_description: "Route code model data benchmark sources"
+  default_prompt: "Use $code-model-benchmark-intel to collect and normalize code, model, dataset, and benchmark evidence."

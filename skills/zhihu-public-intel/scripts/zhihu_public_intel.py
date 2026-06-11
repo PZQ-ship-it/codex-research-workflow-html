@@ -26,6 +26,15 @@ SCHEMA_SUMMARY = {
 
 
 BACKENDS = {
+    "public-browser-lite": {
+        "best_for": ["search", "question", "answers", "article", "report", "public-local"],
+        "setup": [
+            "Use a normal browser or Playwright against public Zhihu pages.",
+            "No MCP server, external API key, paid scraper, or committed cookies are required.",
+            "Save public raw captures under raw/ and normalize with --source public-browser-lite.",
+            "Treat login walls, CAPTCHA, hidden comments, and missing dynamic content as blockers.",
+        ],
+    },
     "zhihu-k-search": {
         "best_for": ["search", "question", "answers", "article", "markdown", "json"],
         "setup": [
@@ -149,16 +158,9 @@ def classify_target(target: str) -> Dict[str, Any]:
 
 
 def choose_backend(needs: List[str], scale: str, prefer: Optional[str] = None) -> str:
-    normalized = {need.lower().replace("_", "-") for need in needs}
     if prefer:
         return prefer
-    if "bulk" in normalized or scale == "large":
-        return "MediaCrawler"
-    if "nested-comments" in normalized or normalized == {"comments"} or ("comments" in normalized and scale == "deep"):
-        return "ZhihuApis"
-    if {"comments", "user"} & normalized or "mcp" in normalized:
-        return "zhihu-mcp"
-    return "zhihu-k-search"
+    return "public-browser-lite"
 
 
 def build_plan(args: argparse.Namespace) -> Dict[str, Any]:
@@ -176,9 +178,12 @@ def build_plan(args: argparse.Namespace) -> Dict[str, Any]:
         "backend_reason": backend_reason(backend, needs, args.scale),
         "setup": BACKENDS[backend]["setup"],
         "commands": command_suggestions(backend, args.target, target_info, needs),
+        "optional_backends": optional_backend_notes(needs, args.scale),
         "output_contract": SCHEMA_SUMMARY,
         "guardrails": [
+            "Default to public/local capture that does not require MCP, paid services, external API keys, or committed login state.",
             "Keep cookies.json, auth.json, storage state, .env, and headers local and untracked.",
+            "Use logged-in state only after explicit user approval and only for content the user can legitimately access.",
             "Run a small smoke crawl before scaling.",
             "Do not bypass CAPTCHA automatically.",
             "Keep raw captures local; summarize and cite URLs in reports.",
@@ -188,6 +193,8 @@ def build_plan(args: argparse.Namespace) -> Dict[str, Any]:
 
 
 def backend_reason(backend: str, needs: List[str], scale: str) -> str:
+    if backend == "public-browser-lite":
+        return "Default narrowed lane for public search and page/detail capture without required external APIs or MCP."
     if backend == "MediaCrawler":
         return "Selected for larger scale or cross-platform public crawling."
     if backend == "ZhihuApis":
@@ -197,9 +204,54 @@ def backend_reason(backend: str, needs: List[str], scale: str) -> str:
     return "Selected for lightweight public search and question/answer/article detail extraction."
 
 
+def optional_backend_notes(needs: List[str], scale: str) -> List[Dict[str, Any]]:
+    normalized = {need.lower().replace("_", "-") for need in needs}
+    notes: List[Dict[str, Any]] = []
+    if "bulk" in normalized or scale == "large":
+        notes.append(
+            {
+                "backend": "MediaCrawler",
+                "when": "Only if the user explicitly accepts a larger external crawler checkout and setup.",
+            }
+        )
+    if "nested-comments" in normalized or ("comments" in normalized and scale == "deep"):
+        notes.append(
+            {
+                "backend": "ZhihuApis",
+                "when": "Only for authorized logged-in comment completeness work; cookies stay local.",
+            }
+        )
+    if {"comments", "user", "mcp"} & normalized:
+        notes.append(
+            {
+                "backend": "zhihu-mcp",
+                "when": "Only when the user explicitly wants an MCP toolchain and accepts local MCP setup.",
+            }
+        )
+    if normalized & {"search", "question", "answers", "article"}:
+        notes.append(
+            {
+                "backend": "zhihu-k-search",
+                "when": "Optional convenience CLI if already installed; not required for the narrowed default lane.",
+            }
+        )
+    return notes
+
+
 def command_suggestions(backend: str, target: str, info: Dict[str, Any], needs: List[str]) -> List[str]:
     item_type = info.get("type")
     ids = info.get("ids") or {}
+    if backend == "public-browser-lite":
+        if item_type in {"question", "answer", "article", "user"}:
+            return [
+                "Open the public URL in a normal browser/Playwright session and save raw HTML or extracted JSON-like fields under raw/.",
+                "Normalize the captured public fields with: python skills/zhihu-public-intel/scripts/zhihu_public_intel.py normalize --source public-browser-lite --input raw/public_capture.json --output-dir normalized",
+            ]
+        query = ids.get("query") or target
+        return [
+            "Search public Zhihu pages for {!r} with a normal browser or approved search provider; save result URLs and snippets under raw/.".format(query),
+            "Normalize the public result list with: python skills/zhihu-public-intel/scripts/zhihu_public_intel.py normalize --source public-browser-lite --input raw/public_search.json --output-dir normalized",
+        ]
     if backend == "zhihu-k-search":
         if item_type in {"question", "answer", "article"}:
             return ['uv run python main.py detail "{}" -o raw_detail.json'.format(target)]

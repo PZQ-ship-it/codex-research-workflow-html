@@ -1,13 +1,13 @@
 ---
 name: zhihu-public-intel
-description: Route public Zhihu content search, crawling, comment collection, normalization, and synthesis. Use when Codex needs to research public Zhihu topics, search questions/articles/answers/users, crawl public question-answer/article pages, collect comments, choose between zhihu-k-search, zhihu-mcp, MediaCrawler, and ZhihuApis, or integrate public Zhihu captures into JSONL/CSV/Markdown reports without focusing on personal collections or browsing history.
+description: Route public Zhihu content search, public page capture, normalization, and synthesis. Use when Codex needs a usable no-required-MCP/no-required-API-key Zhihu research closure for public topics, questions, answers, articles, lightweight user/profile evidence, or JSONL/CSV/Markdown reports, with zhihu-k-search, zhihu-mcp, MediaCrawler, and ZhihuApis treated as optional extensions.
 ---
 
 # Zhihu Public Intel
 
 ## Overview
 
-Use this skill for public Zhihu research and evidence collection. It does not prioritize personal favorites, private collections, or browsing history. It routes the task to the lightest suitable backend, keeps credentials local, and normalizes captured public content into auditable artifacts.
+Use this skill for public Zhihu research and evidence collection. The default closure is narrowed to public/local capture: no required external API key, no required MCP server, no paid crawler, and no committed login state. It does not prioritize personal favorites, private collections, or browsing history. Optional external backends may be used only when the user explicitly accepts their setup and access tradeoffs.
 
 ## Decision Tree
 
@@ -29,16 +29,17 @@ python skills\zhihu-public-intel\scripts\zhihu_public_intel.py plan `
 ```
 
 3. Execute only the needed lane:
-   - `zhihu-k-search`: lightweight browser workflow for search, question details, answer details, and article details.
-   - `zhihu-mcp`: MCP workflow for search, full answers/articles, comments, user profile/activity, and reusable agent tools.
-   - `MediaCrawler`: larger public bulk crawl across Zhihu and other social platforms.
-   - `ZhihuApis`: focused full comment collection for answer/article comments, including nested replies.
+   - `public-browser-lite`: default narrowed lane for public search, public question/answer/article pages, raw capture, and normalization.
+   - `zhihu-k-search`: optional convenience CLI when already installed.
+   - `zhihu-mcp`: optional MCP workflow when the user explicitly wants agent tools.
+   - `MediaCrawler`: optional larger public bulk crawl.
+   - `ZhihuApis`: optional logged-in comment-completeness lane; cookies stay local.
 4. Normalize results before synthesis:
 
 ```powershell
 python skills\zhihu-public-intel\scripts\zhihu_public_intel.py normalize `
   --input output\zhihu\raw_search.json `
-  --source zhihu-k-search `
+  --source public-browser-lite `
   --output-dir output\zhihu\normalized
 ```
 
@@ -48,10 +49,11 @@ python skills\zhihu-public-intel\scripts\zhihu_public_intel.py normalize `
 
 Read `references/source-routing.md` before selecting a backend.
 
-- Use `zhihu-k-search` for ad hoc public topic search and page details when a CLI-style skill is enough.
-- Use `zhihu-mcp` when the user wants an ongoing Agent toolchain, comments plus content, user public profile/activity, or MCP integration.
-- Use `MediaCrawler` when scale matters or the same crawl should later cover Xiaohongshu, Weibo, Bilibili, Tieba, and Zhihu in one framework.
-- Use `ZhihuApis` when comment completeness is the key requirement.
+- Use `public-browser-lite` by default for public pages and lightweight reports. Save public raw HTML/JSON-like captures under `raw/`, then normalize.
+- Use `zhihu-k-search` only as an optional convenience CLI when it is already installed or the user approves setup.
+- Use `zhihu-mcp` only when the user explicitly wants an ongoing Agent/MCP toolchain.
+- Use `MediaCrawler` only when scale matters and the user accepts external crawler setup.
+- Use `ZhihuApis` only when comment completeness is the key requirement and the user approves authorized local cookies.
 
 ## Common Commands
 
@@ -101,6 +103,7 @@ Read `references/output-schema.md` before merging multiple backend outputs.
 ## Guardrails
 
 - Do not focus on personal favorites, private collections, or browsing history unless the user explicitly asks.
+- Default work must remain useful without MCP, paid scraping, external API keys, or committed login state.
 - Keep `cookies.json`, `auth.json`, browser storage state, `.env`, request headers, and token-like values out of git and final answers.
 - Use logged-in browser state only when the user has authorized access and the target content is available to that account.
 - Do not bypass CAPTCHAs automatically or describe blocks as missing data.

@@ -1,23 +1,37 @@
 # Source Routing
 
-Use the shallowest source that satisfies the task. Escalate only when the user asks for more depth or the previous lane cannot answer reliably.
+Use the shallowest source that satisfies the task. The default closure is OpenAlex/open-bibliographic and must work without required SerpApi, Apify, private proxies, or Google Scholar scraping. Escalate only when the user asks for more depth or the previous lane cannot answer reliably.
 
 ## Routes
 
 | Need | Preferred route | Notes |
 |---|---|---|
-| Single scholar profile by Scholar URL or ID | `scholarly-author` | Fill only requested sections. Keep `publications` bounded. |
-| Batch Scholar author IDs | `scholar-scraper` | Useful for profile, cites-per-year, coauthors, publications. Keep thread count low. |
-| Per-paper citing-work lists | `google-scholar-citation-crawler` | Long-running lane with cache/resume. Use only for `deep-citations`. |
-| Managed Scholar extraction | Apify actor input | Generate input first; run actor only after user accepts paid/hosted scraping. |
-| Author disambiguation and open cross-check | `openalex-author` | Good for ORCID, institutions, topics, works count, citations, h-index/i10. |
+| Author disambiguation and open dossier | `openalex-author` | Default lane. Good for ORCID, institutions, topics, works count, citations, h-index/i10. |
+| Single scholar profile by Scholar URL or ID | optional `scholarly-author` | Best-effort only after `--allow-scholar-scrape`; keep `publications` bounded. |
+| Batch Scholar author IDs | optional `scholar-scraper` | External crawler; use only after explicit approval and low thread count. |
+| Per-paper citing-work lists | optional `google-scholar-citation-crawler` | Long-running external lane with cache/resume. Use only for explicitly approved `deep-citations`. |
+| Managed Scholar extraction | optional Apify actor input | Generate input first; run actor only after user accepts paid/hosted scraping. |
 | Report/dossier | Merge raw captures | Preserve field provenance and conflicts. |
+
+## Default Open Closure
+
+Use `openalex-author` first for a usable researcher dossier:
+
+```powershell
+python skills\google-scholar-profile-intel\scripts\scholar_profile_intel.py openalex-author `
+  --query "Author name" `
+  --institution-hint "Institution or affiliation clue" `
+  --per-page 5 `
+  --output output\scholars\openalex_candidates.json
+```
+
+OpenAlex is not Google Scholar, so citation counts and publication lists may differ. Treat it as the stable default closure, and label Google Scholar-specific fields as unavailable unless an optional Scholar scrape succeeds.
 
 ## Local Google Scholar Lanes
 
 ### scholarly
 
-Use when the task is small and interactive:
+Use only when the task is small, interactive, and the user accepts best-effort Google Scholar scraping:
 
 ```powershell
 python skills\google-scholar-profile-intel\scripts\scholar_profile_intel.py scholarly-author `
@@ -40,9 +54,11 @@ Risks:
 - Some calls, especially citation and publication search, need proxies or delays.
 - Treat CAPTCHA, 403, 429, or empty pages as blockers, not as true negative evidence.
 
+To include this lane in planner output, pass `--allow-scholar-scrape`.
+
 ### scholar-scraper
 
-Use for compact batch exports from known author IDs:
+Use for compact batch exports from known author IDs only after explicit approval:
 
 ```python
 from scholar_scraper import scholar_scraper
@@ -53,7 +69,7 @@ Keep `max_threads` conservative. The package is simple and profile-oriented, but
 
 ### google-scholar-citation-crawler
 
-Use only when the user needs per-paper citation lists, history, Excel output, or resumable long runs:
+Use only when the user explicitly needs per-paper citation lists, history, Excel output, or resumable long runs:
 
 ```powershell
 python scholar_citation.py --author AUTHOR_ID --output-dir output\scholars\AUTHOR_ID
@@ -85,7 +101,7 @@ The generated input uses author profile mode and residential proxy configuration
 
 ### OpenAlex
 
-Use for open enrichment and disambiguation:
+Use for open enrichment and disambiguation. This is the default route:
 
 ```powershell
 python skills\google-scholar-profile-intel\scripts\scholar_profile_intel.py openalex-author `

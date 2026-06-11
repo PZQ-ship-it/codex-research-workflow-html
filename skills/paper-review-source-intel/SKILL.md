@@ -1,13 +1,13 @@
 ---
 name: paper-review-source-intel
-description: Route first-source academic paper and peer-review intelligence collection, crawling, normalization, and synthesis. Use when Codex needs to collect papers, official proceedings metadata, OpenReview submissions, reviews, meta-reviews, rebuttals, decisions, acceptance/score signals, open-access PDFs, citation/author enrichment, or auditable evidence corpora from arXiv, OpenReview, ACL Anthology, CVF, PMLR, NeurIPS proceedings, Semantic Scholar, OpenAlex, Crossref, or paper-search-mcp.
+description: Route first-source academic paper and peer-review intelligence collection, crawling, normalization, and synthesis through public official sources by default. Use when Codex needs a no-required-MCP/no-required-API-key closure for papers, proceedings metadata, public OpenReview visibility, open-access PDFs, citation/author enrichment, or auditable evidence corpora from arXiv, OpenReview public pages, ACL Anthology, CVF, PMLR, NeurIPS proceedings, Semantic Scholar, OpenAlex, Crossref, Unpaywall, or optional paper-search-mcp.
 ---
 
 # Paper Review Source Intel
 
 ## Overview
 
-Use this skill for first-source paper and peer-review evidence collection. It prioritizes official APIs, proceedings, and open metadata before general web search or unofficial crawlers, then normalizes results into auditable artifacts for analysis.
+Use this skill for first-source paper and peer-review evidence collection. The default closure uses public official pages/APIs, proceedings, and open metadata before general web search or unofficial crawlers. It must remain usable without required MCP servers, paid services, private credentials, or login-gated review data.
 
 ## Decision Tree
 
@@ -29,8 +29,8 @@ python skills\paper-review-source-intel\scripts\paper_review_source_intel.py pla
 ```
 
 3. Execute only the required lane:
-   - OpenReview reviews/decisions/rebuttals: use OpenReview MCP or `openreview-py`.
-   - Broad paper corpus and OA PDFs: use `paper-search-mcp` or a compatible multi-source paper skill.
+   - OpenReview reviews/decisions/rebuttals: capture public OpenReview visibility first; use `openreview-py` only as an optional local library.
+   - Broad paper corpus and OA PDFs: use public arXiv, Crossref, OpenAlex, Semantic Scholar, Unpaywall, and official proceedings first; `paper-search-mcp` is optional.
    - Official proceedings: use ACL Anthology, CVF Open Access, PMLR, NeurIPS proceedings, or arXiv API directly.
    - Citation/author/topic enrichment: use OpenAlex and Semantic Scholar as secondary metadata backbones.
 4. Keep raw captures and normalized outputs separate. Synthesize from normalized artifacts, not from browser state or loose snippets.
@@ -39,9 +39,10 @@ python skills\paper-review-source-intel\scripts\paper_review_source_intel.py pla
 
 Read `references/source-routing.md` before choosing a backend.
 
-- Use OpenReview first for public reviews, scores, meta-reviews, rebuttals, decisions, venue stats, and rejection/weakness-pattern analysis.
+- Use public OpenReview pages/visible notes first for public reviews, scores, meta-reviews, rebuttals, decisions, venue stats, and rejection/weakness-pattern analysis.
 - Use official proceedings first for accepted-paper lists: ACL Anthology for ACL/EMNLP/NAACL, CVF for CVPR/ICCV/WACV, PMLR for ICML/AISTATS/COLT, NeurIPS proceedings for NeurIPS accepted papers, and arXiv for preprints.
-- Use `paper-search-mcp` for multi-source literature search, DOI recovery, open-access PDF resolution, and text extraction across arXiv, Semantic Scholar, OpenAlex, Crossref, PubMed/PMC, CORE, Europe PMC, DOAJ, Zenodo, HAL, Unpaywall, and related sources.
+- Use public arXiv, Crossref, OpenAlex, Semantic Scholar, Unpaywall, and proceedings pages for multi-source literature search, DOI recovery, and open-access PDF resolution by default.
+- Use `paper-search-mcp` only as an optional convenience layer after the public-source closure is understood.
 - Use Semantic Scholar/OpenAlex for enrichment and cross-checking, not as the only source for official venue decisions.
 - Use general crawlers only as a fallback when official pages are static but lack an API.
 
@@ -97,6 +98,7 @@ Read `references/output-schema.md` before merging multiple sources.
 ## Guardrails
 
 - Prefer first-party APIs and official proceedings over Google Scholar, search snippets, or aggregator pages.
+- Default work must remain useful without MCP, paid services, private credentials, or login-only review data.
 - Do not use Google Scholar or SerpApi as the canonical first source for papers or review evidence.
 - Do not bypass paywalls, CAPTCHAs, login gates, private reviews, or venue access controls.
 - Download only open-access or user-authorized PDFs. Record license/access status when known.

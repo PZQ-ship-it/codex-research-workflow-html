@@ -4,15 +4,48 @@
 
 | Need | Preferred backend | Notes |
 |---|---|---|
-| Keyword search | `zhihu-k-search` or `zhihu-mcp` | `zhihu-k-search` is a simple Playwright CLI; `zhihu-mcp` is better when MCP tools are already configured. |
-| Question detail + answer list | `zhihu-k-search` or `zhihu-mcp` | Good first lane for public topic research. |
-| Single answer or zhuanlan article detail | `zhihu-k-search` or `zhihu-mcp` | Normalize body, author, counts, publish/edit time, and URL. |
-| Comment collection | `zhihu-mcp`; fallback or deep lane `ZhihuApis` | `ZhihuApis` focuses on full answer/article comments and nested replies. |
-| User public profile/activity | `zhihu-mcp` | Keep this public and non-invasive. Avoid private-history workflows. |
-| Bulk crawl | `MediaCrawler` | Use for larger public crawling and cross-platform consistency. |
+| Keyword search | `public-browser-lite` | Default narrowed lane. Use public pages/search results, save raw captures, then normalize. |
+| Question detail + answer list | `public-browser-lite` | Capture public visible page fields. Login walls, CAPTCHA, or hidden dynamic fields are blockers. |
+| Single answer or zhuanlan article detail | `public-browser-lite` | Normalize body, author, counts, publish/edit time, and URL from public visible fields. |
+| Comment collection | optional `zhihu-mcp` or `ZhihuApis` | Full comments usually need logged-in/runtime-specific handling; not part of the default closure. |
+| User public profile/activity | `public-browser-lite`; optional `zhihu-mcp` | Keep this public and non-invasive. Avoid private-history workflows. |
+| Bulk crawl | optional `MediaCrawler` | Use only when the user accepts external crawler setup and strict limits. |
 | Personal favorites/history/collection export | Out of scope by default | Use only if the user explicitly changes the requirement. |
 
 ## Backend Notes
+
+### public-browser-lite
+
+Default route. It does not require an MCP server, paid API, external crawler checkout, or committed login state.
+
+Useful for:
+
+- Public keyword/topic scouting.
+- Public question, answer, article, and lightweight user/profile capture.
+- Small smoke runs whose output can be normalized into `items.jsonl` and `sources.csv`.
+
+Typical workflow:
+
+```powershell
+python skills\zhihu-public-intel\scripts\zhihu_public_intel.py scaffold `
+  --output-dir output\zhihu\agent_discussion `
+  --target "大模型 Agent" `
+  --needs search,answers,report
+```
+
+Then save public raw captures under `raw/` and normalize:
+
+```powershell
+python skills\zhihu-public-intel\scripts\zhihu_public_intel.py normalize `
+  --input output\zhihu\agent_discussion\raw\public_search.json `
+  --source public-browser-lite `
+  --output-dir output\zhihu\agent_discussion\normalized
+```
+
+Limits:
+
+- Do not bypass CAPTCHA or login walls.
+- Hidden comments, private activity, and complete logged-in views are blockers unless the user explicitly approves a local authenticated optional backend.
 
 ### zhihu-k-search
 
@@ -25,6 +58,8 @@ Useful for:
 - Fetch single answer details.
 - Fetch article details.
 - Export JSON or Markdown.
+
+This is an optional convenience CLI when already installed or when the user approves setup. It is not required for the base closure.
 
 Typical setup:
 
@@ -53,6 +88,8 @@ Useful for:
 - Search, question detail, answer detail, article detail, comments, user profile, public activity.
 - Reusable workflows such as `research-on-zhihu`, `analyze-zhihu-question`, `analyze-zhihu-answer`, and `track-zhihu-user`.
 
+This is optional. Use only when the user explicitly wants an MCP toolchain.
+
 Typical setup:
 
 ```powershell
@@ -73,6 +110,8 @@ Useful for:
 - Larger public crawling jobs.
 - Multi-platform public data collection where Zhihu is one lane among Xiaohongshu, Weibo, Bilibili, Tieba, and others.
 - Comment crawling at scale.
+
+This is optional. Use only when scale justifies an external crawler checkout.
 
 Prefer a smoke crawl first, then scale up with strict limits and resumable output.
 

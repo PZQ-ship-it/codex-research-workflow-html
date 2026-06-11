@@ -120,7 +120,7 @@ def inspect_url(url: str) -> Dict[str, Any]:
                 "source_kind": "review-platform",
                 "ids": {"forum_id": forum_id} if forum_id else {},
                 "recommended_needs": ["papers", "reviews", "meta-reviews", "rebuttals", "decisions"],
-                "recommended_routes": ["openreview-mcp", "openreview-py"],
+                "recommended_routes": ["openreview-public-page", "openreview-py"],
             }
         )
         return result
@@ -133,7 +133,7 @@ def inspect_url(url: str) -> Dict[str, Any]:
                 "source_kind": "preprint",
                 "ids": {"arxiv_id": arxiv_match.group(1).removesuffix(".pdf")},
                 "recommended_needs": ["papers", "pdfs"],
-                "recommended_routes": ["arxiv-api", "paper-search-mcp"],
+                "recommended_routes": ["arxiv-api"],
             }
         )
         return result
@@ -197,7 +197,7 @@ def inspect_url(url: str) -> Dict[str, Any]:
                 "source_kind": "identifier",
                 "ids": {"doi": path.strip("/")},
                 "recommended_needs": ["papers", "metadata", "pdfs"],
-                "recommended_routes": ["crossref", "paper-search-mcp", "unpaywall"],
+                "recommended_routes": ["crossref-public", "unpaywall-public"],
             }
         )
         return result
@@ -209,7 +209,7 @@ def inspect_url(url: str) -> Dict[str, Any]:
                 "source_kind": "metadata-enrichment",
                 "ids": {},
                 "recommended_needs": ["metadata", "citations", "authors"],
-                "recommended_routes": ["semantic-scholar-api", "paper-search-mcp"],
+                "recommended_routes": ["semantic-scholar-public-api"],
             }
         )
         return result
@@ -243,7 +243,7 @@ def classify_target(target: str) -> Dict[str, Any]:
             "source_kind": "identifier",
             "ids": {"doi": doi_match.group(0)},
             "recommended_needs": ["papers", "metadata", "pdfs"],
-            "recommended_routes": ["crossref", "paper-search-mcp", "unpaywall"],
+            "recommended_routes": ["crossref-public", "unpaywall-public"],
         }
     return {
         "url": "",
@@ -253,7 +253,7 @@ def classify_target(target: str) -> Dict[str, Any]:
         "source_kind": "query",
         "ids": {"query": target},
         "recommended_needs": ["papers", "metadata", "report"],
-        "recommended_routes": ["paper-search-mcp", "openalex", "semantic-scholar"],
+        "recommended_routes": ["openalex-public-api", "semantic-scholar-public-api", "crossref-public"],
     }
 
 
@@ -267,24 +267,21 @@ def route_for_venue(venue: Optional[str], needs: List[str], year: Optional[int])
     ):
         routes.append(
             {
-                "lane": "openreview-mcp",
+                "lane": "openreview-public-page",
                 "priority": "primary",
-                "why": "Best first-source route for public reviews, scores, meta-reviews, rebuttals, decisions, and venue stats.",
+                "why": "Default narrowed route for public OpenReview pages and visible notes without requiring an MCP server.",
                 "suggested_calls": [
-                    "MCP: openreview_search_submissions(venue=..., query=...)",
-                    "MCP: openreview_get_reviews(submission_id=...)",
-                    "MCP: openreview_get_meta_review(submission_id=...)",
-                    "MCP: openreview_get_rebuttal(submission_id=...)",
-                    "MCP: openreview_get_decision(submission_id=...)",
+                    "Open the forum/group page and save visible public JSON/HTML under raw/.",
+                    "Normalize public note JSON with --source openreview-public-page.",
                 ],
-                "setup": ["pip install openreview-mcp", "openreview-mcp --http --port 8000"],
+                "setup": ["No MCP required; visibility depends on what OpenReview exposes publicly."],
             }
         )
         routes.append(
             {
                 "lane": "openreview-py",
-                "priority": "primary",
-                "why": "Use for custom venue/group queries when MCP tools are insufficient.",
+                "priority": "optional",
+                "why": "Optional local library for custom venue/group queries when public pages are insufficient.",
                 "setup": ["python -m venv .venv", ".venv\\Scripts\\python -m pip install openreview-py"],
             }
         )
@@ -339,33 +336,36 @@ def generic_routes(target_info: Dict[str, Any], needs: List[str], scale: str) ->
     source = target_info.get("source")
     recommended = target_info.get("recommended_routes") or []
 
-    if source == "openreview" and not any(route.get("lane") == "openreview-mcp" for route in routes):
+    if source == "openreview" and not any(route.get("lane") == "openreview-public-page" for route in routes):
         routes.append(
             {
-                "lane": "openreview-mcp",
+                "lane": "openreview-public-page",
                 "priority": "primary",
-                "why": "The target is an OpenReview page or forum.",
-                "suggested_calls": ["MCP: get submission/reviews/meta-review/rebuttal/decision for the forum ID."],
+                "why": "The target is an OpenReview page or forum; capture only public visible fields by default.",
+                "suggested_calls": ["Open public forum/group page; save visible note JSON/HTML; normalize visible fields."],
             }
         )
 
     if any(need in needs for need in ["papers", "metadata", "pdfs", "full-text", "report", "search"]) or source in {"topic", "doi", "arxiv"}:
         routes.append(
             {
-                "lane": "paper-search-mcp",
+                "lane": "public-paper-sources",
                 "priority": "primary" if source == "topic" else "secondary",
-                "why": "Multi-source search, deduplication, DOI recovery, OA PDF resolution, and text extraction.",
-                "suggested_calls": ["MCP: search_papers(query=...)", "MCP: download_with_fallback(paper=...)"],
-                "setup": ["uvx paper-search-mcp", "or install from source when the latest connectors are needed"],
+                "why": "Default narrowed route using public official sources and open metadata without paper-search MCP.",
+                "suggested_calls": [
+                    "Use arXiv Atom, Crossref public REST, OpenAlex public API, Unpaywall public endpoint, and official proceedings pages.",
+                    "Download only open-access PDFs from official or OA URLs.",
+                ],
+                "setup": ["No required API key or MCP; use polite rate limits and record blockers."],
             }
         )
 
     if any(need in needs for need in ["citations", "authors", "topics", "enrichment"]):
         routes.append(
             {
-                "lane": "openalex-semantic-scholar",
+                "lane": "openalex-semantic-scholar-public",
                 "priority": "secondary",
-                "why": "Citation, author, topic, and identifier enrichment.",
+                "why": "Public citation, author, topic, and identifier enrichment without required credentials.",
                 "suggested_calls": ["OpenAlex works/authors API", "Semantic Scholar paper/author API"],
             }
         )
@@ -374,16 +374,17 @@ def generic_routes(target_info: Dict[str, Any], needs: List[str], scale: str) ->
         routes.append(
             {
                 "lane": "scholar-megasearch-pattern",
-                "priority": "fallback",
-                "why": "Useful orchestration pattern for broad fan-out, corpus merge, and open PDF acquisition.",
-                "note": "Use only after confirming source licenses and local installation requirements.",
+                "priority": "optional",
+                "why": "Optional orchestration pattern for broad fan-out; not part of the narrowed default closure.",
+                "note": "Use only after confirming source licenses, local installation requirements, and user approval.",
             }
         )
 
     if recommended:
         for lane in recommended:
             if not any(route.get("lane") == lane for route in routes):
-                routes.append({"lane": lane, "priority": "source-specific", "why": "Suggested by URL/identifier inspection."})
+                priority = "optional" if lane in {"openreview-py", "paper-search-mcp", "openreview-mcp"} else "source-specific"
+                routes.append({"lane": lane, "priority": priority, "why": "Suggested by URL/identifier inspection."})
 
     return routes
 
@@ -426,7 +427,8 @@ def build_plan(args: argparse.Namespace) -> Dict[str, Any]:
         "recommended_routes": deduped,
         "output_contract": SCHEMA_SUMMARY,
         "guardrails": [
-            "Prefer official APIs/proceedings and OpenReview over general search.",
+            "Default to public official pages/APIs and local normalization; do not require MCP, paid services, or private credentials for the base closure.",
+            "Prefer official APIs/proceedings and public OpenReview visibility over general search.",
             "Do not bypass paywalls, CAPTCHAs, private reviews, or login gates.",
             "Keep credentials, cookies, proxies, headers, and .env files local and untracked.",
             "Record source IDs, URLs, fetch timestamps, limits, and blockers in the manifest.",

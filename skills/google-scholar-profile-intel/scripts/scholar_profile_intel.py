@@ -97,7 +97,23 @@ def command_plan(args: argparse.Namespace) -> None:
     commands: List[Dict[str, Any]] = []
     cautions: List[str] = []
 
-    if "deep-citations" in needs or args.deep_citations:
+    openalex_query = args.target if has_name_query else args.openalex_query or "AUTHOR_NAME_FROM_PROFILE"
+    if "profile" in needs or "indices" in needs or "publications" in needs or "enrichment" in needs or args.openalex or has_name_query:
+        commands.append(
+            {
+                "lane": "openalex",
+                "why": "Default narrowed closure for open researcher dossiers without Google Scholar scraping, SerpApi, Apify, or required external API keys.",
+                "command": (
+                    "python skills/google-scholar-profile-intel/scripts/scholar_profile_intel.py "
+                    f"openalex-author --query {json.dumps(openalex_query, ensure_ascii=False)} "
+                    "--per-page 5 --output output/scholars/openalex_candidates.json"
+                ),
+                "requires": ["Network access to api.openalex.org"],
+                "limits": ["OpenAlex metrics and works may differ from Google Scholar profile counts."],
+            }
+        )
+
+    if ("deep-citations" in needs or args.deep_citations) and args.allow_external_crawlers:
         commands.append(
             {
                 "lane": "google-scholar-citation-crawler",
@@ -111,8 +127,10 @@ def command_plan(args: argparse.Namespace) -> None:
             }
         )
         cautions.append("Do not run deep citation crawling for a normal profile summary.")
+    elif "deep-citations" in needs or args.deep_citations:
+        cautions.append("Deep Google Scholar citation crawling is outside the narrowed default closure; pass --allow-external-crawlers only after user approval.")
 
-    if scholar_id and (needs & {"profile", "indices", "publications", "coauthors"}):
+    if scholar_id and (needs & {"profile", "indices", "publications", "coauthors"}) and args.allow_scholar_scrape:
         sections = ["basics"]
         if "indices" in needs:
             sections.append("indices")
@@ -133,8 +151,10 @@ def command_plan(args: argparse.Namespace) -> None:
                 "requires": ["pip install scholarly in an isolated environment"],
             }
         )
+    elif scholar_id and (needs & {"profile", "indices", "publications", "coauthors"}):
+        cautions.append("Google Scholar profile scraping via scholarly is optional best-effort and not part of the default closure; pass --allow-scholar-scrape only after accepting CAPTCHA/block risk.")
 
-    if scholar_id and args.batch_ready:
+    if scholar_id and args.batch_ready and args.allow_external_crawlers:
         commands.append(
             {
                 "lane": "scholar-scraper",
@@ -146,6 +166,8 @@ def command_plan(args: argparse.Namespace) -> None:
                 "requires": ["pip install scholar-scraper"],
             }
         )
+    elif scholar_id and args.batch_ready:
+        cautions.append("scholar-scraper is an external crawler and is omitted from the narrowed default closure.")
 
     if args.allow_apify:
         apify_target = scholar_id or "AUTHOR_ID"
@@ -162,21 +184,6 @@ def command_plan(args: argparse.Namespace) -> None:
             }
         )
 
-    if "enrichment" in needs or args.openalex or has_name_query:
-        openalex_query = args.target if has_name_query else "AUTHOR_NAME_FROM_PROFILE"
-        commands.append(
-            {
-                "lane": "openalex",
-                "why": "Open author disambiguation, identifiers, institutions, topics, and metric cross-check.",
-                "command": (
-                    "python skills/google-scholar-profile-intel/scripts/scholar_profile_intel.py "
-                    f"openalex-author --query {json.dumps(openalex_query, ensure_ascii=False)} "
-                    "--per-page 5 --output output/scholars/openalex_candidates.json"
-                ),
-                "requires": ["Network access to api.openalex.org"],
-            }
-        )
-
     if not commands:
         commands.append(
             {
@@ -189,7 +196,7 @@ def command_plan(args: argparse.Namespace) -> None:
     cautions.extend(
         [
             "SerpApi is intentionally excluded from this skill.",
-            "Google Scholar direct scraping can be blocked; pause on CAPTCHA/403/429.",
+            "Default closure is OpenAlex-based; Google Scholar scraping is optional best-effort and can be blocked.",
             "Keep API keys, proxy credentials, cookies, and copied browser headers out of repo files.",
         ]
     )
@@ -376,8 +383,11 @@ def build_parser() -> argparse.ArgumentParser:
     plan.add_argument("--max-publications", type=int, default=100)
     plan.add_argument("--deep-citations", action="store_true")
     plan.add_argument("--allow-apify", action="store_true")
+    plan.add_argument("--allow-scholar-scrape", action="store_true", help="Include best-effort direct Google Scholar scraping via scholarly.")
+    plan.add_argument("--allow-external-crawlers", action="store_true", help="Include external Scholar crawler suggestions.")
     plan.add_argument("--batch-ready", action="store_true", help="Include scholar-scraper batch suggestion.")
     plan.add_argument("--openalex", action="store_true", help="Always include OpenAlex enrichment.")
+    plan.add_argument("--openalex-query", help="Author name to use for OpenAlex when target is a Scholar ID.")
     plan.add_argument("--output")
     plan.set_defaults(func=command_plan)
 
