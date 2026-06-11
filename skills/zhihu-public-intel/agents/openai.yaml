@@ -1,0 +1,4 @@
+interface:
+  display_name: "Zhihu Public Intel"
+  short_description: "Route public Zhihu search and crawling"
+  default_prompt: "Use $zhihu-public-intel to search, crawl, normalize, and synthesize public Zhihu questions, answers, articles, and comments."

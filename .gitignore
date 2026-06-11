@@ -16,4 +16,9 @@ node_modules/
 skills/anysearch/.env
 skills/figma-context-mcp/.env
 skills/xhs-explore/cookies.json
+skills/zhihu-public-intel/runtime/
+skills/zhihu-public-intel/**/cookies.json
+skills/zhihu-public-intel/**/auth.json
+skills/zhihu-public-intel/**/.env
+skills/zhihu-public-intel/**/storage_state.json
 .env
