@@ -78,9 +78,11 @@ powershell -ExecutionPolicy Bypass -File .\skills\google-scholar-profile-intel\s
 
 This does not replace public OpenReview capture. It helps write code.
 
-## Optional Credentials
+## Credential Matrix
 
-Use `$external-api-onboarding` before setting any of these. Store values only in a private user-level `.env` or user environment variables.
+Required API keys: none.
+
+Use `$external-api-onboarding` before setting any optional credential. Store values only in a private user-level `.env` or user environment variables. Do not collect credentials that the current connector does not read.
 
 Recommended private path:
 
@@ -88,14 +90,20 @@ Recommended private path:
 %USERPROFILE%\.codex\skills\google-scholar-profile-intel\.env
 ```
 
-Common optional variables:
+Current verified variables:
 
-- `OPENALEX_MAILTO`: polite OpenAlex contact email; not secret.
-- `PAPER_SEARCH_MCP_UNPAYWALL_EMAIL`: enables Unpaywall in paper-search-mcp.
-- `PAPER_SEARCH_MCP_SEMANTIC_SCHOLAR_API_KEY`: improves Semantic Scholar rate limits.
-- `PAPER_SEARCH_MCP_CORE_API_KEY`: improves CORE reliability.
-- `APIFY_TOKEN`: only after the user approves paid/hosted scraping.
-- `OPENREVIEW_USERNAME` / `OPENREVIEW_PASSWORD`: only for user-authorized login-visible data, never for bypassing private reviews or venue controls.
+- `OPENALEX_MAILTO`: optional polite OpenAlex contact email. Not secret. Read by `scripts/scholar_profile_intel.py openalex-author` through `--mailto` or the process/user environment.
+- `APIFY_TOKEN`: optional only if the user explicitly runs a paid/hosted Apify actor outside the default no-secret closure. The bundled script generates actor input but does not spend credits or call Apify by itself.
+- `OPENREVIEW_USERNAME` / `OPENREVIEW_PASSWORD`: optional only for user-authorized custom `openreview-py` login-visible data. Public OpenReview API checks and `openreview_knowledge` MCP do not need login. Never use these for private reviews or venue-control bypass.
+- `OPENREVIEW_KNOWLEDGE_PATH` / `OPENREVIEW_TESTS_PATH`: optional non-secret paths for the OpenReview knowledge MCP's local test/example index. The bundled knowledge tools work without them.
+
+Do not request these for the current bundled `paper-search-mcp` setup unless a replacement connector that reads them is installed and smoke-tested:
+
+- `PAPER_SEARCH_MCP_UNPAYWALL_EMAIL`
+- `PAPER_SEARCH_MCP_SEMANTIC_SCHOLAR_API_KEY`
+- `PAPER_SEARCH_MCP_CORE_API_KEY`
+
+The currently bundled `openags/paper-search-mcp` lane provides public arXiv/PubMed/bioRxiv/medRxiv/Google Scholar helpers and does not consume those provider-key variables.
 
 Never print, summarize, screenshot, commit, or paste secret values.
 

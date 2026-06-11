@@ -59,6 +59,8 @@ codex mcp list
 
 Prefer public arXiv/PubMed/bioRxiv/medRxiv tools for breadth. Treat Google Scholar scraping and download/read tools as non-canonical helpers requiring source-access checks.
 
+The currently bundled `openags/paper-search-mcp` package does not read Semantic Scholar, CORE, or Unpaywall credential variables. Use those sources through official public APIs or a verified connector when needed; do not ask the user to configure keys that this MCP will ignore.
+
 ## Local Google Scholar Lanes
 
 ### scholarly

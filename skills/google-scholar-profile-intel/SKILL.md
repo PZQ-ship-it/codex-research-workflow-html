@@ -11,7 +11,7 @@ Use this skill to turn a scholar name, Google Scholar profile URL, Scholar autho
 
 SerpApi is intentionally excluded. Do not ask for SerpApi keys or use SerpApi APIs in this skill.
 
-If the user asks for a complete, dependency-complete, or MCP-enabled setup, read `references/full-setup.md` and actively configure what can be made usable without secrets: isolated `openreview-py`, official `openreview-mcp` as `openreview_knowledge`, `acl-anthology`, `scholarly`, optional `paper-search-mcp`, and `paper_search_mcp` stdio registration. Credentials, Apify spend, proxies, and login-visible OpenReview data require explicit opt-in.
+If the user asks for a complete, dependency-complete, or MCP-enabled setup, read `references/full-setup.md` and actively configure what can be made usable without secrets: isolated `openreview-py`, official `openreview-mcp` as `openreview_knowledge`, `acl-anthology`, `scholarly`, optional `paper-search-mcp`, and `paper_search_mcp` stdio registration. Credentials, Apify spend, proxies, and login-visible OpenReview data require explicit opt-in. Before requesting any optional credential, verify that the current local connector actually reads it; do not ask for Semantic Scholar, CORE, or Unpaywall keys just because a future workflow could use them.
 
 ## Decision Tree
 
@@ -155,6 +155,7 @@ Read `references/output-schema.md` before merging multiple sources. Always keep 
 - Do not overwrite prior raw captures. Add timestamps or write to a new output directory.
 - Do not trust a single source for identity when common names are involved. Cross-check affiliation, homepage, ORCID, coauthors, and publication titles.
 - Keep API keys, proxy credentials, cookies, and browser headers out of committed files and final summaries.
+- Treat `OPENALEX_MAILTO` as the only optional setting read by the bundled `scholar_profile_intel.py` default lane. Apify tokens, OpenReview login variables, and provider API keys are opt-in only when the chosen lane consumes them.
 
 ## Resources
 
