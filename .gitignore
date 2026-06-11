@@ -15,4 +15,5 @@ node_modules/
 .omx/
 skills/anysearch/.env
 skills/figma-context-mcp/.env
+skills/xhs-explore/cookies.json
 .env

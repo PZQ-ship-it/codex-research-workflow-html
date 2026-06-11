@@ -1,0 +1,4 @@
+interface:
+  display_name: "XHS Explore"
+  short_description: "Search and inspect Xiaohongshu notes through the bundled crawler"
+  default_prompt: "Use $xhs-explore to search Xiaohongshu notes, inspect feed details, browse homepage feeds, or fetch user profile data through the bundled scripts/cli.py workflow."
