@@ -9,6 +9,8 @@ description: Route first-source academic paper and peer-review intelligence coll
 
 Use this skill for first-source paper and peer-review evidence collection. The default closure uses public official pages/APIs, proceedings, and open metadata before general web search or unofficial crawlers. It must remain usable without required MCP servers, paid services, private credentials, or login-gated review data.
 
+If the user asks to configure the "complete" or "full" setup, read `references/full-setup.md` and keep the safe default: isolated `openreview-py` and `acl-anthology` runtimes are okay; credentials, login-visible data, paper-search MCP registration, proxies, paid connectors, and Sci-Hub-like fallbacks require explicit opt-in.
+
 ## Decision Tree
 
 1. Identify the target:
@@ -35,6 +37,16 @@ python skills\paper-review-source-intel\scripts\paper_review_source_intel.py pla
    - Citation/author/topic enrichment: use OpenAlex and Semantic Scholar as secondary metadata backbones.
 4. Keep raw captures and normalized outputs separate. Synthesize from normalized artifacts, not from browser state or loose snippets.
 
+## Full Local Setup
+
+For a complete no-secret local setup:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File skills\paper-review-source-intel\scripts\setup_paper_review_source_intel.ps1 -RunNetworkSmoke
+```
+
+This installs isolated global-skill runtimes for `openreview-py` and `acl-anthology` when the skill is installed under `%USERPROFILE%\.codex\skills\paper-review-source-intel`. It does not register paper-search MCP or write credentials unless the user explicitly opts in.
+
 ## Source Routing
 
 Read `references/source-routing.md` before choosing a backend.
@@ -59,6 +71,12 @@ Print the normalized artifact contract:
 
 ```powershell
 python skills\paper-review-source-intel\scripts\paper_review_source_intel.py schema
+```
+
+Check or repair the safe default runtime:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File skills\paper-review-source-intel\scripts\setup_paper_review_source_intel.ps1
 ```
 
 Generate a run scaffold:
@@ -101,6 +119,7 @@ Read `references/output-schema.md` before merging multiple sources.
 - Default work must remain useful without MCP, paid services, private credentials, or login-only review data.
 - Do not use Google Scholar or SerpApi as the canonical first source for papers or review evidence.
 - Do not bypass paywalls, CAPTCHAs, login gates, private reviews, or venue access controls.
+- Do not enable Sci-Hub-like fallbacks, Google Scholar proxy URLs, paid connectors, or private-record credentials as part of the default setup.
 - Download only open-access or user-authorized PDFs. Record license/access status when known.
 - Keep API keys, OpenReview credentials, cookies, proxy URLs, browser storage state, and `.env` files out of git and final answers.
 - Preserve `source_url`, `source_id`, `fetched_at`, and source-specific identifiers for every normalized row.
@@ -110,5 +129,7 @@ Read `references/output-schema.md` before merging multiple sources.
 ## Resources
 
 - `scripts/paper_review_source_intel.py`: planner, URL inspector, scaffold generator, schema printer, and lightweight normalizer.
+- `scripts/setup_paper_review_source_intel.ps1`: safe setup script for isolated `openreview-py`, `acl-anthology`, and opt-in paper-search MCP runtime/registration.
+- `references/full-setup.md`: complete setup matrix, optional MCP boundaries, credentials policy, and smoke tests.
 - `references/source-routing.md`: detailed source selection and third-party tool notes.
 - `references/output-schema.md`: normalized fields and merge policy.

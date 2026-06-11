@@ -1,6 +1,6 @@
 # Source Routing
 
-Use the lightest first-source lane that can satisfy the request. The default lane must work without required MCP servers, paid services, private credentials, or login-only review data. Do not start from a general web search when an official public API, proceedings page, or maintained metadata repository exists.
+Use the lightest first-source lane that can satisfy the request. The default lane must work without required MCP servers, paid services, private credentials, or login-only review data. Do not start from a general web search when an official public API, proceedings page, or maintained metadata repository exists. For full setup and optional MCP registration, read `full-setup.md`.
 
 ## Priority Matrix
 
@@ -40,6 +40,10 @@ Optional tools:
 - Official `openreview-py` for custom scripts and careful API access.
 - Official `openreview/openreview-mcp` for API knowledge, signatures, best practices, and examples when writing `openreview-py` code.
 
+Default configured runtime:
+
+- `runtime/openreview-py/.venv`: local `openreview-py` client for public API/custom-script use. It can be installed or repaired with `scripts/setup_paper_review_source_intel.ps1`.
+
 Do not treat missing review fields as rejection evidence. First check whether the venue hid reviews, changed invitations, requires login, or has a different venue group ID.
 
 ## Paper Corpus and PDFs
@@ -54,6 +58,8 @@ Good tasks:
 
 For high-breadth workflows, borrow orchestration ideas from `scholar-megasearch`, but keep provenance and source-specific failures in the manifest.
 
+Do not enable paper-search MCP by default when the task can close through public APIs and official proceedings. If the user explicitly enables it, keep Sci-Hub-like fallbacks, Google Scholar proxy URLs, paid connectors, and private-record credentials disabled unless separately authorized.
+
 ## Official Proceedings
 
 Use venue/proceedings sources for accepted-paper lists:
@@ -65,6 +71,10 @@ Use venue/proceedings sources for accepted-paper lists:
 - arXiv: use official Atom API for preprint metadata and PDFs.
 
 When official proceedings disagree with secondary metadata, keep both values with provenance and prefer official proceedings for venue/year/acceptance status.
+
+Default configured runtime:
+
+- `runtime/acl-anthology/.venv`: local ACL Anthology Python package for official NLP proceedings metadata.
 
 ## Fallback Crawlers
 
