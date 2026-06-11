@@ -1,0 +1,4 @@
+interface:
+  display_name: "HKUST-GZ Faculty Intel"
+  short_description: "Crawl HKUST(GZ) faculty by Hub and Thrust"
+  default_prompt: "Use $hkust-gz-faculty-intel to crawl HKUST(GZ) faculty profiles for selected hubs and thrusts, then export normalized JSON and CSV."
