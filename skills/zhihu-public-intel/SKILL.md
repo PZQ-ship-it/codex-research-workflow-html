@@ -1,20 +1,45 @@
 ---
 name: zhihu-public-intel
-description: Route Zhihu research through safe zhihu-mcp authentication, public fallback discovery, normalization, and synthesis. Use when Codex needs Zhihu-related search or capture for public topics, people, questions, answers, articles, comments, user profiles, or JSONL/CSV/Markdown reports. For keyword/topic/person search, automatically guide local zhihu-mcp auth first; use AnySearch only if login is declined, fails, or public-index cross-checking is requested.
+description: Route Zhihu research through safe zhihu-mcp authentication, public fallback discovery, normalization, and synthesis. Use when Codex needs Zhihu-related search or capture for public topics, people, questions, answers, articles, comments, user profiles, or JSONL/CSV/Markdown reports. For keyword/topic/person search, automatically run the local zhihu-mcp auth loop first; use AnySearch only if login is declined, two assisted login attempts fail, the MCP runtime remains unavailable, or public-index cross-checking is requested.
 ---
 
 # Zhihu Public Intel
 
 ## Overview
 
-Use this skill for Zhihu research and evidence collection. The default keyword/topic/person workflow is `check zhihu-mcp runtime -> guide visible-browser login if needed -> verify login -> use zhihu-mcp tools -> normalize outputs`. Do not silently fall back to generic web search or AnySearch before giving the user the zhihu-mcp authentication path.
+Use this skill for Zhihu research and evidence collection. The default keyword/topic/person workflow is `check zhihu-mcp runtime -> verify MCP login status -> run visible-browser login helper if needed -> verify again -> use zhihu-mcp tools -> normalize outputs`. Do not silently fall back to generic web search or AnySearch before running the zhihu-mcp authentication path unless the user explicitly declines login.
 
 Zhihu often presents login walls for search, article details, comments, and user activity. When that happens, do not stop at "blocked":
 
 1. Record the blocker precisely (`signin`, 401/403, CAPTCHA, empty tool result, or hidden comments).
 2. Guide the user through the local authenticated flow in `references/zhihu-mcp-setup.md` and `scripts/assist_zhihu_login.ps1`.
-3. Use AnySearch only if the user declines login, login fails, or a public-index cross-check is useful.
+3. Use AnySearch only if the user declines login, two assisted login attempts fail, the MCP runtime remains unavailable, or a public-index cross-check is useful.
 4. Never ask the user to paste cookies or request headers in chat.
+
+## Mandatory Auth Loop
+
+For keyword/topic/person search, exact-name lookup, comments, user activity, or any task that needs Zhihu search:
+
+1. Run `check-runtime`.
+2. Check login with MCP `check_login_status` or `cookie_status` before search.
+3. If `logged_in=false`, `login_verified=false`, cookies are missing/stale, or a plausible exact-name search returns an auth-looking empty result, immediately run the visible login helper:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\skills\zhihu-public-intel\scripts\assist_zhihu_login.ps1
+```
+
+4. Tell the user to complete login/MFA/CAPTCHA in the opened browser, then verify again with `check_login_status` or `cookie_status`.
+5. Only after verified login, run `search_content`/detail/comment/profile MCP tools.
+
+Do not merely say "login expired" and switch to AnySearch. Existing `cookies.json` is not proof of login; if MCP verification fails, treat it as stale and refresh it through the helper. The helper may replace an existing `cookies.json` only after successful visible login, and it never prints cookie values.
+
+AnySearch is allowed only when:
+
+- the user explicitly declines login or asks for public-index cross-checking;
+- the visible helper cannot run in the current environment;
+- two assisted login attempts fail or the MCP runtime remains unavailable.
+
+When AnySearch is used, label output as discovery/snippet evidence, not full Zhihu capture.
 
 ## Decision Tree
 
@@ -38,7 +63,7 @@ python skills\zhihu-public-intel\scripts\zhihu_public_intel.py plan `
 3. Execute only the needed lane:
    - `zhihu-mcp-auth`: default lane. Check runtime, guide visible-browser login if needed, verify login, then use MCP tools.
    - `public-browser-lite`: detail lane for already discovered public question/answer/article/profile URLs.
-   - `AnySearch discovery`: fallback when user declines login, login fails, or public-index cross-checking is requested. Use snippets only as discovery evidence.
+   - `AnySearch discovery`: fallback when user declines login, two assisted login attempts fail, MCP remains unavailable, or public-index cross-checking is requested. Use snippets only as discovery evidence.
    - `zhihu-k-search`: optional convenience CLI when already installed.
    - `zhihu-mcp`: authenticated MCP workflow for search, discovered URLs/IDs, full details, comments, or user activity after `check-runtime` and login-status checks.
    - `MediaCrawler`: optional larger public bulk crawl.
@@ -60,10 +85,11 @@ Read `references/source-routing.md` before selecting a backend.
 
 Hard rule for keyword/topic/person tasks:
 
-- Do not run generic web search, direct Zhihu URL probing, or AnySearch before offering the zhihu-mcp authentication path.
-- Run `check-runtime`; if login is missing/stale, run `assist_zhihu_login.ps1` so the user can log in in a visible browser.
+- Do not run generic web search, direct Zhihu URL probing, or AnySearch before the mandatory auth loop above.
+- Run `check-runtime`; if login is missing/stale or MCP says `logged_in=false`/`login_verified=false`, run `assist_zhihu_login.ps1` immediately so the user can log in in a visible browser.
+- Existing `cookies.json` can be stale; refresh it through the helper instead of treating the file as success.
 - Verify with `check_login_status` or `cookie_status`, then use `zhihu_mcp.search_content`.
-- Use AnySearch only after the user declines login, login fails, or a public-index cross-check is explicitly useful.
+- Use AnySearch only after the user declines login, two assisted login attempts fail, MCP remains unavailable, or a public-index cross-check is explicitly requested.
 
 ```powershell
 python skills\zhihu-public-intel\scripts\zhihu_public_intel.py check-runtime

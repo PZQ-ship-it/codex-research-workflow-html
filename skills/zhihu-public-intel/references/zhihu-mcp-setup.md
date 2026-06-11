@@ -54,6 +54,7 @@ What happens:
 - The user completes login, MFA, and CAPTCHA directly in the browser.
 - The helper waits for Zhihu auth cookies, writes Playwright-format Zhihu cookies to:
   `%USERPROFILE%\.codex\skills\zhihu-public-intel\runtime\zhihu-mcp\cookies.json`.
+- If `cookies.json` already exists, the helper treats it as refreshable local auth state and overwrites it only after successful visible login.
 - The helper prints only status, path, and cookie count; it never prints cookie values.
 
 Useful options:
@@ -62,8 +63,8 @@ Useful options:
 # Show paths and prerequisites without opening a browser
 powershell -ExecutionPolicy Bypass -File .\skills\zhihu-public-intel\scripts\assist_zhihu_login.ps1 -DryRun
 
-# Refresh an existing cookies.json after the user approves
-powershell -ExecutionPolicy Bypass -File .\skills\zhihu-public-intel\scripts\assist_zhihu_login.ps1 -Force
+# Refresh an existing cookies.json after MCP login verification fails
+powershell -ExecutionPolicy Bypass -File .\skills\zhihu-public-intel\scripts\assist_zhihu_login.ps1
 ```
 
 Manual export remains acceptable only if the user explicitly prefers it. Keep `chrome_cookie_extraction=false` unless the user has explicitly approved automatic extraction from an existing browser profile and understands the storage path.

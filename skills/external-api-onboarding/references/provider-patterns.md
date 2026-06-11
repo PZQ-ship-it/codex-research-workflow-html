@@ -95,7 +95,7 @@ codex mcp add browser_use -- uvx --from "browser-use[cli]" browser-use --mcp
 
 ## Zhihu Public Intel / zhihu-mcp
 
-- Access type: local stdio MCP with user-authorized browser login by default; public AnySearch fallback only when login is declined, fails, or public-index cross-checking is requested.
+- Access type: local stdio MCP with user-authorized browser login by default; public AnySearch fallback only when login is declined, two assisted login attempts fail, the MCP runtime remains unavailable, or public-index cross-checking is requested.
 - API key: none.
 - Preferred private runtime: `%USERPROFILE%\.codex\skills\zhihu-public-intel\runtime\zhihu-mcp`.
 - Private auth state: `cookies.json` in the runtime checkout, Playwright cookie format.
@@ -108,6 +108,8 @@ powershell -ExecutionPolicy Bypass -File .\skills\zhihu-public-intel\scripts\ass
 ```
 
 The helper opens a visible browser. The user completes login, MFA, and CAPTCHA directly in the browser. It stores Zhihu cookies locally and prints only status/path/count, never cookie values. Keep `chrome_cookie_extraction=false` unless the user explicitly approves automatic extraction from an existing browser profile.
+
+If `check_login_status` or `cookie_status` reports `logged_in=false`, `login_verified=false`, missing cookies, stale cookies, or an auth-looking empty exact-name search, run `assist_zhihu_login.ps1` immediately. A present `cookies.json` is not proof of login and should be refreshed through the visible helper before using AnySearch.
 
 - Smoke tests:
 
@@ -127,7 +129,7 @@ python C:\Users\Administrator\.codex\skills\anysearch\scripts\anysearch_cli.py b
   --query '"<关键词>" 知乎'
 ```
 
-Use AnySearch only after login is declined/blocked or as a cross-check, and mark snippets as discovery-only evidence. If the MCP server was newly registered, restart Codex before expecting its tools to appear. Never paste `z_c0`, `d_c0`, cookie strings, request headers, or browser storage into chat.
+Use AnySearch only after login is declined, two assisted login attempts fail, the MCP runtime remains unavailable, or as an explicit cross-check, and mark snippets as discovery-only evidence. If the MCP server was newly registered, restart Codex before expecting its tools to appear. Never paste `z_c0`, `d_c0`, cookie strings, request headers, or browser storage into chat.
 
 ## OAuth MCP Providers
 

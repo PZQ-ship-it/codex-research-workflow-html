@@ -22,6 +22,8 @@ $VenvPython = Join-Path $CheckoutDir ".venv\Scripts\python.exe"
 $CookiesPath = Join-Path $CheckoutDir "cookies.json"
 $ProfileDir = Join-Path $CheckoutDir "zhihu-profile"
 $McpServer = Join-Path $CheckoutDir "mcp_server.py"
+$CookiesFileExists = Test-Path -LiteralPath $CookiesPath
+$CookiesRefreshMode = if ($CookiesFileExists) { "replace_after_successful_login" } else { "create_after_successful_login" }
 
 $status = [ordered]@{
     runtime_root = $RuntimeRoot
@@ -33,9 +35,16 @@ $status = [ordered]@{
     checkout_exists = Test-Path -LiteralPath $CheckoutDir
     venv_python_exists = Test-Path -LiteralPath $VenvPython
     mcp_server_exists = Test-Path -LiteralPath $McpServer
-    cookies_file_exists = Test-Path -LiteralPath $CookiesPath
+    cookies_file_exists = $CookiesFileExists
+    cookies_refresh_mode = $CookiesRefreshMode
     timeout_seconds = $TimeoutSeconds
-    force = [bool]$Force
+    force_parameter_accepted = [bool]$Force
+    secret_values_printed = $false
+    notes = @(
+        "A present cookies.json is treated as refreshable local auth state, not a blocker.",
+        "Existing cookies are overwritten only after a successful visible login.",
+        "Cookie values are never printed."
+    )
 }
 
 if ($DryRun) {
@@ -52,8 +61,12 @@ if (-not (Test-Path -LiteralPath $VenvPython)) {
 if (-not (Test-Path -LiteralPath $McpServer)) {
     throw "mcp_server.py is missing under runtime checkout: $McpServer"
 }
-if ((Test-Path -LiteralPath $CookiesPath) -and (-not $Force)) {
-    throw "cookies.json already exists. Re-run with -Force only if you want to refresh it."
+if ($CookiesFileExists) {
+    if ($Force) {
+        Write-Info "Existing cookies.json found; refreshing because -Force was supplied. Cookie values will not be printed."
+    } else {
+        Write-Info "Existing cookies.json found; treating it as stale/refreshable. It will be replaced only after successful login."
+    }
 }
 
 New-Item -ItemType Directory -Force -Path $ProfileDir | Out-Null

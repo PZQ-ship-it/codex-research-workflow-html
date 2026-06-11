@@ -31,9 +31,9 @@ BACKENDS = {
         "best_for": ["search", "keyword", "people", "topic", "question", "answers", "article", "comments", "user", "report"],
         "setup": [
             "Check the private zhihu-mcp runtime before crawling.",
-            "If login status is missing or stale, open the visible login helper and let the user complete Zhihu login/MFA/CAPTCHA.",
+            "If login status is missing, stale, logged_in=false, or login_verified=false, immediately open the visible login helper and let the user complete Zhihu login/MFA/CAPTCHA.",
             "After login is verified, use zhihu-mcp tools for search, detail, comments, and user/profile capture.",
-            "Use AnySearch only as a fallback when the user declines login, login fails, or a quick public index cross-check is requested.",
+            "Use AnySearch only as a fallback when the user declines login, two assisted login attempts fail, the MCP runtime remains unavailable, or a quick public index cross-check is requested.",
         ],
     },
     "anysearch-discovery": {
@@ -279,7 +279,7 @@ def optional_backend_notes(needs: List[str], scale: str) -> List[Dict[str, Any]]
         )
     if normalized & {"search", "question", "answers", "article"}:
         notes.append(
-            {"backend": "AnySearch discovery", "when": "Fallback only when the user declines login, login fails, or public-index cross-checking is useful. Normalize snippets as discovery rows; do not claim full Zhihu content was captured."}
+            {"backend": "AnySearch discovery", "when": "Fallback only when the user declines login, two assisted login attempts fail, the MCP runtime remains unavailable, or public-index cross-checking is useful. Normalize snippets as discovery rows; do not claim full Zhihu content was captured."}
         )
         notes.append(
             {
@@ -301,11 +301,13 @@ def login_wall_policy(target: str, info: Dict[str, Any], needs: List[str]) -> Di
             "Article/detail APIs return request-parameter/login errors while search engines still index the URL.",
             "Comment/full activity fields are hidden or incomplete.",
         ],
-        "first_fallback": [
+        "auth_first": [
             "Guide the user through zhihu-mcp local authentication first.",
             "python skills\\zhihu-public-intel\\scripts\\zhihu_public_intel.py check-runtime",
+            "Call MCP check_login_status() or cookie_status(); if logged_in=false/login_verified=false, do not search yet.",
             "powershell -ExecutionPolicy Bypass -File .\\skills\\zhihu-public-intel\\scripts\\assist_zhihu_login.ps1",
-            "After user login, verify with MCP tool check_login_status() or cookie_status().",
+            "A present cookies.json is not enough; the helper refreshes stale cookies after successful visible login.",
+            "After user login, verify again with MCP tool check_login_status() or cookie_status().",
         ],
         "authenticated_escalation": [
             "Tell the user what local state will be stored before opening the visible login helper.",
@@ -315,7 +317,7 @@ def login_wall_policy(target: str, info: Dict[str, Any], needs: List[str]) -> Di
             "Restart Codex if the MCP server was newly registered, then smoke-test with check_login_status/cookie_status before crawling.",
         ],
         "public_fallback": [
-            "Use only if authentication is declined, fails, or a public index cross-check is requested.",
+            "Use only if authentication is declined, two assisted login attempts fail, the MCP runtime remains unavailable, or a public index cross-check is requested.",
             anysearch_discovery_command(query),
             "Store AnySearch output under raw/ and normalize with --source anysearch; mark it as discovery/snippet evidence, not full Zhihu page capture.",
         ],
@@ -345,13 +347,13 @@ def command_suggestions(backend: str, target: str, info: Dict[str, Any], needs: 
         query = ids.get("query") or target
         return [
             "Do not use public-browser-lite for keyword search directly.",
-            "Run AnySearch discovery first: {}".format(anysearch_discovery_command(query)),
-            "After discovering concrete Zhihu URLs, inspect each URL and rerun detail capture.",
+            "Switch to the auth-first lane: python skills\\zhihu-public-intel\\scripts\\zhihu_public_intel.py plan --target {!r} --needs search,auth,report".format(query),
+            "If the user declines login, two assisted login attempts fail, or zhihu-mcp remains unavailable, then use AnySearch fallback: {}".format(anysearch_discovery_command(query)),
         ]
     if backend == "anysearch-discovery":
         query = ids.get("query") or target
         return [
-            "Use AnySearch only as fallback/cross-check after authenticated zhihu-mcp is declined or unavailable: {}".format(anysearch_discovery_command(query)),
+            "Use AnySearch only as fallback/cross-check after authenticated zhihu-mcp login is declined, two assisted login attempts fail, the runtime is unavailable, or cross-checking is requested: {}".format(anysearch_discovery_command(query)),
             "Save the raw AnySearch result JSON under raw/.",
             "Normalize discovery rows with: python skills/zhihu-public-intel/scripts/zhihu_public_intel.py normalize --source anysearch --input raw/anysearch_discovery.json --output-dir normalized",
             "Only after URLs/IDs are found, use inspect-url to choose public-browser-lite or authenticated zhihu-mcp for detail capture.",
@@ -360,12 +362,13 @@ def command_suggestions(backend: str, target: str, info: Dict[str, Any], needs: 
         query = ids.get("query") or target
         return [
             "Run runtime check without reading cookies: python skills\\zhihu-public-intel\\scripts\\zhihu_public_intel.py check-runtime",
-            "If cookies are missing/stale or login is not verified, open visible login: powershell -ExecutionPolicy Bypass -File .\\skills\\zhihu-public-intel\\scripts\\assist_zhihu_login.ps1",
+            "Call MCP check_login_status() or cookie_status(); if logged_in=false/login_verified=false, immediately open visible login: powershell -ExecutionPolicy Bypass -File .\\skills\\zhihu-public-intel\\scripts\\assist_zhihu_login.ps1",
+            "Existing cookies.json may be stale; refresh it through the visible helper instead of switching to AnySearch.",
             "The user completes Zhihu login/MFA/CAPTCHA in the browser; do not ask for cookie values in chat.",
             "Verify with MCP tool: check_login_status() or cookie_status().",
             'Then run MCP tool: search_content(keyword={!r}, content_type="all", count=20)'.format(query),
             "Use get_question_detail/get_answer_detail/get_article_detail/get_comments/user_profile on selected results.",
-            "Use AnySearch only if the user declines login or zhihu-mcp remains unavailable: {}".format(anysearch_discovery_command(query)),
+            "Use AnySearch only if the user declines login, two assisted login attempts still fail, or zhihu-mcp remains unavailable: {}".format(anysearch_discovery_command(query)),
         ]
     if backend == "zhihu-k-search":
         if item_type in {"question", "answer", "article"}:
@@ -567,9 +570,10 @@ def cmd_auth_guide(args: argparse.Namespace) -> int:
         "policy": login_wall_policy(args.target or "", info, needs),
         "human_steps": [
             "Run setup_zhihu_mcp.ps1 if check-runtime reports missing runtime files.",
-            "Run assist_zhihu_login.ps1 to open a visible browser.",
+            "Call MCP check_login_status() or cookie_status() before searching.",
+            "If logged_in=false, login_verified=false, cookies are missing/stale, or exact-name search returns an auth-looking empty result, run assist_zhihu_login.ps1 immediately.",
             "In the visible browser, the user logs in to Zhihu and completes MFA/CAPTCHA if shown.",
-            "The helper saves only Zhihu Playwright cookies to the private runtime cookies.json and prints no cookie values.",
+            "The helper saves only Zhihu Playwright cookies to the private runtime cookies.json, refreshes stale cookies after successful login, and prints no cookie values.",
             "Restart Codex if zhihu_mcp was newly registered, then run check_login_status/cookie_status.",
         ],
         "commands": {
@@ -579,6 +583,11 @@ def cmd_auth_guide(args: argparse.Namespace) -> int:
             "visible_login_dry_run": r"powershell -ExecutionPolicy Bypass -File .\skills\zhihu-public-intel\scripts\assist_zhihu_login.ps1 -DryRun",
             "anysearch_discovery": anysearch_discovery_command((info.get("ids") or {}).get("query") or args.target or ""),
         },
+        "fallback_gate": [
+            "Do not run AnySearch before a visible zhihu-mcp login attempt unless the user explicitly declines login.",
+            "AnySearch is allowed only after user decline, two assisted login failures, unavailable MCP runtime, or explicit public-index cross-check.",
+            "If AnySearch is used, label results as discovery/snippet evidence, not full Zhihu capture.",
+        ],
         "never_do": [
             "Do not paste z_c0, d_c0, cookies, request headers, or browser storage into chat.",
             "Do not bypass CAPTCHA/MFA/login controls.",

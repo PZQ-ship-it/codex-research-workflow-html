@@ -32,7 +32,9 @@ Rules:
 - The user completes login, MFA, and CAPTCHA in the visible browser.
 - Do not paste or print cookie values.
 - If cookies already exist, still verify login before crawling.
-- If auth fails or the user declines login, use AnySearch fallback below and mark it as discovery-only evidence.
+- If MCP reports `logged_in=false`, `login_verified=false`, missing cookies, stale cookies, or auth-looking empty search results, run the visible helper immediately; do not switch to AnySearch first.
+- Existing `cookies.json` is refreshable local auth state, not a blocker. The helper replaces it only after successful visible login.
+- If the user declines login, two assisted login attempts fail, or the runtime remains unavailable, use AnySearch fallback below and mark it as discovery-only evidence.
 
 ### public-browser-lite
 
@@ -68,7 +70,7 @@ Limits:
 
 ### AnySearch discovery fallback
 
-Use AnySearch only when the user declines zhihu-mcp login, login fails, or a public index cross-check is explicitly useful.
+Use AnySearch only when the user declines zhihu-mcp login, two assisted login attempts fail, the MCP runtime remains unavailable, or a public index cross-check is explicitly useful. A stale `cookies.json` is not enough reason to use AnySearch; refresh it through `assist_zhihu_login.ps1` first.
 
 Recommended command shape on this Windows machine:
 
