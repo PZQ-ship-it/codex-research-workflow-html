@@ -1,4 +1,4 @@
 interface:
   display_name: "Google Scholar Profile Intel"
-  short_description: "Route scholar profile crawling and enrichment"
-  default_prompt: "Use $google-scholar-profile-intel to gather and integrate a scholar profile, publication list, citation summary, and open bibliographic cross-checks from non-SerpApi sources."
+  short_description: "Configure and route scholar profile intel"
+  default_prompt: "Use $google-scholar-profile-intel to configure scholar profile dependencies/MCP, gather a researcher profile, publication list, citation summary, OpenReview/proceedings evidence, and open bibliographic cross-checks from non-SerpApi sources."

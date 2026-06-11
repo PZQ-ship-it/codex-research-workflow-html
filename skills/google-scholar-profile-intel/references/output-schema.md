@@ -1,6 +1,6 @@
 # Output Schema
 
-Use this contract when merging Google Scholar, Apify, scholar-scraper, citation crawler, and OpenAlex data.
+Use this contract when merging Google Scholar, Apify, scholar-scraper, citation crawler, OpenAlex, OpenReview, paper-search MCP, and official proceedings/API data.
 
 ## Author Profile
 
@@ -31,6 +31,8 @@ Use this contract when merging Google Scholar, Apify, scholar-scraper, citation 
   "publications": [],
   "coauthors": [],
   "citation_events": [],
+  "review_events": [],
+  "proceedings_matches": [],
   "provenance": {
     "sources": [],
     "field_sources": {},
@@ -61,10 +63,33 @@ Use this contract when merging Google Scholar, Apify, scholar-scraper, citation 
 }
 ```
 
+## Review Or Proceedings Row
+
+```json
+{
+  "row_type": "review_event_or_proceedings_match",
+  "source": "",
+  "source_id": "",
+  "source_url": "",
+  "paper_title": "",
+  "venue": "",
+  "year": null,
+  "openreview_forum": "",
+  "decision": "",
+  "review_visibility": "public/login-required/unknown",
+  "proceedings_status": "accepted/preprint/unknown",
+  "matched_author_evidence": [],
+  "raw_ref": ""
+}
+```
+
 ## Merge Policy
 
 - Prefer Google Scholar for Scholar-visible metrics and publication order.
 - Prefer OpenAlex for DOI, ORCID, institutions, topics, and open identifiers.
+- Prefer OpenReview for public review/decision fields when visible.
+- Prefer official proceedings for venue/year/accepted status.
+- Prefer paper-search MCP only as a convenience source; retain the underlying source URL/API and do not cite the MCP alone as evidence.
 - Prefer citation crawler output for per-paper citing-work lists.
 - Prefer Apify output when it is the only successful Scholar profile capture in a blocked environment.
 - When counts conflict, keep both as separate fields or attach source provenance; do not silently average.

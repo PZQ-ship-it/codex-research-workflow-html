@@ -1,12 +1,15 @@
 # Source Routing
 
-Use the shallowest source that satisfies the task. The default closure is OpenAlex/open-bibliographic and must work without required SerpApi, Apify, private proxies, or Google Scholar scraping. Escalate only when the user asks for more depth or the previous lane cannot answer reliably.
+Use the shallowest source that satisfies the task. The default closure is OpenAlex/open-bibliographic and must work without required SerpApi, Apify, private proxies, or Google Scholar scraping. Escalate only when the user asks for more depth or the previous lane cannot answer reliably. For complete dependency/MCP setup, read `full-setup.md`.
 
 ## Routes
 
 | Need | Preferred route | Notes |
 |---|---|---|
 | Author disambiguation and open dossier | `openalex-author` | Default lane. Good for ORCID, institutions, topics, works count, citations, h-index/i10. |
+| Profile-to-paper/review cross-check | `openreview-py`, OpenReview public pages | Public submissions, forum IDs, review visibility, decisions, and venue evidence. |
+| Broad public paper search | `paper_search_mcp`, arXiv, PubMed, bioRxiv, medRxiv | MCP is a convenience layer after source routing; avoid Google Scholar as canonical evidence. |
+| Official publication evidence | ACL Anthology, CVF, PMLR, NeurIPS proceedings, arXiv, Crossref, OpenAlex, Semantic Scholar, Unpaywall | Prefer official proceedings/API over Google Scholar snippets or scraper output. |
 | Single scholar profile by Scholar URL or ID | optional `scholarly-author` | Best-effort only after `--allow-scholar-scrape`; keep `publications` bounded. |
 | Batch Scholar author IDs | optional `scholar-scraper` | External crawler; use only after explicit approval and low thread count. |
 | Per-paper citing-work lists | optional `google-scholar-citation-crawler` | Long-running external lane with cache/resume. Use only for explicitly approved `deep-citations`. |
@@ -26,6 +29,35 @@ python skills\google-scholar-profile-intel\scripts\scholar_profile_intel.py open
 ```
 
 OpenAlex is not Google Scholar, so citation counts and publication lists may differ. Treat it as the stable default closure, and label Google Scholar-specific fields as unavailable unless an optional Scholar scrape succeeds.
+
+## OpenReview And Proceedings Closure
+
+Use OpenReview public pages and `openreview-py` when the dossier needs public review/decision evidence, forum IDs, or profile-to-submission corroboration:
+
+```powershell
+%USERPROFILE%\.codex\skills\google-scholar-profile-intel\runtime\openreview-py\.venv\Scripts\python.exe -c "import openreview; print('ok')"
+```
+
+Use official proceedings/API sources for publication evidence:
+
+- ACL Anthology Python package or metadata for ACL/EMNLP/NAACL/COLING.
+- CVF Open Access for CVPR/ICCV/WACV.
+- PMLR volume pages for ICML/AISTATS/COLT.
+- NeurIPS proceedings for accepted papers.
+- arXiv, Crossref, OpenAlex, Semantic Scholar, and Unpaywall for DOI and open-access cross-checks.
+
+When proceedings disagree with Google Scholar, preserve both values with provenance and prefer official proceedings for venue/year/accepted status.
+
+## Paper Search MCP
+
+Register `paper_search_mcp` for MCP-enabled setups:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File skills\google-scholar-profile-intel\scripts\setup_google_scholar_profile_intel.ps1 -RegisterPaperSearchMcp
+codex mcp list
+```
+
+Prefer public arXiv/PubMed/bioRxiv/medRxiv tools for breadth. Treat Google Scholar scraping and download/read tools as non-canonical helpers requiring source-access checks.
 
 ## Local Google Scholar Lanes
 

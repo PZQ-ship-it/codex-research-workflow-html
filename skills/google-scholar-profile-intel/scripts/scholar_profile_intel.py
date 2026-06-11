@@ -113,6 +113,64 @@ def command_plan(args: argparse.Namespace) -> None:
             }
         )
 
+    if needs & {"openreview", "reviews", "decisions", "rebuttals"} or args.openreview:
+        commands.append(
+            {
+                "lane": "openreview-public-openreview-py",
+                "why": "Public OpenReview evidence for submissions, visible reviews, decisions, forum IDs, and venue/profile corroboration.",
+                "command": (
+                    "powershell -ExecutionPolicy Bypass -File "
+                    "skills/google-scholar-profile-intel/scripts/setup_google_scholar_profile_intel.ps1 "
+                    "-SkipAclAnthology -SkipScholarly -RunNetworkSmoke -RegisterOpenReviewKnowledgeMcp"
+                ),
+                "requires": [
+                    "openreview-py runtime",
+                    "openreview_knowledge MCP for API guidance",
+                    "Public OpenReview visibility only; missing fields are visibility blockers, not facts",
+                ],
+            }
+        )
+
+    if needs & {"proceedings", "official-proceedings", "accepted-papers"} or args.proceedings:
+        commands.append(
+            {
+                "lane": "official-proceedings-apis",
+                "why": "Official publication evidence for venue/year/accepted status and profile-to-paper corroboration.",
+                "routes": [
+                    "ACL Anthology Python package or metadata",
+                    "CVF Open Access",
+                    "PMLR volume pages",
+                    "NeurIPS proceedings",
+                    "arXiv, Crossref, OpenAlex, Semantic Scholar, Unpaywall",
+                ],
+                "command": (
+                    "powershell -ExecutionPolicy Bypass -File "
+                    "skills/google-scholar-profile-intel/scripts/setup_google_scholar_profile_intel.ps1 "
+                    "-SkipOpenReviewPy -SkipScholarly"
+                ),
+            }
+        )
+
+    if needs & {"paper-search", "mcp", "broad-search"} or args.paper_search_mcp:
+        commands.append(
+            {
+                "lane": "paper-search-mcp",
+                "why": "Optional MCP-enabled public-source breadth search for arXiv/PubMed/bioRxiv/medRxiv and related metadata.",
+                "command": (
+                    "powershell -ExecutionPolicy Bypass -File "
+                    "skills/google-scholar-profile-intel/scripts/setup_google_scholar_profile_intel.ps1 "
+                    "-SkipOpenReviewPy -SkipAclAnthology -SkipScholarly -RegisterPaperSearchMcp"
+                ),
+                "requires": [
+                    "paper_search_mcp registered in Codex MCP config",
+                    "Restart current Codex session if tools do not hot-load",
+                ],
+                "limits": [
+                    "Do not treat Google Scholar scraping or download/read tools as canonical evidence without access checks.",
+                ],
+            }
+        )
+
     if ("deep-citations" in needs or args.deep_citations) and args.allow_external_crawlers:
         commands.append(
             {
@@ -387,6 +445,9 @@ def build_parser() -> argparse.ArgumentParser:
     plan.add_argument("--allow-external-crawlers", action="store_true", help="Include external Scholar crawler suggestions.")
     plan.add_argument("--batch-ready", action="store_true", help="Include scholar-scraper batch suggestion.")
     plan.add_argument("--openalex", action="store_true", help="Always include OpenAlex enrichment.")
+    plan.add_argument("--openreview", action="store_true", help="Include public OpenReview/openreview-py setup and route suggestions.")
+    plan.add_argument("--proceedings", action="store_true", help="Include official proceedings/API route suggestions.")
+    plan.add_argument("--paper-search-mcp", action="store_true", help="Include paper-search MCP setup/registration route suggestions.")
     plan.add_argument("--openalex-query", help="Author name to use for OpenAlex when target is a Scholar ID.")
     plan.add_argument("--output")
     plan.set_defaults(func=command_plan)
