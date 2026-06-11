@@ -1,6 +1,6 @@
 # Full Setup
 
-Use this reference when the user asks to configure the complete `paper-review-source-intel` setup. The safe default is a no-secret local toolchain plus public official sources. Optional MCP servers and credentials are opt-in only.
+Use this reference when the user asks to configure the complete `paper-review-source-intel` setup. The safe default is a no-secret local toolchain plus public official sources. MCP registration is allowed for no-secret public-source servers; credentials and restricted connectors are opt-in only.
 
 ## Safe Default
 
@@ -20,6 +20,7 @@ It creates isolated runtimes under `runtime/`:
 
 - `openreview-py`: official Python client for public OpenReview API access and custom scripts.
 - `acl-anthology`: official ACL Anthology metadata package for ACL/EMNLP/NAACL/COLING evidence.
+- `paper-search-mcp`: optional stdio MCP for public arXiv/PubMed/bioRxiv/medRxiv breadth search. Registration is safe when no credentials, proxies, or restricted connectors are configured.
 
 Do not commit `runtime/`, `.env`, cookies, browser storage, downloaded PDFs, or raw crawl outputs.
 
@@ -68,17 +69,27 @@ Install but do not register:
 powershell -ExecutionPolicy Bypass -File .\skills\paper-review-source-intel\scripts\setup_paper_review_source_intel.ps1 -InstallPaperSearchMcp
 ```
 
-Register only after the user explicitly accepts the optional connector boundary:
+Register the no-secret stdio MCP when the user asks for the full MCP-enabled setup:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\skills\paper-review-source-intel\scripts\setup_paper_review_source_intel.ps1 -RegisterPaperSearchMcp -AllowOptionalRestrictedConnectors
+powershell -ExecutionPolicy Bypass -File .\skills\paper-review-source-intel\scripts\setup_paper_review_source_intel.ps1 -RegisterPaperSearchMcp
 ```
 
-Keep these disabled unless explicitly authorized by the user:
+Then verify:
+
+```powershell
+codex mcp list
+```
+
+Current `paper-search-mcp` exposes arXiv, PubMed, bioRxiv, medRxiv, and Google Scholar search plus some download/read tools. Treat it as a helper, not as canonical venue evidence. Prefer public APIs and official proceedings first.
+
+Keep these disabled or unused unless explicitly authorized by the user:
 
 - Sci-Hub fallback.
 - Google Scholar proxy URLs.
 - IEEE/ACM keys, paid connectors, private records, or closed-access downloads.
+- Google Scholar scraping as canonical evidence.
+- Download/read tools for papers whose license or access status is unclear.
 
 ## Optional Credentials
 
@@ -125,4 +136,12 @@ Dependency integrity:
 ```powershell
 %USERPROFILE%\.codex\skills\paper-review-source-intel\runtime\openreview-py\.venv\Scripts\python.exe -m pip check
 %USERPROFILE%\.codex\skills\paper-review-source-intel\runtime\acl-anthology\.venv\Scripts\python.exe -m pip check
+```
+
+Paper Search MCP:
+
+```powershell
+%USERPROFILE%\.codex\skills\paper-review-source-intel\runtime\paper-search-mcp\.venv\Scripts\python.exe -m pip check
+%USERPROFILE%\.codex\skills\paper-review-source-intel\runtime\paper-search-mcp\.venv\Scripts\python.exe -c "import paper_search_mcp; print('ok')"
+codex mcp list
 ```

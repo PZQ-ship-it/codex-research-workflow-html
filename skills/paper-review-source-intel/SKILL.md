@@ -9,7 +9,7 @@ description: Route first-source academic paper and peer-review intelligence coll
 
 Use this skill for first-source paper and peer-review evidence collection. The default closure uses public official pages/APIs, proceedings, and open metadata before general web search or unofficial crawlers. It must remain usable without required MCP servers, paid services, private credentials, or login-gated review data.
 
-If the user asks to configure the "complete" or "full" setup, read `references/full-setup.md` and keep the safe default: isolated `openreview-py` and `acl-anthology` runtimes are okay; credentials, login-visible data, paper-search MCP registration, proxies, paid connectors, and Sci-Hub-like fallbacks require explicit opt-in.
+If the user asks to configure the "complete", "full", or MCP-enabled setup, read `references/full-setup.md` and actively configure what can be made usable without secrets: isolated `openreview-py` and `acl-anthology` runtimes, optional `paper-search-mcp` runtime, and `paper_search_mcp` stdio registration when requested or clearly implied. Credentials, login-visible data, external OpenReview knowledge MCP URLs, proxies, paid connectors, and Sci-Hub-like fallbacks require explicit opt-in.
 
 ## Decision Tree
 
@@ -45,7 +45,13 @@ For a complete no-secret local setup:
 powershell -ExecutionPolicy Bypass -File skills\paper-review-source-intel\scripts\setup_paper_review_source_intel.ps1 -RunNetworkSmoke
 ```
 
-This installs isolated global-skill runtimes for `openreview-py` and `acl-anthology` when the skill is installed under `%USERPROFILE%\.codex\skills\paper-review-source-intel`. It does not register paper-search MCP or write credentials unless the user explicitly opts in.
+For an MCP-enabled setup, register the public-source `paper_search_mcp` stdio server too:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File skills\paper-review-source-intel\scripts\setup_paper_review_source_intel.ps1 -RunNetworkSmoke -RegisterPaperSearchMcp
+```
+
+This installs isolated global-skill runtimes when the skill is installed under `%USERPROFILE%\.codex\skills\paper-review-source-intel`. It does not write real credentials. After MCP registration, verify with `codex mcp list`; a running Codex session may need restart before new MCP tools appear.
 
 ## Source Routing
 
@@ -55,6 +61,7 @@ Read `references/source-routing.md` before choosing a backend.
 - Use official proceedings first for accepted-paper lists: ACL Anthology for ACL/EMNLP/NAACL, CVF for CVPR/ICCV/WACV, PMLR for ICML/AISTATS/COLT, NeurIPS proceedings for NeurIPS accepted papers, and arXiv for preprints.
 - Use public arXiv, Crossref, OpenAlex, Semantic Scholar, Unpaywall, and proceedings pages for multi-source literature search, DOI recovery, and open-access PDF resolution by default.
 - Use `paper-search-mcp` only as an optional convenience layer after the public-source closure is understood.
+- If `paper_search_mcp` is registered, prefer its public arXiv/PubMed/bioRxiv/medRxiv tools for breadth; do not use its Google Scholar or download/read tools as canonical evidence without checking access/licensing and recording provenance.
 - Use Semantic Scholar/OpenAlex for enrichment and cross-checking, not as the only source for official venue decisions.
 - Use general crawlers only as a fallback when official pages are static but lack an API.
 
@@ -120,6 +127,7 @@ Read `references/output-schema.md` before merging multiple sources.
 - Do not use Google Scholar or SerpApi as the canonical first source for papers or review evidence.
 - Do not bypass paywalls, CAPTCHAs, login gates, private reviews, or venue access controls.
 - Do not enable Sci-Hub-like fallbacks, Google Scholar proxy URLs, paid connectors, or private-record credentials as part of the default setup.
+- Registering `paper_search_mcp` is allowed for public-source convenience, but using Google Scholar scraping or paper download/read tools must be justified by the task and source-access status.
 - Download only open-access or user-authorized PDFs. Record license/access status when known.
 - Keep API keys, OpenReview credentials, cookies, proxy URLs, browser storage state, and `.env` files out of git and final answers.
 - Preserve `source_url`, `source_id`, `fetched_at`, and source-specific identifiers for every normalized row.
@@ -129,7 +137,7 @@ Read `references/output-schema.md` before merging multiple sources.
 ## Resources
 
 - `scripts/paper_review_source_intel.py`: planner, URL inspector, scaffold generator, schema printer, and lightweight normalizer.
-- `scripts/setup_paper_review_source_intel.ps1`: safe setup script for isolated `openreview-py`, `acl-anthology`, and opt-in paper-search MCP runtime/registration.
+- `scripts/setup_paper_review_source_intel.ps1`: safe setup script for isolated `openreview-py`, `acl-anthology`, optional `paper-search-mcp`, and MCP registration.
 - `references/full-setup.md`: complete setup matrix, optional MCP boundaries, credentials policy, and smoke tests.
 - `references/source-routing.md`: detailed source selection and third-party tool notes.
 - `references/output-schema.md`: normalized fields and merge policy.

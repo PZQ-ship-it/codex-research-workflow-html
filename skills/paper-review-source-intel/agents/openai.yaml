@@ -1,4 +1,4 @@
 interface:
   display_name: "Paper Review Source Intel"
   short_description: "Route and configure paper/review sources"
-  default_prompt: "Use $paper-review-source-intel to configure safe public paper-source tooling, collect first-source paper metadata, reviews, decisions, PDFs, and normalize evidence."
+  default_prompt: "Use $paper-review-source-intel to configure public paper-source runtimes and MCP registration, collect first-source paper metadata, reviews, decisions, PDFs, and normalize evidence."

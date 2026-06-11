@@ -9,7 +9,6 @@ param(
     [switch]$SkipAclAnthology,
     [switch]$InstallPaperSearchMcp,
     [switch]$RegisterPaperSearchMcp,
-    [switch]$AllowOptionalRestrictedConnectors,
     [string]$OpenReviewKnowledgeMcpUrl = "",
     [switch]$RegisterOpenReviewKnowledgeMcp,
     [switch]$RunNetworkSmoke,
@@ -158,17 +157,19 @@ if ($InstallPaperSearchMcp -or $RegisterPaperSearchMcp) {
     $summary.paper_search_mcp = $paperSearchPython
 
     if ($RegisterPaperSearchMcp) {
-        if (-not $AllowOptionalRestrictedConnectors) {
-            throw "Refusing to register paper-search-mcp without -AllowOptionalRestrictedConnectors. Read references/full-setup.md first; keep Sci-Hub, proxies, paid connectors, and private keys disabled unless explicitly authorized."
-        }
         $envPath = Join-Path $resolvedSkillDir ".env"
+        $downloadsPath = Join-Path $resolvedSkillDir "runtime\paper-search-mcp\downloads"
         Invoke-Logged "create private env placeholder" {
             if (-not (Test-Path -LiteralPath $envPath)) {
                 New-Item -ItemType File -Path $envPath -Force | Out-Null
             }
+            New-Item -ItemType Directory -Force -Path $downloadsPath | Out-Null
         }
         Invoke-Logged "register paper_search_mcp in Codex" {
-            & codex mcp add paper_search_mcp --env "PAPER_SEARCH_MCP_ENV_FILE=$envPath" -- $paperSearchPython -m paper_search_mcp.server
+            & codex mcp add paper_search_mcp `
+                --env "PAPER_SEARCH_MCP_ENV_FILE=$envPath" `
+                --env "PAPER_SEARCH_MCP_DOWNLOADS=$downloadsPath" `
+                -- $paperSearchPython -m paper_search_mcp.server
         }
         $summary.paper_search_mcp_registered = $true
     }

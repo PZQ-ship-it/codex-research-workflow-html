@@ -48,7 +48,7 @@ Do not treat missing review fields as rejection evidence. First check whether th
 
 ## Paper Corpus and PDFs
 
-Use public sources first when the user asks for a topic corpus, broad literature scan, DOI recovery, open PDF acquisition, or text extraction. `paper-search-mcp` is an optional convenience layer, not required for the narrowed closure, and is best used as a corpus builder rather than as the sole authority on conference acceptance or review decisions.
+Use public sources first when the user asks for a topic corpus, broad literature scan, DOI recovery, open PDF acquisition, or text extraction. `paper-search-mcp` is an optional convenience layer, not required for the narrowed closure, and is best used as a corpus builder rather than as the sole authority on conference acceptance or review decisions. If the user asks for a full MCP-enabled setup, register `paper_search_mcp` and then verify it with `codex mcp list`.
 
 Good tasks:
 
@@ -58,7 +58,7 @@ Good tasks:
 
 For high-breadth workflows, borrow orchestration ideas from `scholar-megasearch`, but keep provenance and source-specific failures in the manifest.
 
-Do not enable paper-search MCP by default when the task can close through public APIs and official proceedings. If the user explicitly enables it, keep Sci-Hub-like fallbacks, Google Scholar proxy URLs, paid connectors, and private-record credentials disabled unless separately authorized.
+Do not rely on paper-search MCP by default when the task can close through public APIs and official proceedings. If it is registered, keep Sci-Hub-like fallbacks, Google Scholar proxy URLs, paid connectors, and private-record credentials disabled unless separately authorized. Treat Google Scholar scraping and download/read tools as non-canonical helpers requiring source-access checks.
 
 ## Official Proceedings
 
