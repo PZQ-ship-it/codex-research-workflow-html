@@ -30,3 +30,11 @@ This file records third-party skill snapshots vendored into this repository.
 - Upstream: `https://github.com/luwill/research-skills`
 - Upstream path: `research-proposal`
 - Commit: `269b448fe918f910a23e09e74fede45dc5d78f10`
+
+## Professor Fit Analyzer
+
+- Skill directory: `skills/professor-fit-analyzer/`
+- Upstream: `https://github.com/voidful/academic-skills`
+- Upstream path: `professor-fit-analyser`
+- Commit: `71e9c42c60636602e87985f4306d134a3b63809e`
+- Install note: moved the upstream `compatibility` frontmatter field under `metadata.compatibility` to satisfy the local Codex skill validator while preserving the compatibility note.
