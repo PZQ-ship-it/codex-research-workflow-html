@@ -40,7 +40,7 @@ Recommended fields:
 
 - `row_type`: `paper`.
 - `row_id`: stable local ID.
-- `source`: source name, such as `openreview`, `acl-anthology`, `cvf`, `pmlr`, `neurips-proceedings`, `arxiv`, `paper-search-mcp`, `openalex`, or `semantic-scholar`.
+- `source`: source name, such as `openreview`, `acl-anthology`, `cvf`, `pmlr`, `neurips-proceedings`, `arxiv`, `acm-dl`, `ieee-csdl`, `ieee-xplore`, `ieee-transactions`, `iacr-tches`, `paper-search-mcp`, `openalex`, or `semantic-scholar`.
 - `source_priority`: `primary`, `secondary`, or `fallback`.
 - `source_id`: source-native ID.
 - `source_url`: source-native page/API URL.

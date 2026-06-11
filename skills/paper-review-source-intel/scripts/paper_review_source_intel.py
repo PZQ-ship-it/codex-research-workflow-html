@@ -15,7 +15,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence
 from urllib.parse import parse_qs, urlparse
 
 
-SCHEMA_VERSION = "0.1"
+SCHEMA_VERSION = "0.2"
 
 VENUE_ALIASES = {
     "acl": "ACL",
@@ -32,12 +32,162 @@ VENUE_ALIASES = {
     "icml": "ICML",
     "aistats": "AISTATS",
     "colt": "COLT",
+    "micro": "MICRO",
+    "isca": "ISCA",
+    "asplos": "ASPLOS",
+    "hpca": "HPCA",
+    "fpga": "FPGA",
+    "fccm": "FCCM",
+    "iccad": "ICCAD",
+    "dac": "DAC",
+    "date": "DATE",
+    "tcad": "TCAD",
+    "isscc": "ISSCC",
+    "tkde": "TKDE",
+    "tches": "TCHES",
+    "ches": "TCHES",
 }
 
 OPENREVIEW_VENUES = {"ICLR", "NeurIPS", "ICML", "COLM", "TMLR", "ARR", "ACL", "EMNLP", "CoRL"}
 ACL_VENUES = {"ACL", "EMNLP", "NAACL", "COLING"}
 CVF_VENUES = {"CVPR", "ICCV", "WACV", "ECCV"}
 PMLR_VENUES = {"ICML", "AISTATS", "COLT"}
+ACM_DL_VENUES = {"ISCA", "ASPLOS", "FPGA", "DAC"}
+IEEE_CSDL_VENUES = {"MICRO", "HPCA", "FCCM"}
+ACM_IEEE_VENUES = {"MICRO", "ISCA", "ASPLOS", "ICCAD", "DAC"}
+IEEE_XPLORE_VENUES = {"FCCM", "ICCAD", "DATE", "ISSCC"}
+IEEE_TRANSACTIONS = {"TCAD", "TKDE"}
+IACR_VENUES = {"TCHES"}
+
+VENUE_SOURCE_HINTS = {
+    "MICRO": ["https://www.computer.org/csdl/proceedings/1000440", "https://microarch.org/"],
+    "ISCA": ["https://dl.acm.org/conference/isca"],
+    "ASPLOS": ["https://www.asplos-conference.org/", "https://dl.acm.org/conference/asplos"],
+    "HPCA": ["https://www.computer.org/csdl/proceedings/1000335", "https://www.hpca-conf.org/"],
+    "FPGA": ["https://dl.acm.org/conference/fpga"],
+    "FCCM": ["https://www.fccm.org/"],
+    "ICCAD": ["https://iccad.com/", "https://dl.acm.org/conference/iccad"],
+    "DAC": ["https://www.dac.com/", "https://dl.acm.org/conference/dac"],
+    "DATE": ["https://www.date-conference.com/archive"],
+    "TCAD": ["https://ieee-ceda.org/publications/tcad"],
+    "ISSCC": ["https://www.isscc.org/"],
+    "ICML": ["https://proceedings.mlr.press/", "https://icml.cc/"],
+    "TKDE": ["https://www.computer.org/csdl/journal/tk"],
+    "TCHES": ["https://tches.iacr.org/"],
+}
+
+DIRECTION_VENUE_RULES = [
+    {
+        "family": "computer-architecture",
+        "venues": ["MICRO", "ISCA", "ASPLOS", "HPCA"],
+        "keywords": [
+            "computer architecture",
+            "microarchitecture",
+            "processor",
+            "cpu",
+            "cache",
+            "memory hierarchy",
+            "architecture accelerator",
+            "hardware accelerator",
+            "parallel architecture",
+            "speculative execution",
+        ],
+        "why": "Target direction appears to be computer architecture, microarchitecture, or architecture-facing systems.",
+    },
+    {
+        "family": "fpga-reconfigurable-computing",
+        "venues": ["FPGA", "FCCM"],
+        "keywords": [
+            "fpga",
+            "field-programmable",
+            "field programmable",
+            "reconfigurable computing",
+            "hls",
+            "overlay architecture",
+        ],
+        "why": "Target direction appears to be FPGA, HLS, or reconfigurable computing.",
+    },
+    {
+        "family": "eda-design-automation",
+        "venues": ["ICCAD", "DAC", "DATE", "TCAD"],
+        "keywords": [
+            "eda",
+            "electronic design automation",
+            "computer-aided design",
+            "computer aided design",
+            "design automation",
+            "placement",
+            "routing",
+            "logic synthesis",
+            "physical design",
+            "verification",
+            "vlsi cad",
+            "ic design",
+        ],
+        "why": "Target direction appears to be EDA, CAD, verification, or integrated-circuit design automation.",
+    },
+    {
+        "family": "circuits-solid-state",
+        "venues": ["ISSCC", "TCAD", "DATE"],
+        "keywords": [
+            "solid-state circuit",
+            "solid state circuit",
+            "analog circuit",
+            "mixed-signal",
+            "mixed signal",
+            "rf circuit",
+            "adc",
+            "pll",
+            "serdes",
+            "circuit design",
+            "soc design",
+        ],
+        "why": "Target direction appears to be solid-state circuits or circuit/system design.",
+    },
+    {
+        "family": "machine-learning",
+        "venues": ["ICML"],
+        "keywords": [
+            "machine learning",
+            "deep learning",
+            "representation learning",
+            "reinforcement learning",
+            "learning theory",
+            "foundation model",
+            "large language model",
+        ],
+        "why": "Target direction appears to be machine learning.",
+    },
+    {
+        "family": "data-engineering",
+        "venues": ["TKDE"],
+        "keywords": [
+            "data engineering",
+            "knowledge engineering",
+            "data mining",
+            "database",
+            "knowledge graph",
+            "graph mining",
+            "information retrieval",
+        ],
+        "why": "Target direction appears to be knowledge and data engineering.",
+    },
+    {
+        "family": "cryptographic-hardware",
+        "venues": ["TCHES"],
+        "keywords": [
+            "cryptographic hardware",
+            "embedded security",
+            "side-channel",
+            "side channel",
+            "fault attack",
+            "hardware security",
+            "masked implementation",
+            "post-quantum hardware",
+        ],
+        "why": "Target direction appears to be cryptographic hardware or embedded-system security.",
+    },
+]
 
 SCHEMA_SUMMARY = {
     "raw/": "Untouched API JSON, scraped HTML, PDFs, screenshots, or logs.",
@@ -74,6 +224,13 @@ def normalize_venue(value: Optional[str]) -> Optional[str]:
         return None
     stripped = value.strip()
     return VENUE_ALIASES.get(stripped.lower(), stripped)
+
+
+def infer_venue_from_target(target: str) -> Optional[str]:
+    for venue in sorted(set(VENUE_ALIASES.values()), key=len, reverse=True):
+        if re.search(rf"(?<![A-Za-z0-9]){re.escape(venue)}(?![A-Za-z0-9])", target):
+            return venue
+    return None
 
 
 def content_value(value: Any) -> Any:
@@ -190,6 +347,80 @@ def inspect_url(url: str) -> Dict[str, Any]:
         )
         return result
 
+    if "dl.acm.org" in host:
+        result.update(
+            {
+                "source": "acm-dl",
+                "source_kind": "official-proceedings-or-journal",
+                "ids": {"path": path.strip("/")} if path.strip("/") else {},
+                "recommended_needs": ["papers", "metadata", "bibtex"],
+                "recommended_routes": ["acm-dl-proceedings"],
+            }
+        )
+        return result
+
+    if "computer.org" in host and "/csdl/" in path:
+        result.update(
+            {
+                "source": "ieee-csdl",
+                "source_kind": "official-proceedings-or-journal",
+                "ids": {"path": path.strip("/")} if path.strip("/") else {},
+                "recommended_needs": ["papers", "metadata", "pdfs"],
+                "recommended_routes": ["ieee-csdl-proceedings"],
+            }
+        )
+        return result
+
+    if "ieeexplore.ieee.org" in host:
+        result.update(
+            {
+                "source": "ieee-xplore",
+                "source_kind": "official-proceedings-or-journal",
+                "ids": {"path": path.strip("/")} if path.strip("/") else {},
+                "recommended_needs": ["papers", "metadata", "pdfs"],
+                "recommended_routes": ["ieee-xplore"],
+            }
+        )
+        return result
+
+    if "tches.iacr.org" in host or ("iacr.org" in host and "tches" in path.lower()):
+        result.update(
+            {
+                "source": "iacr-tches",
+                "source_kind": "open-access-journal",
+                "ids": {"path": path.strip("/")} if path.strip("/") else {},
+                "recommended_needs": ["papers", "metadata", "pdfs"],
+                "recommended_routes": ["iacr-tches"],
+            }
+        )
+        return result
+
+    official_venue_hosts = {
+        "microarch.org",
+        "microarch.hosting.acm.org",
+        "iscaconf.org",
+        "iscaconf.hosting.acm.org",
+        "asplos-conference.org",
+        "hpca-conf.org",
+        "fccm.org",
+        "iccad.com",
+        "dac.com",
+        "date-conference.com",
+        "isscc.org",
+        "icml.cc",
+    }
+    if any(host == domain or host.endswith(f".{domain}") for domain in official_venue_hosts):
+        result.update(
+            {
+                "source": "official-venue-site",
+                "source_kind": "official-venue-site",
+                "ids": {"path": path.strip("/")} if path.strip("/") else {},
+                "recommended_needs": ["papers", "metadata", "cfp", "schedule"],
+                "recommended_routes": ["official-venue-site"],
+            }
+        )
+        return result
+
     if "doi.org" in host:
         result.update(
             {
@@ -257,6 +488,23 @@ def classify_target(target: str) -> Dict[str, Any]:
     }
 
 
+def infer_related_venue_families(target: str) -> List[Dict[str, Any]]:
+    normalized = target.lower()
+    matches: List[Dict[str, Any]] = []
+    for rule in DIRECTION_VENUE_RULES:
+        matched_keywords = [keyword for keyword in rule["keywords"] if keyword in normalized]
+        if matched_keywords:
+            matches.append(
+                {
+                    "family": rule["family"],
+                    "venues": rule["venues"],
+                    "matched_keywords": matched_keywords[:5],
+                    "why": rule["why"],
+                }
+            )
+    return matches
+
+
 def route_for_venue(venue: Optional[str], needs: List[str], year: Optional[int]) -> List[Dict[str, Any]]:
     routes: List[Dict[str, Any]] = []
     if not venue:
@@ -318,6 +566,81 @@ def route_for_venue(venue: Optional[str], needs: List[str], year: Optional[int])
             }
         )
 
+    if venue in ACM_DL_VENUES:
+        routes.append(
+            {
+                "lane": "acm-dl-proceedings",
+                "priority": "primary",
+                "why": "Official ACM Digital Library proceedings for accepted-paper metadata, DOI pages, BibTeX, and publication status.",
+                "source_hint": "; ".join(VENUE_SOURCE_HINTS.get(venue, ["https://dl.acm.org/"])),
+                "setup": ["No private credentials required for metadata pages; do not bypass ACM access controls for full text."],
+            }
+        )
+
+    if venue in IEEE_CSDL_VENUES:
+        routes.append(
+            {
+                "lane": "ieee-csdl-proceedings",
+                "priority": "primary",
+                "why": "Official IEEE Computer Society Digital Library proceedings for accepted-paper metadata and table-of-contents pages.",
+                "source_hint": "; ".join(VENUE_SOURCE_HINTS.get(venue, ["https://www.computer.org/csdl/proceedings"])),
+                "setup": ["Metadata pages are the default target; download only open or user-authorized PDFs."],
+            }
+        )
+
+    if venue in IEEE_XPLORE_VENUES:
+        routes.append(
+            {
+                "lane": "ieee-xplore-proceedings",
+                "priority": "primary" if venue not in {"ICCAD"} else "co-primary",
+                "why": "Official IEEE Xplore conference proceedings lane for metadata, conference records, and authorized PDFs.",
+                "source_hint": "; ".join(VENUE_SOURCE_HINTS.get(venue, ["https://ieeexplore.ieee.org/"])),
+                "setup": ["Use public conference pages and metadata first; do not rely on logged-in full text as canonical evidence."],
+            }
+        )
+
+    if venue in ACM_IEEE_VENUES and venue not in ACM_DL_VENUES:
+        routes.append(
+            {
+                "lane": "acm-ieee-proceedings",
+                "priority": "co-primary",
+                "why": "Joint ACM/IEEE venue; cross-check official ACM DL, IEEE Xplore/CSDL, and the venue site before treating a row as complete.",
+                "source_hint": "; ".join(VENUE_SOURCE_HINTS.get(venue, ["https://dl.acm.org/", "https://ieeexplore.ieee.org/"])),
+            }
+        )
+
+    if venue in IEEE_TRANSACTIONS:
+        routes.append(
+            {
+                "lane": "ieee-transactions",
+                "priority": "primary",
+                "why": "Official IEEE Transactions journal lane for issue/article metadata and publication status.",
+                "source_hint": "; ".join(VENUE_SOURCE_HINTS.get(venue, ["https://ieeexplore.ieee.org/"])),
+                "setup": ["Use IEEE/Computer Society/CEDA journal pages plus DOI metadata; do not bypass subscription full text."],
+            }
+        )
+
+    if venue in IACR_VENUES:
+        routes.append(
+            {
+                "lane": "iacr-tches",
+                "priority": "primary",
+                "why": "Official IACR TCHES open-access journal/proceedings hybrid source for accepted articles and PDFs.",
+                "source_hint": "; ".join(VENUE_SOURCE_HINTS.get(venue, ["https://tches.iacr.org/"])),
+                "setup": ["Open-access TCHES pages are suitable for metadata and PDF capture with provenance."],
+            }
+        )
+
+    if venue in VENUE_SOURCE_HINTS and not any(route.get("lane") == "official-venue-site" for route in routes):
+        routes.append(
+            {
+                "lane": "official-venue-site",
+                "priority": "secondary",
+                "why": "Use the official venue or journal site for CFP, program, archive, deadlines, scope, and source-discovery links.",
+                "source_hint": "; ".join(VENUE_SOURCE_HINTS[venue]),
+            }
+        )
+
     if venue == "NeurIPS":
         routes.append(
             {
@@ -328,6 +651,33 @@ def route_for_venue(venue: Optional[str], needs: List[str], year: Optional[int])
             }
         )
 
+    return routes
+
+
+def route_for_related_direction(target: str, needs: List[str]) -> List[Dict[str, Any]]:
+    actionable_needs = {"papers", "metadata", "proceedings", "venue-info", "venues", "search", "report", "pdfs"}
+    if needs and not any(need in actionable_needs for need in needs):
+        return []
+    routes: List[Dict[str, Any]] = []
+    for match in infer_related_venue_families(target):
+        hints: List[str] = []
+        for venue in match["venues"]:
+            hints.extend(VENUE_SOURCE_HINTS.get(venue, []))
+        routes.append(
+            {
+                "lane": f"conditional-venue-scouting:{match['family']}",
+                "priority": "conditional",
+                "why": match["why"],
+                "venues": match["venues"],
+                "matched_keywords": match["matched_keywords"],
+                "source_hint": "; ".join(dict.fromkeys(hints)),
+                "suggested_calls": [
+                    "Only crawl these venue/journal sources when the user's stated direction clearly matches this family.",
+                    "For each selected venue/year, call the planner again with --venue and --year before bulk crawling.",
+                    "Use official venue pages, ACM DL, IEEE CSDL/Xplore, PMLR, or IACR TCHES before secondary indexes.",
+                ],
+            }
+        )
     return routes
 
 
@@ -394,9 +744,12 @@ def build_plan(args: argparse.Namespace) -> Dict[str, Any]:
     target_info = classify_target(args.target)
     if not needs:
         needs = target_info.get("recommended_needs") or ["papers", "metadata", "report"]
-    venue = normalize_venue(args.venue)
+    venue = normalize_venue(args.venue) or infer_venue_from_target(args.target)
     year = args.year
-    routes = route_for_venue(venue, needs, year) + generic_routes(target_info, needs, args.scale)
+    routes = route_for_venue(venue, needs, year)
+    if not venue:
+        routes += route_for_related_direction(args.target, needs)
+    routes += generic_routes(target_info, needs, args.scale)
 
     seen = set()
     deduped = []
@@ -429,6 +782,7 @@ def build_plan(args: argparse.Namespace) -> Dict[str, Any]:
         "guardrails": [
             "Default to public official pages/APIs and local normalization; do not require MCP, paid services, or private credentials for the base closure.",
             "Prefer official APIs/proceedings and public OpenReview visibility over general search.",
+            "Crawl venue-specific sources such as MICRO/ISCA/ASPLOS/HPCA/FPGA/FCCM/ICCAD/DAC/DATE/TCAD/ISSCC/ICML/TKDE/TCHES only when the venue is explicit or the user's stated research direction clearly matches that family.",
             "Do not bypass paywalls, CAPTCHAs, private reviews, or login gates.",
             "Keep credentials, cookies, proxies, headers, and .env files local and untracked.",
             "Record source IDs, URLs, fetch timestamps, limits, and blockers in the manifest.",
@@ -543,7 +897,25 @@ def normalize_paper(record: Dict[str, Any], source: str, raw_ref: str) -> Dict[s
         "row_type": "paper",
         "row_id": stable_id(source, source_id, title, source_url),
         "source": source,
-        "source_priority": "primary" if source in {"openreview", "acl-anthology", "cvf", "pmlr", "neurips-proceedings", "arxiv"} else "secondary",
+        "source_priority": "primary"
+        if source
+        in {
+            "openreview",
+            "acl-anthology",
+            "cvf",
+            "pmlr",
+            "neurips-proceedings",
+            "arxiv",
+            "acm-dl",
+            "acm-dl-proceedings",
+            "ieee-csdl",
+            "ieee-csdl-proceedings",
+            "ieee-xplore",
+            "ieee-xplore-proceedings",
+            "ieee-transactions",
+            "iacr-tches",
+        }
+        else "secondary",
         "source_id": source_id,
         "source_url": source_url,
         "fetched_at": now_iso(),

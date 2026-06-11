@@ -14,6 +14,12 @@ Use the lightest first-source lane that can satisfy the request. The default lan
 | CVPR/ICCV/WACV papers | CVF Open Access pages | CVF crawler fallback | Static official pages usually expose title, authors, abstract, PDF, and BibTeX. |
 | ICML/AISTATS/COLT papers | PMLR volume pages / mlresearch GitHub | Static scraper fallback | Resolve the volume page before scraping. |
 | NeurIPS accepted papers | NeurIPS proceedings | OpenReview for reviews when hosted there | The proceedings and review venue can be separate evidence lanes. |
+| Computer architecture venues | ACM DL, IEEE Computer Society Digital Library, IEEE Xplore, official venue archives | dblp/OpenAlex/Semantic Scholar enrichment | Covers MICRO, ISCA, ASPLOS, and HPCA only when the venue or architecture direction is explicit. |
+| FPGA and reconfigurable-computing venues | ACM DL for FPGA; IEEE CSDL/Xplore and official site for FCCM | dblp/OpenAlex/Semantic Scholar enrichment | Covers FPGA and FCCM only when FPGA/HLS/reconfigurable computing is relevant. |
+| EDA/CAD and design automation venues | ACM DL, IEEE Xplore/CSDL, official venue archives, IEEE CEDA pages | dblp/OpenAlex/Semantic Scholar enrichment | Covers ICCAD, DAC, DATE, and TCAD only when EDA/CAD/circuit-design automation is relevant. |
+| Circuits and solid-state venues | IEEE Xplore, official venue/journal pages, IEEE CEDA/CAS pages | Crossref/OpenAlex/Semantic Scholar enrichment | Covers ISSCC and related TCAD/DATE evidence only when circuits or solid-state systems are relevant. |
+| Data-engineering journals | IEEE Computer Society Digital Library / IEEE Xplore journal pages | dblp/OpenAlex/Semantic Scholar enrichment | Covers TKDE only when knowledge/data engineering is relevant. |
+| Cryptographic hardware journal/proceedings | IACR TCHES official open-access pages | dblp/Crossref/OpenAlex enrichment | Covers TCHES/CHES journal-conference hybrid evidence when cryptographic hardware or embedded security is relevant. |
 | Citation/author/topic enrichment | OpenAlex and Semantic Scholar | Crossref, dblp | Use as enrichment/cross-check, not as the source of venue decisions. |
 | Open-access PDF acquisition | Unpaywall public endpoint, arXiv, PMC/Europe PMC, CORE, venue official PDF URLs | optional `paper-search-mcp` | Closed-access papers should be flagged, not bypassed. |
 
@@ -68,6 +74,10 @@ Use venue/proceedings sources for accepted-paper lists:
 - CVF Open Access: use official pages for CVPR, ICCV, and WACV.
 - PMLR: use official volume pages and mlresearch GitHub repositories for ICML, AISTATS, COLT, and workshops.
 - NeurIPS proceedings: use `papers.nips.cc` for accepted papers; use OpenReview separately if the year's review process was hosted there.
+- ACM Digital Library: use official conference pages/proceedings for ISCA, ASPLOS, FPGA, DAC, and ACM-side records for joint ACM/IEEE venues.
+- IEEE Computer Society Digital Library: use official proceedings series/table-of-contents pages for MICRO, HPCA, FCCM, TKDE, and IEEE Computer Society-hosted records.
+- IEEE Xplore: use conference and journal pages for FCCM, ICCAD, DATE, ISSCC, TCAD, TKDE, and IEEE-side records for joint ACM/IEEE venues.
+- IACR TCHES: use `https://tches.iacr.org/` for Transactions on Cryptographic Hardware and Embedded Systems accepted articles and open PDFs.
 - arXiv: use official Atom API for preprint metadata and PDFs.
 
 When official proceedings disagree with secondary metadata, keep both values with provenance and prefer official proceedings for venue/year/acceptance status.
@@ -75,6 +85,22 @@ When official proceedings disagree with secondary metadata, keep both values wit
 Default configured runtime:
 
 - `runtime/acl-anthology/.venv`: local ACL Anthology Python package for official NLP proceedings metadata.
+
+## Conditional Venue Expansion
+
+Do not add all venue sources to every broad paper crawl. Use the target direction and venue names to decide whether to include the following source lanes.
+
+| Direction trigger | Venues/journals | Primary official lanes | Source hints |
+|---|---|---|---|
+| computer architecture, microarchitecture, processor/cache/memory hierarchy, architecture-facing systems | MICRO, ISCA, ASPLOS, HPCA | IEEE CSDL/Xplore, ACM DL, official venue archives | `https://microarch.org/`, `https://dl.acm.org/conference/isca`, `https://www.asplos-conference.org/`, `https://www.hpca-conf.org/` |
+| FPGA, HLS, field-programmable, reconfigurable computing | FPGA, FCCM | ACM DL for FPGA; IEEE CSDL/Xplore and official site for FCCM | `https://dl.acm.org/conference/fpga`, `https://www.fccm.org/` |
+| EDA, CAD, design automation, placement/routing, logic synthesis, verification, VLSI/IC design | ICCAD, DAC, DATE, TCAD | ACM DL, IEEE Xplore/CSDL, official venue archives, IEEE CEDA pages | `https://iccad.com/`, `https://www.dac.com/`, `https://www.date-conference.com/archive`, `https://ieee-ceda.org/publications/tcad` |
+| solid-state circuits, analog/mixed-signal/RF circuits, ADC/PLL/SerDes, SoC/circuit design | ISSCC, TCAD, DATE | IEEE Xplore, ISSCC official site, IEEE CEDA/CAS pages | `https://www.isscc.org/`, `https://ieeexplore.ieee.org/`, `https://ieee-ceda.org/publications/tcad` |
+| machine learning, learning theory, representation/RL/foundation models | ICML | PMLR and ICML official site | `https://proceedings.mlr.press/`, `https://icml.cc/` |
+| data engineering, knowledge engineering, databases, mining, knowledge graphs, information retrieval | TKDE | IEEE Computer Society Digital Library / IEEE Xplore journal pages | `https://www.computer.org/csdl/journal/tk` |
+| cryptographic hardware, embedded security, side-channel/fault attacks, masked implementations | TCHES | IACR TCHES official open-access pages | `https://tches.iacr.org/` |
+
+For a topic-only request, first run `paper_review_source_intel.py plan`. If it emits a `conditional-venue-scouting:*` lane, confirm the matched family is actually part of the user's intent before crawling venue pages. For a named venue or journal, route directly to that venue's official lane and use secondary metadata only for enrichment or gap filling.
 
 ## Fallback Crawlers
 

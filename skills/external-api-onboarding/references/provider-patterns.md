@@ -93,6 +93,42 @@ codex mcp add browser_use -- uvx --from "browser-use[cli]" browser-use --mcp
 - Do not set `BROWSER_USE_DISABLE_SECURITY=true` unless the user explicitly accepts the risk for a controlled local target.
 - Smoke test: open a benign page and read non-secret state. Do not use it to extract provider secrets.
 
+## Zhihu Public Intel / zhihu-mcp
+
+- Access type: local stdio MCP with user-authorized browser login by default; public AnySearch fallback only when login is declined, fails, or public-index cross-checking is requested.
+- API key: none.
+- Preferred private runtime: `%USERPROFILE%\.codex\skills\zhihu-public-intel\runtime\zhihu-mcp`.
+- Private auth state: `cookies.json` in the runtime checkout, Playwright cookie format.
+- Auth-first setup:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\skills\zhihu-public-intel\scripts\setup_zhihu_mcp.ps1
+python C:\Users\Administrator\.codex\skills\zhihu-public-intel\scripts\zhihu_public_intel.py check-runtime
+powershell -ExecutionPolicy Bypass -File .\skills\zhihu-public-intel\scripts\assist_zhihu_login.ps1
+```
+
+The helper opens a visible browser. The user completes login, MFA, and CAPTCHA directly in the browser. It stores Zhihu cookies locally and prints only status/path/count, never cookie values. Keep `chrome_cookie_extraction=false` unless the user explicitly approves automatic extraction from an existing browser profile.
+
+- Smoke tests:
+
+```powershell
+python C:\Users\Administrator\.codex\skills\zhihu-public-intel\scripts\zhihu_public_intel.py check-runtime
+python C:\Users\Administrator\.codex\skills\zhihu-public-intel\scripts\zhihu_public_intel.py auth-guide --target "<关键词>" --needs search,comments
+```
+
+After login, use MCP `check_login_status` or `cookie_status`, then `search_content`/detail/comment tools.
+
+- AnySearch fallback:
+
+```powershell
+python C:\Users\Administrator\.codex\skills\anysearch\scripts\anysearch_cli.py batch_search `
+  --query "site:zhihu.com <关键词>" `
+  --query "site:zhuanlan.zhihu.com <关键词>" `
+  --query '"<关键词>" 知乎'
+```
+
+Use AnySearch only after login is declined/blocked or as a cross-check, and mark snippets as discovery-only evidence. If the MCP server was newly registered, restart Codex before expecting its tools to appear. Never paste `z_c0`, `d_c0`, cookie strings, request headers, or browser storage into chat.
+
 ## OAuth MCP Providers
 
 Use this pattern for Notion-like or other remote MCP providers that support OAuth:

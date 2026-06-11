@@ -1,6 +1,6 @@
 ---
 name: paper-review-source-intel
-description: Route first-source academic paper and peer-review intelligence collection, crawling, normalization, and synthesis through public official sources by default. Use when Codex needs a no-required-MCP/no-required-API-key closure for papers, proceedings metadata, public OpenReview visibility, open-access PDFs, citation/author enrichment, or auditable evidence corpora from arXiv, OpenReview public pages, ACL Anthology, CVF, PMLR, NeurIPS proceedings, Semantic Scholar, OpenAlex, Crossref, Unpaywall, or optional paper-search-mcp.
+description: Route first-source academic paper and peer-review intelligence collection, crawling, normalization, and synthesis through public official sources by default. Use when Codex needs a no-required-MCP/no-required-API-key closure for papers, proceedings metadata, public OpenReview visibility, open-access PDFs, citation/author enrichment, or auditable evidence corpora from arXiv, OpenReview public pages, ACL Anthology, CVF, PMLR, NeurIPS proceedings, ACM DL, IEEE CSDL/Xplore, IACR TCHES, Semantic Scholar, OpenAlex, Crossref, Unpaywall, or optional paper-search-mcp.
 ---
 
 # Paper Review Source Intel
@@ -33,7 +33,8 @@ python skills\paper-review-source-intel\scripts\paper_review_source_intel.py pla
 3. Execute only the required lane:
    - OpenReview reviews/decisions/rebuttals: capture public OpenReview visibility first; use `openreview-py` only as an optional local library.
    - Broad paper corpus and OA PDFs: use public arXiv, Crossref, OpenAlex, Semantic Scholar, Unpaywall, and official proceedings first; `paper-search-mcp` is optional.
-   - Official proceedings: use ACL Anthology, CVF Open Access, PMLR, NeurIPS proceedings, or arXiv API directly.
+   - Official proceedings: use ACL Anthology, CVF Open Access, PMLR, NeurIPS proceedings, ACM DL, IEEE CSDL/Xplore, IACR TCHES, or arXiv API directly.
+   - Architecture/FPGA/EDA/circuits/ML/data-engineering/cryptographic-hardware venues: crawl MICRO, ISCA, ASPLOS, HPCA, FPGA, FCCM, ICCAD, DAC, DATE, TCAD, ISSCC, ICML, TKDE, or TCHES sources only when the user names the venue or states a clearly related direction.
    - Citation/author/topic enrichment: use OpenAlex and Semantic Scholar as secondary metadata backbones.
 4. Keep raw captures and normalized outputs separate. Synthesize from normalized artifacts, not from browser state or loose snippets.
 
@@ -58,7 +59,8 @@ This installs isolated global-skill runtimes when the skill is installed under `
 Read `references/source-routing.md` before choosing a backend.
 
 - Use public OpenReview pages/visible notes first for public reviews, scores, meta-reviews, rebuttals, decisions, venue stats, and rejection/weakness-pattern analysis.
-- Use official proceedings first for accepted-paper lists: ACL Anthology for ACL/EMNLP/NAACL, CVF for CVPR/ICCV/WACV, PMLR for ICML/AISTATS/COLT, NeurIPS proceedings for NeurIPS accepted papers, and arXiv for preprints.
+- Use official proceedings first for accepted-paper lists: ACL Anthology for ACL/EMNLP/NAACL, CVF for CVPR/ICCV/WACV, PMLR for ICML/AISTATS/COLT, NeurIPS proceedings for NeurIPS accepted papers, ACM DL / IEEE CSDL / IEEE Xplore for relevant architecture, FPGA, EDA, and circuits venues, IACR TCHES for cryptographic hardware articles, and arXiv for preprints.
+- Do not crawl MICRO, ISCA, ASPLOS, HPCA, FPGA, FCCM, ICCAD, DAC, DATE, TCAD, ISSCC, ICML, TKDE, or TCHES by default for unrelated topics. Add them only when the user names them or the research direction clearly matches the venue family.
 - Use public arXiv, Crossref, OpenAlex, Semantic Scholar, Unpaywall, and proceedings pages for multi-source literature search, DOI recovery, and open-access PDF resolution by default.
 - Use `paper-search-mcp` only as an optional convenience layer after the public-source closure is understood.
 - If `paper_search_mcp` is registered, prefer its public arXiv/PubMed/bioRxiv/medRxiv tools for breadth; do not use its Google Scholar or download/read tools as canonical evidence without checking access/licensing and recording provenance.

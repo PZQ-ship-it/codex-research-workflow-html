@@ -38,15 +38,43 @@ powershell -ExecutionPolicy Bypass -File .\skills\zhihu-public-intel\scripts\set
 
 Do not paste `z_c0`, `d_c0`, cookie strings, request headers, or browser storage into chat or committed files.
 
-## Cookie Boundary
+## Cookie Boundary And Assisted Login
 
 Without `cookies.json`, the MCP server can start and tools can be listed, but Zhihu may return login walls, empty results, 401 responses, or partial public-only data.
 
-For logged-in comment completeness, the user must provide an authorized Playwright-format `cookies.json` locally under the runtime repo. Codex should not extract it from Chrome automatically unless the user explicitly approves that source and storage path.
+For logged-in search/detail/comment/activity completeness, the user must authorize a local login state. Prefer the bundled visible-browser helper over asking the user to export cookies manually:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\skills\zhihu-public-intel\scripts\assist_zhihu_login.ps1
+```
+
+What happens:
+
+- Codex opens a visible Playwright Chromium window at Zhihu login.
+- The user completes login, MFA, and CAPTCHA directly in the browser.
+- The helper waits for Zhihu auth cookies, writes Playwright-format Zhihu cookies to:
+  `%USERPROFILE%\.codex\skills\zhihu-public-intel\runtime\zhihu-mcp\cookies.json`.
+- The helper prints only status, path, and cookie count; it never prints cookie values.
+
+Useful options:
+
+```powershell
+# Show paths and prerequisites without opening a browser
+powershell -ExecutionPolicy Bypass -File .\skills\zhihu-public-intel\scripts\assist_zhihu_login.ps1 -DryRun
+
+# Refresh an existing cookies.json after the user approves
+powershell -ExecutionPolicy Bypass -File .\skills\zhihu-public-intel\scripts\assist_zhihu_login.ps1 -Force
+```
+
+Manual export remains acceptable only if the user explicitly prefers it. Keep `chrome_cookie_extraction=false` unless the user has explicitly approved automatic extraction from an existing browser profile and understands the storage path.
 
 ## Smoke Tests
 
 Safe setup checks:
+
+```powershell
+python C:\Users\Administrator\.codex\skills\zhihu-public-intel\scripts\zhihu_public_intel.py check-runtime
+```
 
 ```powershell
 python C:\Users\Administrator\.codex\skills\zhihu-public-intel\scripts\zhihu_public_intel.py plan `

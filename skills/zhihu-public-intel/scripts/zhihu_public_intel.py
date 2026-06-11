@@ -8,6 +8,7 @@ import csv
 import datetime as dt
 import hashlib
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -26,13 +27,31 @@ SCHEMA_SUMMARY = {
 
 
 BACKENDS = {
-    "public-browser-lite": {
-        "best_for": ["search", "question", "answers", "article", "report", "public-local"],
+    "zhihu-mcp-auth": {
+        "best_for": ["search", "keyword", "people", "topic", "question", "answers", "article", "comments", "user", "report"],
         "setup": [
-            "Use a normal browser or Playwright against public Zhihu pages.",
+            "Check the private zhihu-mcp runtime before crawling.",
+            "If login status is missing or stale, open the visible login helper and let the user complete Zhihu login/MFA/CAPTCHA.",
+            "After login is verified, use zhihu-mcp tools for search, detail, comments, and user/profile capture.",
+            "Use AnySearch only as a fallback when the user declines login, login fails, or a quick public index cross-check is requested.",
+        ],
+    },
+    "anysearch-discovery": {
+        "best_for": ["fallback-search", "public-index", "declined-login"],
+        "setup": [
+            "Use AnySearch Python CLI only as a fallback or cross-check lane.",
+            "Save search output under raw/ and normalize with --source anysearch.",
+            "Treat results as URL/title/snippet discovery unless a Zhihu page or MCP detail tool later returns full content.",
+        ],
+    },
+    "public-browser-lite": {
+        "best_for": ["question", "answers", "article", "report", "public-local"],
+        "setup": [
+            "Use a normal browser or Playwright against already discovered public Zhihu URLs.",
             "No MCP server, external API key, paid scraper, or committed cookies are required.",
             "Save public raw captures under raw/ and normalize with --source public-browser-lite.",
-            "Treat login walls, CAPTCHA, hidden comments, and missing dynamic content as blockers.",
+            "When Zhihu search/detail pages hit a login wall, record the blocker and route to the zhihu-mcp authenticated helper before using fallback discovery.",
+            "Treat CAPTCHA, hidden comments, and missing dynamic content as blockers.",
         ],
     },
     "zhihu-k-search": {
@@ -69,6 +88,28 @@ BACKENDS = {
         ],
     },
 }
+
+
+ANYSEARCH_ENTRYPOINT = r"python C:\Users\Administrator\.codex\skills\anysearch\scripts\anysearch_cli.py"
+
+
+def default_runtime_root() -> Path:
+    home = os.environ.get("USERPROFILE") or str(Path.home())
+    return Path(home) / ".codex" / "skills" / "zhihu-public-intel" / "runtime"
+
+
+def runtime_paths(runtime_root: Optional[str] = None) -> Dict[str, Path]:
+    root = Path(runtime_root).expanduser() if runtime_root else default_runtime_root()
+    checkout = root / "zhihu-mcp"
+    return {
+        "runtime_root": root,
+        "checkout_dir": checkout,
+        "venv_python": checkout / ".venv" / "Scripts" / "python.exe",
+        "config_json": checkout / "config.json",
+        "cookies_json": checkout / "cookies.json",
+        "profile_dir": checkout / "zhihu-profile",
+        "mcp_server": checkout / "mcp_server.py",
+    }
 
 
 def now_iso() -> str:
@@ -153,13 +194,16 @@ def classify_target(target: str) -> Dict[str, Any]:
         "path": "",
         "type": "keyword",
         "ids": {"query": target},
-        "recommended_needs": ["search", "answers", "report"],
+        "recommended_needs": ["search", "auth", "report"],
     }
 
 
 def choose_backend(needs: List[str], scale: str, prefer: Optional[str] = None) -> str:
     if prefer:
         return prefer
+    normalized = {need.lower().replace("_", "-") for need in needs}
+    if normalized & {"search", "auth", "comments", "user", "activities", "article", "answers", "question"}:
+        return "zhihu-mcp-auth"
     return "public-browser-lite"
 
 
@@ -179,6 +223,7 @@ def build_plan(args: argparse.Namespace) -> Dict[str, Any]:
         "setup": BACKENDS[backend]["setup"],
         "commands": command_suggestions(backend, args.target, target_info, needs),
         "optional_backends": optional_backend_notes(needs, args.scale),
+        "login_wall_policy": login_wall_policy(args.target, target_info, needs),
         "output_contract": SCHEMA_SUMMARY,
         "guardrails": [
             "Default to public/local capture that does not require MCP, paid services, external API keys, or committed login state.",
@@ -194,7 +239,11 @@ def build_plan(args: argparse.Namespace) -> Dict[str, Any]:
 
 def backend_reason(backend: str, needs: List[str], scale: str) -> str:
     if backend == "public-browser-lite":
-        return "Default narrowed lane for public search and page/detail capture without required external APIs or MCP."
+        return "Selected for already discovered public Zhihu URLs and page/detail capture without required MCP."
+    if backend == "anysearch-discovery":
+        return "Fallback public-index lane when authenticated zhihu-mcp is declined, unavailable, or needs cross-checking."
+    if backend == "zhihu-mcp-auth":
+        return "Default lane for Zhihu research: guide local authentication first, then use zhihu-mcp tools."
     if backend == "MediaCrawler":
         return "Selected for larger scale or cross-platform public crawling."
     if backend == "ZhihuApis":
@@ -225,10 +274,13 @@ def optional_backend_notes(needs: List[str], scale: str) -> List[Dict[str, Any]]
         notes.append(
             {
                 "backend": "zhihu-mcp",
-                "when": "Only when the user explicitly wants an MCP toolchain and accepts local MCP setup.",
+                "when": "Default authenticated lane after check-runtime and visible-browser login if needed.",
             }
         )
     if normalized & {"search", "question", "answers", "article"}:
+        notes.append(
+            {"backend": "AnySearch discovery", "when": "Fallback only when the user declines login, login fails, or public-index cross-checking is useful. Normalize snippets as discovery rows; do not claim full Zhihu content was captured."}
+        )
         notes.append(
             {
                 "backend": "zhihu-k-search",
@@ -236,6 +288,49 @@ def optional_backend_notes(needs: List[str], scale: str) -> List[Dict[str, Any]]
             }
         )
     return notes
+
+
+def login_wall_policy(target: str, info: Dict[str, Any], needs: List[str]) -> Dict[str, Any]:
+    query = (info.get("ids") or {}).get("query") or target
+    needs_norm = {need.lower().replace("_", "-") for need in needs}
+    needs_auth = bool(needs_norm & {"comments", "nested-comments", "user", "activities", "mcp", "full-detail"})
+    return {
+        "detect_as_blocker": [
+            "URL redirects to /signin or returns 401/403.",
+            "Zhihu tool returns zero results for an otherwise plausible exact-name/topic query.",
+            "Article/detail APIs return request-parameter/login errors while search engines still index the URL.",
+            "Comment/full activity fields are hidden or incomplete.",
+        ],
+        "first_fallback": [
+            "Guide the user through zhihu-mcp local authentication first.",
+            "python skills\\zhihu-public-intel\\scripts\\zhihu_public_intel.py check-runtime",
+            "powershell -ExecutionPolicy Bypass -File .\\skills\\zhihu-public-intel\\scripts\\assist_zhihu_login.ps1",
+            "After user login, verify with MCP tool check_login_status() or cookie_status().",
+        ],
+        "authenticated_escalation": [
+            "Tell the user what local state will be stored before opening the visible login helper.",
+            r"powershell -ExecutionPolicy Bypass -File .\skills\zhihu-public-intel\scripts\setup_zhihu_mcp.ps1",
+            r"powershell -ExecutionPolicy Bypass -File .\skills\zhihu-public-intel\scripts\assist_zhihu_login.ps1",
+            "The user completes Zhihu login/MFA/CAPTCHA in the visible browser; Codex never asks for cookie values in chat.",
+            "Restart Codex if the MCP server was newly registered, then smoke-test with check_login_status/cookie_status before crawling.",
+        ],
+        "public_fallback": [
+            "Use only if authentication is declined, fails, or a public index cross-check is requested.",
+            anysearch_discovery_command(query),
+            "Store AnySearch output under raw/ and normalize with --source anysearch; mark it as discovery/snippet evidence, not full Zhihu page capture.",
+        ],
+        "auth_likely_needed": needs_auth,
+    }
+
+
+def anysearch_discovery_command(query: str) -> str:
+    q = str(query).replace('"', '\\"')
+    return (
+        f'{ANYSEARCH_ENTRYPOINT} batch_search '
+        f'--query "site:zhihu.com {q}" '
+        f'--query "site:zhuanlan.zhihu.com {q}" '
+        f'--query "\\"{q}\\" 知乎"'
+    )
 
 
 def command_suggestions(backend: str, target: str, info: Dict[str, Any], needs: List[str]) -> List[str]:
@@ -249,8 +344,28 @@ def command_suggestions(backend: str, target: str, info: Dict[str, Any], needs: 
             ]
         query = ids.get("query") or target
         return [
-            "Search public Zhihu pages for {!r} with a normal browser or approved search provider; save result URLs and snippets under raw/.".format(query),
-            "Normalize the public result list with: python skills/zhihu-public-intel/scripts/zhihu_public_intel.py normalize --source public-browser-lite --input raw/public_search.json --output-dir normalized",
+            "Do not use public-browser-lite for keyword search directly.",
+            "Run AnySearch discovery first: {}".format(anysearch_discovery_command(query)),
+            "After discovering concrete Zhihu URLs, inspect each URL and rerun detail capture.",
+        ]
+    if backend == "anysearch-discovery":
+        query = ids.get("query") or target
+        return [
+            "Use AnySearch only as fallback/cross-check after authenticated zhihu-mcp is declined or unavailable: {}".format(anysearch_discovery_command(query)),
+            "Save the raw AnySearch result JSON under raw/.",
+            "Normalize discovery rows with: python skills/zhihu-public-intel/scripts/zhihu_public_intel.py normalize --source anysearch --input raw/anysearch_discovery.json --output-dir normalized",
+            "Only after URLs/IDs are found, use inspect-url to choose public-browser-lite or authenticated zhihu-mcp for detail capture.",
+        ]
+    if backend == "zhihu-mcp-auth":
+        query = ids.get("query") or target
+        return [
+            "Run runtime check without reading cookies: python skills\\zhihu-public-intel\\scripts\\zhihu_public_intel.py check-runtime",
+            "If cookies are missing/stale or login is not verified, open visible login: powershell -ExecutionPolicy Bypass -File .\\skills\\zhihu-public-intel\\scripts\\assist_zhihu_login.ps1",
+            "The user completes Zhihu login/MFA/CAPTCHA in the browser; do not ask for cookie values in chat.",
+            "Verify with MCP tool: check_login_status() or cookie_status().",
+            'Then run MCP tool: search_content(keyword={!r}, content_type="all", count=20)'.format(query),
+            "Use get_question_detail/get_answer_detail/get_article_detail/get_comments/user_profile on selected results.",
+            "Use AnySearch only if the user declines login or zhihu-mcp remains unavailable: {}".format(anysearch_discovery_command(query)),
         ]
     if backend == "zhihu-k-search":
         if item_type in {"question", "answer", "article"}:
@@ -276,10 +391,17 @@ def command_suggestions(backend: str, target: str, info: Dict[str, Any], needs: 
             ]
         if item_type == "user":
             return [
+                "First run: python skills\\zhihu-public-intel\\scripts\\zhihu_public_intel.py check-runtime",
+                "Then verify login with MCP tool: check_login_status() or cookie_status().",
                 "MCP tool: user_profile(token={!r})".format(ids.get("user_token", "")),
                 "MCP tool: get_activities(user={!r}, count=...)".format(ids.get("user_token", "")),
             ]
-        return ['MCP tool: search_content(keyword={!r}, content_type="all", count=20)'.format(ids.get("query") or target)]
+        return [
+            "First run: python skills\\zhihu-public-intel\\scripts\\zhihu_public_intel.py check-runtime",
+            "If needed, run visible login: powershell -ExecutionPolicy Bypass -File .\\skills\\zhihu-public-intel\\scripts\\assist_zhihu_login.ps1",
+            "Verify login with MCP tool: check_login_status() or cookie_status().",
+            'Then run MCP tool: search_content(keyword={!r}, content_type="all", count=20)'.format(ids.get("query") or target),
+        ]
     if backend == "ZhihuApis":
         if item_type == "answer":
             return ["POST /get_answer_all_comment with answer_id={} and local cookies_str".format(ids.get("answer_id", ""))]
@@ -434,6 +556,78 @@ def cmd_schema(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_auth_guide(args: argparse.Namespace) -> int:
+    info = classify_target(args.target) if args.target else {"ids": {"query": ""}}
+    needs = split_csv(args.needs)
+    paths = runtime_paths(args.runtime_root)
+    payload = {
+        "target": args.target,
+        "needs": needs,
+        "runtime_paths": {key: str(value) for key, value in paths.items()},
+        "policy": login_wall_policy(args.target or "", info, needs),
+        "human_steps": [
+            "Run setup_zhihu_mcp.ps1 if check-runtime reports missing runtime files.",
+            "Run assist_zhihu_login.ps1 to open a visible browser.",
+            "In the visible browser, the user logs in to Zhihu and completes MFA/CAPTCHA if shown.",
+            "The helper saves only Zhihu Playwright cookies to the private runtime cookies.json and prints no cookie values.",
+            "Restart Codex if zhihu_mcp was newly registered, then run check_login_status/cookie_status.",
+        ],
+        "commands": {
+            "check_runtime": r"python skills\zhihu-public-intel\scripts\zhihu_public_intel.py check-runtime",
+            "setup_runtime": r"powershell -ExecutionPolicy Bypass -File .\skills\zhihu-public-intel\scripts\setup_zhihu_mcp.ps1",
+            "visible_login": r"powershell -ExecutionPolicy Bypass -File .\skills\zhihu-public-intel\scripts\assist_zhihu_login.ps1",
+            "visible_login_dry_run": r"powershell -ExecutionPolicy Bypass -File .\skills\zhihu-public-intel\scripts\assist_zhihu_login.ps1 -DryRun",
+            "anysearch_discovery": anysearch_discovery_command((info.get("ids") or {}).get("query") or args.target or ""),
+        },
+        "never_do": [
+            "Do not paste z_c0, d_c0, cookies, request headers, or browser storage into chat.",
+            "Do not bypass CAPTCHA/MFA/login controls.",
+            "Do not commit cookies.json, auth.json, .env, storage_state.json, browser profiles, DB files, or logs.",
+        ],
+    }
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 0
+
+
+def load_config_safely(path: Path) -> Dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:  # pragma: no cover - defensive CLI status.
+        return {"_error": str(exc)}
+
+
+def cmd_check_runtime(args: argparse.Namespace) -> int:
+    paths = runtime_paths(args.runtime_root)
+    config = load_config_safely(paths["config_json"])
+    browser = config.get("browser") if isinstance(config, dict) else {}
+    cookie_path = paths["cookies_json"]
+    status = {
+        "runtime_root": str(paths["runtime_root"]),
+        "checkout_exists": paths["checkout_dir"].exists(),
+        "venv_python_exists": paths["venv_python"].exists(),
+        "mcp_server_exists": paths["mcp_server"].exists(),
+        "config_exists": paths["config_json"].exists(),
+        "config_path": str(paths["config_json"]),
+        "chrome_cookie_extraction": browser.get("chrome_cookie_extraction") if isinstance(browser, dict) else None,
+        "headless_default": browser.get("headless") if isinstance(browser, dict) else None,
+        "cookies_path": str(cookie_path),
+        "cookies_file_exists": cookie_path.exists(),
+        "cookies_file_size_bytes": cookie_path.stat().st_size if cookie_path.exists() else 0,
+        "profile_dir_exists": paths["profile_dir"].exists(),
+        "setup_command": r"powershell -ExecutionPolicy Bypass -File .\skills\zhihu-public-intel\scripts\setup_zhihu_mcp.ps1",
+        "visible_login_command": r"powershell -ExecutionPolicy Bypass -File .\skills\zhihu-public-intel\scripts\assist_zhihu_login.ps1",
+        "notes": [
+            "This command checks paths and config only; it does not read or print cookie values.",
+            "chrome_cookie_extraction should normally remain false unless the user explicitly approves automatic browser-cookie extraction.",
+            "If cookies_file_exists is false or login checks fail, run the visible login helper and let the user complete login in the browser.",
+        ],
+    }
+    print(json.dumps(status, ensure_ascii=False, indent=2))
+    return 0
+
+
 def cmd_scaffold(args: argparse.Namespace) -> int:
     out_dir = Path(args.output_dir)
     (out_dir / "raw").mkdir(parents=True, exist_ok=True)
@@ -488,6 +682,16 @@ def build_parser() -> argparse.ArgumentParser:
 
     schema = sub.add_parser("schema", help="Print normalized artifact contract.")
     schema.set_defaults(func=cmd_schema)
+
+    auth = sub.add_parser("auth-guide", help="Print safe login-wall recovery and authenticated Zhihu setup guidance.")
+    auth.add_argument("--target", default="", help="Keyword or Zhihu URL that hit a login wall.")
+    auth.add_argument("--needs", action="append", help="Comma-separated needs that may require logged-in access.")
+    auth.add_argument("--runtime-root", default="", help="Override private zhihu-mcp runtime root.")
+    auth.set_defaults(func=cmd_auth_guide)
+
+    runtime = sub.add_parser("check-runtime", help="Check private zhihu-mcp runtime paths without reading cookie values.")
+    runtime.add_argument("--runtime-root", default="", help="Override private zhihu-mcp runtime root.")
+    runtime.set_defaults(func=cmd_check_runtime)
 
     scaffold = sub.add_parser("scaffold", help="Create an output directory with raw/, manifest.json, and summary.md.")
     scaffold.add_argument("--output-dir", required=True)

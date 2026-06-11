@@ -1,4 +1,4 @@
 interface:
   display_name: "Zhihu Public Intel"
-  short_description: "Route public Zhihu search and crawling"
-  default_prompt: "Use $zhihu-public-intel to search, crawl, normalize, and synthesize public Zhihu questions, answers, articles, and comments."
+  short_description: "Guide Zhihu MCP auth and research"
+  default_prompt: "Use $zhihu-public-intel to guide safe zhihu-mcp authentication, then search, capture, normalize, and synthesize Zhihu questions, answers, articles, comments, and profiles."
