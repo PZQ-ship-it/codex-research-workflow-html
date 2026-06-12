@@ -49,6 +49,12 @@ powershell -ExecutionPolicy Bypass -File skills\code-model-benchmark-intel\scrip
 
 This installs isolated global-skill runtimes when the skill is installed under `%USERPROFILE%\.codex\skills\code-model-benchmark-intel`. It registers official remote MCP entries without storing secrets or starting blocking OAuth flows. GitHub hosted MCP needs `GITHUB_PAT_TOKEN` visible to the Codex process; Hugging Face and Kaggle may require `codex mcp login <server>` or provider settings as separate user-approved steps. Read `references/full-setup.md` before configuring credentials.
 
+For a visible assisted OAuth flow, use:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File skills\code-model-benchmark-intel\scripts\assist_code_model_benchmark_auth.ps1 -Provider huggingface,kaggle
+```
+
 ## Source Routing
 
 Read `references/source-routing.md` before selecting a backend.
@@ -127,6 +133,7 @@ Read `references/output-schema.md` before merging multiple sources.
 
 - `scripts/code_model_benchmark_intel.py`: planner, URL inspector, scaffold generator, schema printer, and lightweight normalizer.
 - `scripts/setup_code_model_benchmark_intel.ps1`: safe setup script for isolated HF/OpenML/Kaggle Python dependencies, official MCP registrations, and optional shallow benchmark repo clones.
+- `scripts/assist_code_model_benchmark_auth.ps1`: visible assisted auth helper for HF/Kaggle Codex OAuth and GitHub PAT setup routing.
 - `references/full-setup.md`: complete setup matrix, MCP boundaries, credentials policy, benchmark repos, and smoke tests.
 - `references/benchmark-repos.md`: curated official benchmark repo/dataset list and clone policy.
 - `references/source-routing.md`: detailed platform routing and tool notes.

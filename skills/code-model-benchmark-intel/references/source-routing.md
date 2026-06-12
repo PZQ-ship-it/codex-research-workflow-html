@@ -81,6 +81,12 @@ codex mcp login kaggle
 
 For unattended setup, use `setup_code_model_benchmark_intel.ps1 -RegisterKaggleMcp`; it writes the remote MCP config and leaves OAuth login as a separate step.
 
+For visible assisted OAuth, use:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\skills\code-model-benchmark-intel\scripts\assist_code_model_benchmark_auth.ps1 -Provider kaggle
+```
+
 Treat Kaggle tokens as private. Do not commit `kaggle.json`, `KAGGLE_API_TOKEN`, or downloaded restricted competition data.
 
 ## OpenML

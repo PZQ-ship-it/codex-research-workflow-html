@@ -85,6 +85,12 @@ If Codex reports OAuth or auth required, run this as a separate human-approved s
 codex mcp login huggingface
 ```
 
+Or use the visible assisted helper, which opens Codex's emitted authorization URL in the default browser:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\skills\code-model-benchmark-intel\scripts\assist_code_model_benchmark_auth.ps1 -Provider huggingface
+```
+
 Public HF API and `huggingface_hub` metadata workflows do not require HF MCP.
 
 ### Kaggle MCP
@@ -107,6 +113,12 @@ Then authenticate only if needed, as a separate human-approved step:
 codex mcp login kaggle
 ```
 
+Or use the visible assisted helper:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\skills\code-model-benchmark-intel\scripts\assist_code_model_benchmark_auth.ps1 -Provider kaggle
+```
+
 Kaggle API package downloads and notebook/competition access may also require `kaggle.json` or `KAGGLE_USERNAME`/`KAGGLE_KEY`. Do not configure them unless the user accepts Kaggle terms for the specific asset.
 
 ## Credential Matrix
@@ -127,6 +139,8 @@ Current verified variables:
 - `HF_TOKEN` or `HUGGING_FACE_HUB_TOKEN`: optional for gated/private HF repos, higher limits, or write-capable Hub workflows. Public metadata and public leaderboard reads do not require it.
 - `KAGGLE_USERNAME` / `KAGGLE_KEY`: optional for Kaggle API package workflows. Official remote Kaggle MCP should use its own OAuth flow where supported by Codex.
 - `OPENML_API_KEY`: optional for OpenML upload/publish/authenticated operations. Read-only public metadata should be attempted first and treated as blocked if the server requires auth.
+
+GitHub note: the official hosted GitHub MCP uses bearer token auth in Codex, not browser OAuth. To assist setup without exposing the token, the auth helper opens GitHub's fine-grained PAT page and tells the user to store `GITHUB_PAT_TOKEN` through hidden/local storage.
 
 Hidden prompt example for local `.env` storage:
 
