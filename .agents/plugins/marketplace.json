@@ -1,0 +1,20 @@
+{
+  "name": "codex-marketplace-codex-research-workflow-html-0dc29d88",
+  "interface": {
+    "displayName": "Codex Plugins (codex-research-workflow-html)"
+  },
+  "plugins": [
+    {
+      "name": "codex-council",
+      "source": {
+        "source": "local",
+        "path": "./plugins/codex-council"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

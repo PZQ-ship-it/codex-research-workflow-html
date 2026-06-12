@@ -32,6 +32,15 @@
 
 全局 advisory hook：`C:\Users\Administrator\.codex\skills\scenario-agent-run-optimizer\scripts\scenario_agent_run_optimizer_hook.ps1`。它只在用户提示明显涉及 Agent 运行日志、traces、eval、失败诊断或优化时追加上下文提醒，不自动改文件。
 
+### Codex Council
+
+```text
+Use Codex Council to review this architecture decision.
+Focus on blockers, rollback, and verification.
+```
+
+本仓库已同步 `plugins/codex-council/`，来源和验证命令见 `../../plugins/THIRD_PARTY_PLUGINS.md` 与 `../../docs/codex-advanced-config-and-usage.md`。
+
 ## Open Questions
 
 - 哪些 Codex App 功能可以在 VS Code 中近似复刻？
