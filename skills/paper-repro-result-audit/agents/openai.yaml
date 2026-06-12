@@ -1,0 +1,4 @@
+interface:
+  display_name: "Paper Repro Result Audit"
+  short_description: "Audit reproduced results against papers"
+  default_prompt: "Use $paper-repro-result-audit to compare reproduced metrics against the paper and issue a reproduction verdict."

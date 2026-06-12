@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI Paper Reproduction Workflow"
+  short_description: "Coordinate AI paper reproduction stages"
+  default_prompt: "Use $ai-paper-reproduction-workflow to coordinate an end-to-end AI paper reproduction from claims to audited results."
