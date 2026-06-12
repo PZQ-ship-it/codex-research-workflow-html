@@ -137,10 +137,11 @@ Use this pattern for Notion-like or other remote MCP providers that support OAut
 
 ```powershell
 codex mcp add <server-name> --url <official-mcp-url>
-codex mcp login <server-name>
+powershell -ExecutionPolicy Bypass -File .\skills\external-api-onboarding\scripts\assist_oauth_login.ps1 `
+  -ServerName <server-name>
 ```
 
-The user completes consent in the browser. Store only the MCP config and report login status, not tokens.
+The helper opens the official authorization URL in the default browser when Codex emits it. The user completes consent in the browser. Store only the MCP config and report login status, not tokens. If the provider has a stronger provider-specific visible-login helper, use that instead.
 
 ## GitHub, Hugging Face, Kaggle, and Similar API Keys
 
@@ -152,4 +153,4 @@ Common env var candidates:
 - Hugging Face: `HF_TOKEN` or `HUGGING_FACE_HUB_TOKEN`.
 - Kaggle: `KAGGLE_USERNAME` and `KAGGLE_KEY`, often in a provider-specific config file rather than a generic `.env`.
 
-Prefer read-only, project-scoped, expiring credentials. For organization/admin scopes, stop and ask.
+Prefer read-only, project-scoped, expiring credentials. For organization/admin scopes, stop and ask. When a provider uses PAT/API-key auth instead of OAuth, open the official token creation page automatically, but make the user copy the secret into hidden local storage or an environment variable; never into chat.

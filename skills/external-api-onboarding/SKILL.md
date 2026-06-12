@@ -11,6 +11,8 @@ Use this skill to turn "I need this external API/MCP to work" into a safe setup 
 
 This skill does not harvest, reveal, or bypass credentials. It keeps login, MFA, CAPTCHA, billing, and secret-copy actions human-approved.
 
+For any setup that needs user authentication, the default UX must be assisted and visible: open the official provider console, token creation page, OAuth URL, or login page in a browser automatically when it is safe to do so. Do not leave the user with only a raw URL or a pasted command if the agent can open the official auth target directly. The user still completes login, MFA, CAPTCHA, billing consent, key reveal, and token copy.
+
 ## Required Inputs
 
 - Provider or target skill/MCP, inferred from context when possible.
@@ -39,7 +41,8 @@ Ask one concise question only when the answer changes privacy, cost, provider sc
 4. Configure locally.
    - For API keys, prefer `scripts/set_env_secret.ps1` so the value is entered hidden and not printed.
    - For MCP servers, prefer `codex mcp add ...` or explicit `config.toml` edits.
-   - For OAuth MCP, run `codex mcp login <server-name>` after the server is configured.
+   - For OAuth MCP, prefer `scripts/assist_oauth_login.ps1 -ServerName <server-name>` after the server is configured so the official authorization URL is opened automatically. If a provider-specific assisted login helper exists, use that helper.
+   - For browser/PAT/API-key auth, open the official provider page automatically and guide the user to paste secrets only into a hidden local prompt or provider-controlled UI.
    - Do not read, print, paste into chat, commit, or summarize secret values.
 5. Smoke test.
    - Prefer dry-run, `whoami`, `list`, `doc`, or one cheap read-only request.
@@ -54,6 +57,7 @@ Ask one concise question only when the answer changes privacy, cost, provider sc
 Allowed:
 
 - Open the official provider docs or console.
+- Automatically open official login, OAuth authorization, API-key creation, or token creation pages when user authentication is required.
 - Help the user find account, developer, API key, OAuth app, or MCP setup pages.
 - Click documented non-destructive controls after the user approves the goal.
 - Read non-secret labels such as key name, scope names, redirect URL fields, and status messages.
@@ -90,14 +94,27 @@ powershell -ExecutionPolicy Bypass -File .\skills\external-api-onboarding\script
 
 Avoid `-Value` for real secrets because command lines can be persisted in shell history or process listings.
 
+## Assisted OAuth Login
+
+Use the bundled helper for OAuth-style remote MCP authentication:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\skills\external-api-onboarding\scripts\assist_oauth_login.ps1 `
+  -ServerName huggingface
+```
+
+The helper runs `codex mcp login <server>`, watches for the official authorization URL, opens it in the default browser, and suppresses auth-looking output. The user completes login and consent in the browser. Use `-DryRun` to validate command shape without opening a browser.
+
 ## References
 
 - `references/security-policy.md`: required guardrails for secrets, OAuth, browser sessions, storage, and reporting.
 - `references/provider-patterns.md`: known provider routes, env var names, MCP command shapes, and smoke-test ideas.
+- `scripts/assist_oauth_login.ps1`: generic visible OAuth helper for Codex remote MCP servers.
 
 ## Done Criteria
 
 - Credentials were stored only in the approved private target.
+- User-auth steps were assisted with an automatic browser/provider-page open, or a blocker explains why automatic opening was not possible.
 - No secret value appears in chat, committed files, command output, or final summary.
 - MCP or env configuration is documented by server name, env var name, and path only.
 - A smoke test ran, or the blocker and next human action are clear.

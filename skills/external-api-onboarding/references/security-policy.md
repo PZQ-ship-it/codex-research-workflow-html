@@ -19,6 +19,7 @@ Use this reference before touching credentials, OAuth, provider consoles, browse
 Allowed browser assistance:
 
 - Navigate to official provider docs, provider consoles, or official OAuth login pages.
+- Automatically open official auth targets when user action is required, including OAuth authorization URLs, login pages, API-key consoles, and token-creation pages.
 - Read non-secret page text, field labels, scope names, button labels, and success/error status.
 - Help fill non-secret metadata such as key names, app names, local callback URLs, redirect URIs, or descriptions.
 - Pause for the user to complete login, MFA, CAPTCHA, consent, key reveal, or key copy.
@@ -37,7 +38,9 @@ codex mcp add <server-name> --url <official-mcp-url>
 codex mcp login <server-name>
 ```
 
-The user should complete the browser consent flow. Report only whether login appears complete.
+The user should complete the browser consent flow. When possible, wrap `codex mcp login` with `scripts/assist_oauth_login.ps1` or a provider-specific helper so the emitted official authorization URL is opened automatically. Report only whether login appears complete.
+
+If a provider uses PAT/API-key auth instead of OAuth, open the official token/key creation page in the browser, then use hidden local storage such as `scripts/set_env_secret.ps1` or a user environment variable. Do not ask the user to paste the secret into chat.
 
 ## Command and Storage Rules
 
@@ -45,6 +48,7 @@ The user should complete the browser consent flow. Report only whether login app
 - Use command-line `-Value` only for dummy dry-runs, tests, or explicit non-interactive automation where the user accepts command-history risk.
 - Before writing global config, state the target path and what key/server name will be changed.
 - Before installing or running an MCP package with `npx`, `uvx`, `pipx`, or similar, make clear that it will execute provider/package code.
+- If a command prints an authorization URL instead of opening a browser, capture/open that URL with an assisted helper when feasible.
 - For paid APIs, image generation, write-capable endpoints, or destructive actions, ask before the first real request.
 
 ## Reporting
