@@ -33,6 +33,22 @@ python skills\code-model-benchmark-intel\scripts\code_model_benchmark_intel.py p
    - Historical paper-code-benchmark linkage: Papers with Code archive or CodeSOTA-like third-party pages, clearly marked as archive/secondary.
 4. Normalize before synthesis. Reports should cite normalized row IDs and source URLs, not loose browser state.
 
+## Full Local Setup
+
+For a complete no-secret local setup with Python dependencies:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File skills\code-model-benchmark-intel\scripts\setup_code_model_benchmark_intel.ps1 -RunNetworkSmoke
+```
+
+For MCP registration shells:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File skills\code-model-benchmark-intel\scripts\setup_code_model_benchmark_intel.ps1 -RegisterGitHubMcp -RegisterHuggingFaceMcp -RegisterKaggleMcp
+```
+
+This installs isolated global-skill runtimes when the skill is installed under `%USERPROFILE%\.codex\skills\code-model-benchmark-intel`. It registers official remote MCP entries without storing secrets or starting blocking OAuth flows. GitHub hosted MCP needs `GITHUB_PAT_TOKEN` visible to the Codex process; Hugging Face and Kaggle may require `codex mcp login <server>` or provider settings as separate user-approved steps. Read `references/full-setup.md` before configuring credentials.
+
 ## Source Routing
 
 Read `references/source-routing.md` before selecting a backend.
@@ -101,6 +117,7 @@ Read `references/output-schema.md` before merging multiple sources.
 - Keep GitHub tokens, HF tokens, Kaggle tokens, API keys, cookies, proxy URLs, browser storage state, and `.env` files out of git and final answers.
 - Do not download gated/private models, datasets, competition data, or benchmark assets unless the user has authorized access and the source terms allow it.
 - Do not bypass paywalls, CAPTCHAs, login gates, rate limits, or license controls.
+- Do not request or store GitHub/HF/Kaggle/OpenML credentials unless the selected lane actually needs them and the user explicitly approves.
 - Mark source priority as `primary`, `secondary`, `archive`, or `fallback` for every normalized row.
 - Preserve `source_url`, `source_id`, `fetched_at`, source-specific identifiers, and score provenance.
 - For benchmark numbers, capture benchmark version, metric, split, date, verification status, source, and whether the value is self-reported.
@@ -109,5 +126,8 @@ Read `references/output-schema.md` before merging multiple sources.
 ## Resources
 
 - `scripts/code_model_benchmark_intel.py`: planner, URL inspector, scaffold generator, schema printer, and lightweight normalizer.
+- `scripts/setup_code_model_benchmark_intel.ps1`: safe setup script for isolated HF/OpenML/Kaggle Python dependencies, official MCP registrations, and optional shallow benchmark repo clones.
+- `references/full-setup.md`: complete setup matrix, MCP boundaries, credentials policy, benchmark repos, and smoke tests.
+- `references/benchmark-repos.md`: curated official benchmark repo/dataset list and clone policy.
 - `references/source-routing.md`: detailed platform routing and tool notes.
 - `references/output-schema.md`: normalized fields and merge policy.

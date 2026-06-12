@@ -30,7 +30,13 @@ Use GitHub public REST/GraphQL and local clones by default when the user asks fo
 - GitHub Actions runs/logs, dependency/security alerts;
 - implementation evidence for a paper/model/benchmark.
 
-GitHub MCP is an optional convenience layer when already configured or when richer authenticated access is explicitly approved. Keep token scopes minimal. Avoid write tools unless the user explicitly asks to create/update issues, PRs, comments, releases, or workflows.
+GitHub MCP is an optional convenience layer when already configured or when richer authenticated access is explicitly approved. The official hosted Codex route is:
+
+```powershell
+codex mcp add github --url https://api.githubcopilot.com/mcp/ --bearer-token-env-var GITHUB_PAT_TOKEN
+```
+
+Keep token scopes minimal. Avoid write tools unless the user explicitly asks to create/update issues, PRs, comments, releases, or workflows.
 
 ## Hugging Face
 
@@ -50,9 +56,30 @@ For benchmark datasets:
 - use `HfApi.get_dataset_leaderboard(dataset_id)` when a Python environment is available;
 - use `model_info(model_id, expand=["evalResults"])` for per-model score views.
 
+HF MCP is optional. Prefer the official settings page, because it controls built-in tools and MCP Spaces:
+
+```text
+https://huggingface.co/settings/mcp
+```
+
+Generic Codex registration, if you are ready to complete OAuth immediately:
+
+```powershell
+codex mcp add huggingface --url https://huggingface.co/mcp
+```
+
 ## Kaggle
 
 Use public Kaggle pages first for competitions, datasets, notebooks/kernels, models, and benchmark leaderboards. Use Kaggle API, official MCP, or third-party `kaggle-mcp` only when the user explicitly accepts authenticated setup, download terms, or discussion/write-up access.
+
+Official remote MCP registration:
+
+```powershell
+codex mcp add kaggle --url https://www.kaggle.com/mcp
+codex mcp login kaggle
+```
+
+For unattended setup, use `setup_code_model_benchmark_intel.ps1 -RegisterKaggleMcp`; it writes the remote MCP config and leaves OAuth login as a separate step.
 
 Treat Kaggle tokens as private. Do not commit `kaggle.json`, `KAGGLE_API_TOKEN`, or downloaded restricted competition data.
 
@@ -66,7 +93,7 @@ Use OpenML for classic ML datasets and reproducible benchmark evidence:
 - runs/evaluations: reproducible results and metrics;
 - benchmark suites: curated task collections.
 
-Prefer `openml-python` for automation and record task/run IDs in normalized rows.
+Prefer `openml-python` for automation and record task/run IDs in normalized rows. Persistent OpenML auth is optional for default read-only metadata. For uploads, publishing, or authenticated operations, use official OpenML account API-key configuration outside git.
 
 ## Benchmark-Specific Sources
 
@@ -77,6 +104,8 @@ For modern AI benchmark claims, use benchmark-specific official repos/datasets b
 - GAIA: official HF Space/dataset pages when available.
 - LiveCodeBench/BigCodeBench: official sites/repos.
 - Arena/LMArena: official site first; daily snapshot repos only as supplemental because no official public API was found.
+
+For curated clone targets and policy, read `benchmark-repos.md`.
 
 ## Papers with Code and CodeSOTA
 

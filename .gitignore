@@ -15,6 +15,9 @@ node_modules/
 .omx/
 skills/anysearch/.env
 skills/figma-context-mcp/.env
+skills/code-model-benchmark-intel/.env
+skills/code-model-benchmark-intel/**/.env
+skills/code-model-benchmark-intel/runtime/
 skills/xhs-explore/cookies.json
 skills/zhihu-public-intel/runtime/
 skills/zhihu-public-intel/**/cookies.json

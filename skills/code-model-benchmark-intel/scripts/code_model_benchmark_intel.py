@@ -268,7 +268,7 @@ def route_for_needs(needs: List[str], target_info: Dict[str, Any], scale: str) -
                 "lane": "github-mcp",
                 "priority": "optional",
                 "why": "Optional convenience route if the user already has GitHub MCP configured or needs richer authenticated access.",
-                "setup": ["Use remote GitHub MCP or local ghcr.io/github/github-mcp-server with minimal token scopes."],
+                "setup": ["codex mcp add github --url https://api.githubcopilot.com/mcp/ --bearer-token-env-var GITHUB_PAT_TOKEN", "Set GITHUB_PAT_TOKEN only through user-approved secret handling."],
             }
         )
 
@@ -299,7 +299,7 @@ def route_for_needs(needs: List[str], target_info: Dict[str, Any], scale: str) -
                 "lane": "huggingface-mcp",
                 "priority": "optional",
                 "why": "Optional convenience route if HF MCP is already configured; not required for the narrowed closure.",
-                "setup": ["Configure HF MCP from https://huggingface.co/settings/mcp."],
+                "setup": ["Configure HF MCP from https://huggingface.co/settings/mcp.", "Generic Codex registration: codex mcp add huggingface --url https://huggingface.co/mcp"],
             }
         )
 
@@ -317,7 +317,7 @@ def route_for_needs(needs: List[str], target_info: Dict[str, Any], scale: str) -
                 "lane": "kaggle-official-mcp",
                 "priority": "optional",
                 "why": "Optional route for authenticated Kaggle operations when the user explicitly approves credentials.",
-                "setup": ["Use Kaggle MCP docs and OAuth/token configuration outside git."],
+                "setup": ["codex mcp add kaggle --url https://www.kaggle.com/mcp", "Run codex mcp login kaggle only when authenticated Kaggle access is needed."],
             }
         )
         routes.append(
