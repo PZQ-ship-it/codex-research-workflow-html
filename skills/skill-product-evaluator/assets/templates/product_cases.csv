@@ -1,0 +1,5 @@
+id,should_trigger,prompt,expected_behavior,expected_artifacts,benchmark_sources,judge_focus,run_source,notes
+direct-01,true,"Use $target-skill to complete a realistic core task with enough evidence.","complete_core_artifact","core_artifact.md","S1;S2","functional_fit;evidence_quality;artifact_usability","new_product_run","Direct positive case."
+implicit-01,true,"Natural-language request that should trigger the target skill without naming it.","implicit_trigger_artifact","artifact.md","S1","trigger_quality;artifact_contract","new_product_run","Implicit positive case."
+negative-adjacent-01,false,"Adjacent task that should not use this skill.","no_skill_trigger","","skill-boundary","negative_boundary;adjacent_routing","new_product_run","Negative control."
+edge-missing-evidence-01,true,"In-scope request with missing facts that should not produce an overconfident final artifact.","ask_for_missing_info","needs_evidence.md","S2","evidence_gate;safety;artifact_usability","new_product_run","Missing evidence gate."

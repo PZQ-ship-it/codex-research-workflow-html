@@ -88,6 +88,7 @@
           <tr><td><code>codex-adversarial-qa</code></td><td>需要用边界情况、反例、审稿人视角压测代码、论文、图表或跑批流程。</td></tr>
           <tr><td><code>scenario-agent-run-optimizer</code></td><td>分析自研或业务 Agent 的 logs、traces、eval 输出，定位 root cause，并给出 system prompt、tool schema、检索、路由和验证优化方案；配套全局 UserPromptSubmit advisory hook。</td></tr>
           <tr><td><code>skill-eval-optimizer</code></td><td>测试、压测并优化 Codex skills：静态验证、触发样例、<code>codex exec --json</code> trace、rubric 评分和外部 API/MCP 配置闭环。</td></tr>
+          <tr><td><code>skill-product-evaluator</code></td><td>在普通 skill 行为测试之上增加 benchmark-grounded product-quality eval、case pack、LLM-as-a-judge 证据包和质量报告。</td></tr>
           <tr><td><code>codex-native-subagent-team</code></td><td>用户明确要求 subagents、parallel agents 或 team-style split 时，安全拆分 native Codex 并行任务。</td></tr>
           <tr><td><code>codex-design-brief</code></td><td>实现前需要沉淀产品、UI、文档或工作流的轻量设计决策源。</td></tr>
         </tbody>

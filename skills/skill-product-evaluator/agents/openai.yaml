@@ -1,0 +1,4 @@
+interface:
+  display_name: "Skill Product Evaluator"
+  short_description: "Benchmark-grounded skill quality eval"
+  default_prompt: "Use $skill-product-evaluator to run a benchmark-grounded product-quality eval for this Codex skill."
