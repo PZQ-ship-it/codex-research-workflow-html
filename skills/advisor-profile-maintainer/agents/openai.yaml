@@ -1,0 +1,4 @@
+interface:
+  display_name: "Advisor Profile Maintainer"
+  short_description: "Maintain private advisor profiles"
+  default_prompt: "Use $advisor-profile-maintainer to update a private advisor profile from my notes or meeting records."
