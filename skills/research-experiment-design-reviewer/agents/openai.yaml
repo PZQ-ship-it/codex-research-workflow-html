@@ -1,0 +1,4 @@
+interface:
+  display_name: "Research Experiment Design Reviewer"
+  short_description: "Review training and experiment designs"
+  default_prompt: "Use $research-experiment-design-reviewer to review my training or experiment design before I run it."

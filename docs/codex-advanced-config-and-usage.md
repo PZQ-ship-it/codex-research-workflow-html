@@ -11,8 +11,9 @@
 - `$scope-negotiator`：把宽泛任务收束成当前轮最小高价值范围，并显式列出 deferred work。
 - `$decision-record-writer`：把已形成的选择记录为简短 decision note / ADR，保留理由、备选项、后果和复查触发条件。
 - `$project-design-reviewer`：审项目/功能/架构设计本身是否合理；无设计文件时先用 `$codex-deep-interview` 对齐用户设计意图，或经用户许可从实现反推设计草案并确认；外源事实通过 `$anysearch` 查官方/一手来源。
+- `$research-experiment-design-reviewer`：审训练设计、实验设计、ablation、benchmark/eval、人类研究协议或统计分析计划；无实验设计文件时先用 `$codex-deep-interview` 对齐研究意图，或经用户许可从本地代码/配置/结果反推设计草案并确认；需要当前 benchmark、venue checklist、复现标准或 baseline 预期时用 `$anysearch` 查外源依据。
 
-典型搭配：先用 `$uncertainty-router` 判断该查什么，再用 `$assumption-auditor` 审前提；任务过大时用 `$scope-negotiator` 收口；需要判断“设计是否该这样做”时用 `$project-design-reviewer`；关键选择落地后用 `$decision-record-writer` 留痕。
+典型搭配：先用 `$uncertainty-router` 判断该查什么，再用 `$assumption-auditor` 审前提；任务过大时用 `$scope-negotiator` 收口；需要判断“项目/架构设计是否该这样做”时用 `$project-design-reviewer`；需要判断“训练/实验设计是否足以支撑研究结论”时用 `$research-experiment-design-reviewer`；关键选择落地后用 `$decision-record-writer` 留痕。
 
 ## Skill 评估与优化闭环
 
