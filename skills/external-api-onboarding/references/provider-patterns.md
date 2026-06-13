@@ -131,6 +131,39 @@ python C:\Users\Administrator\.codex\skills\anysearch\scripts\anysearch_cli.py b
 
 Use AnySearch only after login is declined, two assisted login attempts fail, the MCP runtime remains unavailable, or as an explicit cross-check, and mark snippets as discovery-only evidence. If the MCP server was newly registered, restart Codex before expecting its tools to appear. Never paste `z_c0`, `d_c0`, cookie strings, request headers, or browser storage into chat.
 
+## Chinese AI Signal Crawler
+
+- Access type: no-key public baseline for Chinese AI media public pages, RSS/RSSHub, and AnySearch anonymous discovery; optional API key for AnySearch quota; optional visible login/tool-local state for WeChat, Bilibili, and MediaCrawler-style platform captures.
+- Preferred storage:
+  - `%USERPROFILE%\.codex\skills\chinese-ai-signal-crawler\.env` for skill-specific optional settings.
+  - `%USERPROFILE%\.codex\skills\anysearch\.env` for `ANYSEARCH_API_KEY`.
+- Baseline setup and smoke:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\skills\chinese-ai-signal-crawler\scripts\setup_chinese_ai_signal_crawler.ps1 -RunNetworkSmoke
+```
+
+- Optional provider helper:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\skills\chinese-ai-signal-crawler\scripts\assist_chinese_ai_signal_auth.ps1 -Provider anysearch
+powershell -ExecutionPolicy Bypass -File .\skills\chinese-ai-signal-crawler\scripts\assist_chinese_ai_signal_auth.ps1 -Provider wechat
+powershell -ExecutionPolicy Bypass -File .\skills\chinese-ai-signal-crawler\scripts\assist_chinese_ai_signal_auth.ps1 -Provider bilibili
+powershell -ExecutionPolicy Bypass -File .\skills\chinese-ai-signal-crawler\scripts\assist_chinese_ai_signal_auth.ps1 -Provider mediacrawler
+```
+
+- Env vars:
+  - AnySearch: `ANYSEARCH_API_KEY` optional; anonymous mode works with lower limits.
+  - WeChat/Bilibili/MediaCrawler: no default secret env var; keep cookies, QR login artifacts, browser state, and platform sessions in each external tool's private runtime, not in this repo.
+- Smoke tests:
+
+```powershell
+python .\skills\chinese-ai-signal-crawler\scripts\chinese_ai_signal_crawler.py fetch-page --url https://www.qbitai.com/ --max-links 5
+python .\skills\chinese-ai-signal-crawler\scripts\chinese_ai_signal_crawler.py fetch-anysearch --query "机器之心 量子位 新智元 PaperWeekly AI" --max-results 2
+```
+
+Treat Chinese AI media, WeChat posts, Bilibili videos/comments, and platform captures as secondary or propagation evidence. Cross-check important claims against primary papers, official releases, repositories, or venue/company/lab pages before final synthesis.
+
 ## OAuth MCP Providers
 
 Use this pattern for Notion-like or other remote MCP providers that support OAuth:

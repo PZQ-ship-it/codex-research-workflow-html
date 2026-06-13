@@ -1,0 +1,7 @@
+interface:
+  display_name: "Chinese AI Signal Crawler"
+  short_description: "采集中中文AI传播与产业化信号"
+  default_prompt: "Use $chinese-ai-signal-crawler to collect Chinese AI media, WeChat, and Bilibili diffusion signals for a paper or model."
+
+policy:
+  allow_implicit_invocation: true
