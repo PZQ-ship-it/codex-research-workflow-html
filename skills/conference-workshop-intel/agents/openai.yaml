@@ -1,0 +1,4 @@
+interface:
+  display_name: "Conference Workshop Intel"
+  short_description: "Track AI conference and workshop sources"
+  default_prompt: "Use $conference-workshop-intel to collect and normalize conference workshop papers, CFP, policy, awards, and deadline evidence."

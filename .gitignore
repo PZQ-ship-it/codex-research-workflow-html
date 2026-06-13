@@ -18,6 +18,12 @@ skills/figma-context-mcp/.env
 skills/code-model-benchmark-intel/.env
 skills/code-model-benchmark-intel/**/.env
 skills/code-model-benchmark-intel/runtime/
+skills/conference-workshop-intel/.env
+skills/conference-workshop-intel/**/.env
+skills/conference-workshop-intel/runtime/
+skills/early-signal-intel/.env
+skills/early-signal-intel/**/.env
+skills/early-signal-intel/runtime/
 skills/xhs-explore/cookies.json
 skills/zhihu-public-intel/runtime/
 skills/zhihu-public-intel/**/cookies.json
