@@ -10,8 +10,9 @@
 - `$uncertainty-router`：把不确定性路由到本地检查、官方/实时检索、实验验证、询问用户或安全默认。
 - `$scope-negotiator`：把宽泛任务收束成当前轮最小高价值范围，并显式列出 deferred work。
 - `$decision-record-writer`：把已形成的选择记录为简短 decision note / ADR，保留理由、备选项、后果和复查触发条件。
+- `$project-design-reviewer`：审项目/功能/架构设计本身是否合理；无设计文件时先用 `$codex-deep-interview` 对齐用户设计意图，或经用户许可从实现反推设计草案并确认；外源事实通过 `$anysearch` 查官方/一手来源。
 
-典型搭配：先用 `$uncertainty-router` 判断该查什么，再用 `$assumption-auditor` 审前提；任务过大时用 `$scope-negotiator` 收口；关键选择落地后用 `$decision-record-writer` 留痕。
+典型搭配：先用 `$uncertainty-router` 判断该查什么，再用 `$assumption-auditor` 审前提；任务过大时用 `$scope-negotiator` 收口；需要判断“设计是否该这样做”时用 `$project-design-reviewer`；关键选择落地后用 `$decision-record-writer` 留痕。
 
 ## Skill 评估与优化闭环
 

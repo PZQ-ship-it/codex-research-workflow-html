@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Design Reviewer"
+  short_description: "Review project design before implementation"
+  default_prompt: "Use $project-design-reviewer to review this project design for feasibility, risks, assumptions, and tradeoffs."
