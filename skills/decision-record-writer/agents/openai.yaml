@@ -1,0 +1,4 @@
+interface:
+  display_name: "Decision Record Writer"
+  short_description: "Capture decisions with rationale and consequences"
+  default_prompt: "Use $decision-record-writer to turn this decision into a concise durable record."

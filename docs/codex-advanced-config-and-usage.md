@@ -2,6 +2,17 @@
 
 本文件记录本仓库可复用的 Codex 高级配置、插件、skills、hooks、subagents 和验证方式。
 
+## 通用认知 Skills
+
+本仓库维护一组不绑定具体项目的认知型 skills，适合和 `codex-deep-interview`、`codex-consensus-plan`、`codex-adversarial-qa` 组合使用：
+
+- `$assumption-auditor`：审隐含假设、过期风险、未经验证事实和高风险默认值。
+- `$uncertainty-router`：把不确定性路由到本地检查、官方/实时检索、实验验证、询问用户或安全默认。
+- `$scope-negotiator`：把宽泛任务收束成当前轮最小高价值范围，并显式列出 deferred work。
+- `$decision-record-writer`：把已形成的选择记录为简短 decision note / ADR，保留理由、备选项、后果和复查触发条件。
+
+典型搭配：先用 `$uncertainty-router` 判断该查什么，再用 `$assumption-auditor` 审前提；任务过大时用 `$scope-negotiator` 收口；关键选择落地后用 `$decision-record-writer` 留痕。
+
 ## Skill 评估与优化闭环
 
 `skill-eval-optimizer` 是本仓库用于测试、压测和优化 Codex skills 的专用 skill。它把 skill 维护拆成可验证闭环：`quick_validate.py` 静态验证、触发/不触发样例、`codex exec --json` trace 捕获、确定性评分、rubric JSON 评分、针对性修改和 forward-testing。

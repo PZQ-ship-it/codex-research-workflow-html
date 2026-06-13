@@ -1,0 +1,4 @@
+interface:
+  display_name: "Assumption Auditor"
+  short_description: "Audit hidden assumptions before trusting work"
+  default_prompt: "Use $assumption-auditor to audit the assumptions in this request or artifact."

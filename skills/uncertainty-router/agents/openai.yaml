@@ -1,0 +1,4 @@
+interface:
+  display_name: "Uncertainty Router"
+  short_description: "Route uncertainty to the cheapest verification"
+  default_prompt: "Use $uncertainty-router to decide what should be verified, assumed, searched, inspected, tested, or asked."

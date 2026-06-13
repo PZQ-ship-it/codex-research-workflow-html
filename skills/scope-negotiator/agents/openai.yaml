@@ -1,0 +1,4 @@
+interface:
+  display_name: "Scope Negotiator"
+  short_description: "Shrink fuzzy work to the best current scope"
+  default_prompt: "Use $scope-negotiator to reduce this broad request to the smallest valuable scope for the current turn."
