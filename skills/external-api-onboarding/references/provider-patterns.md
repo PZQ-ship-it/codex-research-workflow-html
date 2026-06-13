@@ -151,6 +151,39 @@ python C:\Users\Administrator\.codex\skills\anysearch\scripts\anysearch_cli.py b
 
 Use AnySearch only after login is declined, two assisted login attempts fail, the MCP runtime remains unavailable, or as an explicit cross-check, and mark snippets as discovery-only evidence. If the MCP server was newly registered, restart Codex before expecting its tools to appear. Never paste `z_c0`, `d_c0`, cookie strings, request headers, or browser storage into chat.
 
+## Early Signal Intel
+
+- Access type: no-key public baseline for Hacker News and RSS; optional API-key/app-password/OAuth-style setup for alphaXiv, Bluesky, Reddit, and X.
+- Preferred storage: `%USERPROFILE%\.codex\skills\early-signal-intel\.env`.
+- Baseline setup and smoke:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\skills\early-signal-intel\scripts\setup_early_signal_intel.ps1 -RunNetworkSmoke
+```
+
+- Optional provider helper:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\skills\early-signal-intel\scripts\assist_early_signal_auth.ps1 -Provider alphaxiv
+powershell -ExecutionPolicy Bypass -File .\skills\early-signal-intel\scripts\assist_early_signal_auth.ps1 -Provider bluesky
+powershell -ExecutionPolicy Bypass -File .\skills\early-signal-intel\scripts\assist_early_signal_auth.ps1 -Provider reddit
+powershell -ExecutionPolicy Bypass -File .\skills\early-signal-intel\scripts\assist_early_signal_auth.ps1 -Provider x
+```
+
+- Env vars:
+  - alphaXiv: `ALPHAXIV_API_KEY` optional.
+  - Bluesky: `BLUESKY_HANDLE`, `BLUESKY_APP_PASSWORD` optional; use app passwords only.
+  - Reddit: `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT`; use official API/PRAW and treat content as anecdotal.
+  - X: `X_BEARER_TOKEN`; official API only and ask before paid requests.
+- Smoke tests:
+
+```powershell
+python .\skills\early-signal-intel\scripts\early_signal_intel.py fetch-hn --query "alphaXiv arXiv discussion" --max-results 2
+python .\skills\early-signal-intel\scripts\early_signal_intel.py fetch-rss --feed https://openai.com/news/rss.xml --max-entries 2
+```
+
+Do not use unofficial X login scrapers or bulk Reddit mirroring by default. Do not train models on captured user-generated content. Store optional secrets through the helper or `set_env_secret.ps1`, never in chat.
+
 ## Chinese AI Signal Crawler
 
 - Access type: no-key public baseline for Chinese AI media public pages, RSS/RSSHub, and AnySearch anonymous discovery; optional API key for AnySearch quota; optional visible login/tool-local state for WeChat, Bilibili, and MediaCrawler-style platform captures.
@@ -183,6 +216,41 @@ python .\skills\chinese-ai-signal-crawler\scripts\chinese_ai_signal_crawler.py f
 ```
 
 Treat Chinese AI media, WeChat posts, Bilibili videos/comments, and platform captures as secondary or propagation evidence. Cross-check important claims against primary papers, official releases, repositories, or venue/company/lab pages before final synthesis.
+
+## AI Lab Blog Intel
+
+- Access type: no-key public baseline for first-party RSS/Atom, sitemap, and public HTML blog index crawling; optional API keys for AnySearch discovery, Apify managed crawler fallback, GitHub repository enrichment, and Hugging Face model/dataset enrichment.
+- Preferred storage:
+  - `%USERPROFILE%\.codex\skills\ai-lab-blog-intel\.env` for `APIFY_TOKEN`, optional `GITHUB_TOKEN`, and optional `HF_TOKEN`.
+  - `%USERPROFILE%\.codex\skills\anysearch\.env` or the skill-specific `.env` for `ANYSEARCH_API_KEY`; anonymous AnySearch works with lower limits.
+- Baseline setup and smoke:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\skills\ai-lab-blog-intel\scripts\setup_ai_lab_blog_intel.ps1 -RunNetworkSmoke
+```
+
+- Optional provider helper:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\skills\ai-lab-blog-intel\scripts\assist_ai_lab_blog_auth.ps1 -Provider anysearch
+powershell -ExecutionPolicy Bypass -File .\skills\ai-lab-blog-intel\scripts\assist_ai_lab_blog_auth.ps1 -Provider apify
+powershell -ExecutionPolicy Bypass -File .\skills\ai-lab-blog-intel\scripts\assist_ai_lab_blog_auth.ps1 -Provider github
+powershell -ExecutionPolicy Bypass -File .\skills\ai-lab-blog-intel\scripts\assist_ai_lab_blog_auth.ps1 -Provider huggingface
+```
+
+- Env vars:
+  - AnySearch: `ANYSEARCH_API_KEY` optional for higher live-discovery quota.
+  - Apify: `APIFY_TOKEN` optional; ask before paid actor runs.
+  - GitHub: `GITHUB_TOKEN` optional; use read-only/project-scoped tokens for enrichment.
+  - Hugging Face: `HF_TOKEN` optional; public model/dataset pages often work without it.
+- Smoke tests:
+
+```powershell
+python .\skills\ai-lab-blog-intel\scripts\ai_lab_blog_intel.py fetch-feeds --org openai --max-entries 2
+python .\skills\ai-lab-blog-intel\scripts\ai_lab_blog_intel.py fetch-index --org anthropic --max-pages 1 --max-links 5
+```
+
+Treat AnySearch snippets and third-party generated feeds as discovery or secondary evidence. Canonical rows should come from first-party feeds, sitemaps, or public organization pages when available.
 
 ## OAuth MCP Providers
 

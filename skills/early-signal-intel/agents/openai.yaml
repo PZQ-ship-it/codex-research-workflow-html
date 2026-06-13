@@ -1,0 +1,4 @@
+interface:
+  display_name: "Early Signal Intel"
+  short_description: "Monitor early research discussion signals"
+  default_prompt: "Use $early-signal-intel to collect and normalize alphaXiv, Hacker News, RSS/lab blog, Bluesky, or Reddit early research signals."

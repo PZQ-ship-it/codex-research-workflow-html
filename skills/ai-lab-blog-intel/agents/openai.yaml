@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI Lab Blog Intel"
+  short_description: "Monitor AI lab and company research blogs"
+  default_prompt: "Use -lab-blog-intel to collect, normalize, and synthesize AI company or lab research blog releases from RSS, sitemaps, or lightweight public crawlers."
