@@ -78,6 +78,26 @@ codex mcp add openaiDeveloperDocs --url https://developers.openai.com/mcp
 
 - Smoke test: list MCP servers with `codex mcp --help` / `/mcp`, or use the MCP in a tiny official-doc lookup if tools are available.
 
+## Skill Eval Optimizer
+
+- Access type: no-key local baseline for skill validation, JSONL trace grading, and eval-pack scaffolding; optional provider setup only when eval cases require live discovery, official docs lookup, repository/HF/Kaggle enrichment, browser automation, or remote MCP tools.
+- API key: none required for the base workflow.
+- Skill path: `skills\skill-eval-optimizer\`.
+- Baseline smoke tests:
+
+```powershell
+python skills\skill-eval-optimizer\scripts\skill_eval_harness.py static-check skills\skill-eval-optimizer
+python C:\Users\Administrator\.codex\skills\.system\skill-creator\scripts\quick_validate.py skills\skill-eval-optimizer
+```
+
+- Optional provider routes:
+  - AnySearch: use `ANYSEARCH_API_KEY` in `%USERPROFILE%\.codex\skills\anysearch\.env` only when anonymous live discovery is insufficient.
+  - OpenAI Developer Docs MCP: use `codex mcp add openaiDeveloperDocs --url https://developers.openai.com/mcp` when current official Codex/OpenAI docs are required.
+  - GitHub, Hugging Face, Kaggle: use read-only scoped tokens only when public unauthenticated access cannot satisfy the eval.
+  - Browser Use MCP or visible browser helpers: use only for non-secret UI/state checks; the user completes login, MFA, CAPTCHA, and secret reveal steps.
+- Smoke test policy: prefer local `doc`, `list`, `whoami`, public read, or dry-run commands. Ask before paid, write-capable, or provider-mutating requests.
+- Reporting: include provider name, env var name, private storage path, MCP server name, command shape, and smoke-test result only; never include token values, cookies, auth headers, or browser storage.
+
 ## Browser Use MCP
 
 - Access type: local stdio MCP for browser automation.

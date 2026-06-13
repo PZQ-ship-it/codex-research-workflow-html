@@ -1,0 +1,4 @@
+interface:
+  display_name: "Skill Eval Optimizer"
+  short_description: "Test and improve Codex skills"
+  default_prompt: "Use $skill-eval-optimizer to evaluate and improve a Codex skill from its folder and recent run evidence."

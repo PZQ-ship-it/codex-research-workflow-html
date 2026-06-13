@@ -2,6 +2,28 @@
 
 本文件记录本仓库可复用的 Codex 高级配置、插件、skills、hooks、subagents 和验证方式。
 
+## Skill 评估与优化闭环
+
+`skill-eval-optimizer` 是本仓库用于测试、压测和优化 Codex skills 的专用 skill。它把 skill 维护拆成可验证闭环：`quick_validate.py` 静态验证、触发/不触发样例、`codex exec --json` trace 捕获、确定性评分、rubric JSON 评分、针对性修改和 forward-testing。
+
+本地入口：
+
+```powershell
+python skills\skill-eval-optimizer\scripts\skill_eval_harness.py static-check skills\skill-eval-optimizer
+python skills\skill-eval-optimizer\scripts\skill_eval_harness.py init-eval `
+  --skill-dir skills\skill-eval-optimizer `
+  --out-dir evals\skill-eval\skill-eval-optimizer
+```
+
+推荐顺序：
+
+1. 用 `$skill-creator` 创建或修改 skill。
+2. 用 `quick_validate.py` 和 `skill_eval_harness.py static-check` 做结构验证。
+3. 建 10-20 条 eval prompts，至少包含 direct、implicit、negative control。
+4. 用 `codex exec --json` 在隔离目录跑样例并保存 JSONL trace。
+5. 用确定性检查和 `--output-schema` rubric 比较 before/after。
+6. 如果 eval 需要 AnySearch、OpenAI Developer Docs MCP、GitHub、Hugging Face、Kaggle 或浏览器登录，先调用 `$external-api-onboarding`，把凭据放在用户级私有 `.env` 或 Codex MCP 配置里，不写入仓库。
+
 ## Codex Council 插件
 
 `codex-council` 是一个 Codex-only council review 插件，用多个隔离角色做 first opinions、匿名 review/ranking、rubric scoring 和 Chairman synthesis。它适合架构决策、风险 diff、迁移、安全/隐私、性能或 release go/no-go 这类“单次自信错误代价较高”的任务。
