@@ -1,0 +1,4 @@
+interface:
+  display_name: "Deep Think Reasoning"
+  short_description: "Structured deep reasoning workflow"
+  default_prompt: "Use $deep-think-reasoning to analyze this hard problem with parallel candidates and verification."
