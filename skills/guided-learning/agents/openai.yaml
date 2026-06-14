@@ -1,0 +1,4 @@
+interface:
+  display_name: "Guided Learning"
+  short_description: "Socratic tutoring with adaptive scaffolds"
+  default_prompt: "Use $guided-learning to help me understand this problem step by step without jumping straight to the answer."
