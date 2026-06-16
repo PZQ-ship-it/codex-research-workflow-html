@@ -59,13 +59,13 @@ powershell -ExecutionPolicy Bypass -File scripts\setup_dianping_explore.ps1 -Wit
 $env:DIANPING_COOKIE = "<从浏览器复制的 Cookie>"
 ```
 
-如果用户需要长期保存，用 `external-api-onboarding` 的隐藏输入 helper 写入技能私有 `.env`，不要在聊天或命令行里传真实 Cookie：
+如果用户需要长期保存，用登录辅助脚本打开可见浏览器；用户在浏览器中完成登录/验证后回到终端按 Enter，程序会自动保存本次 Playwright 会话里的大众点评 Cookie：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\assist_dianping_cookie.ps1
 ```
 
-这个辅助脚本会打开大众点评页面，用户在浏览器里完成登录/验证并自行复制 Cookie，再在本地隐藏提示中粘贴；脚本只保存变量，不打印 Cookie。
+这个辅助脚本不会读取现有 Chrome/Edge profile，不需要用户复制粘贴 Cookie，也不会打印 Cookie 值。它只写入技能私有 `.env`。
 
 ### 3. 检查状态
 

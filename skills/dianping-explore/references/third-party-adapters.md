@@ -56,7 +56,7 @@ Use `DIANPING_COOKIE` for cookies. Do not write real cookies into:
 
 The setup command redacts the upstream sample `COOKIES` value in the local checkout by default. The runtime launcher injects the cookie from the environment before running `main.py`.
 
-Use `scripts/assist_dianping_cookie.ps1` when the user wants assisted cookie setup. It opens `https://www.dianping.com/` and delegates storage to `external-api-onboarding/scripts/set_env_secret.ps1` with hidden input.
+Use `scripts/assist_dianping_cookie.ps1` when the user wants assisted cookie setup. It launches a visible Playwright Chromium session, waits for the user to complete login/CAPTCHA/MFA manually, then saves only that session's Dianping cookies into the private `.env` without printing values. It must not read existing Chrome/Edge profiles.
 
 ## Adapter selection
 
