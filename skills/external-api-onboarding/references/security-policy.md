@@ -13,6 +13,7 @@ Use this reference before touching credentials, OAuth, provider consoles, browse
   - `%USERPROFILE%\.codex\config.toml` for MCP server definitions
 - Treat repo-local `.env`, `cookies.json`, `auth.json`, browser storage state, and token dumps as private and untracked unless the user explicitly says otherwise.
 - For cookie/storage-state providers, prefer saving a fresh visible helper session over asking the user to paste cookies manually. Store only the target provider's required state in private user-level storage.
+- Do not let missing credentials silently redirect a skill into anonymous/public fallback when a safe auth helper exists. Attempt the helper-backed main flow first, and treat fallback as an explicit or failure-driven exception.
 - Use least privilege: narrow scopes, short expiry, read-only access, and provider-specific project keys when available.
 
 ## Browser and OAuth Guardrails
@@ -56,6 +57,7 @@ If a provider uses browser session auth instead of OAuth or API keys, prefer a p
 - Before installing or running an MCP package with `npx`, `uvx`, `pipx`, or similar, make clear that it will execute provider/package code.
 - If a command prints an authorization URL instead of opening a browser, capture/open that URL with an assisted helper when feasible.
 - If a skill needs cookies/storage state, implement or use a helper with `--dry-run`, visible login, private output path, and redacted reporting. Verify state with a cheap status/whoami/read-only smoke when available.
+- During onboarding, inspect whether the target skill's defaults prefer fallback over its helper-backed main flow. If they do, correct the skill or document the user's explicit fallback choice before closing setup.
 - For paid APIs, image generation, write-capable endpoints, or destructive actions, ask before the first real request.
 
 ## Reporting

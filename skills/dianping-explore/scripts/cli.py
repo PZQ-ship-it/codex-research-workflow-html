@@ -55,7 +55,7 @@ def load_private_env(env_file: Path = PRIVATE_ENV_FILE) -> List[str]:
         if not parsed:
             continue
         key, value = parsed
-        if key.startswith("DIANPING_") and key not in os.environ:
+        if key.startswith("DIANPING_") and not os.environ.get(key):
             os.environ[key] = value
             loaded.append(key)
     return loaded
@@ -73,6 +73,14 @@ def fail(message: str, **extra: Any) -> int:
     payload: Dict[str, Any] = {"ok": False, "error": message}
     payload.update(extra)
     return emit(payload, 1)
+
+
+def refresh_private_env() -> List[str]:
+    loaded = load_private_env()
+    for key in loaded:
+        if key not in LOADED_PRIVATE_ENV:
+            LOADED_PRIVATE_ENV.append(key)
+    return loaded
 
 
 def resolve_root(value: str | None = None) -> Path:
@@ -230,19 +238,30 @@ def split_csv(value: str) -> List[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+def run_visible_login_helper(py: str, login_url: str) -> int:
+    helper = SKILL_DIR / "scripts" / "assist_dianping_cookie.py"
+    if not helper.exists():
+        return 127
+    completed = subprocess.run(
+        [
+            py,
+            str(helper),
+            "--env-file",
+            str(PRIVATE_ENV_FILE),
+            "--url",
+            login_url,
+        ],
+        check=False,
+    )
+    return completed.returncode
+
+
 def cmd_run_crawler(args: argparse.Namespace) -> int:
     root = resolve_root(args.crawler_root)
     try:
         ensure_ready(root)
     except FileNotFoundError as exc:
         return fail(str(exc), status=crawler_status(root, args.cookie_env))
-
-    cookie = os.environ.get(args.cookie_env, "")
-    if not cookie and not args.allow_empty_cookie:
-        return fail(
-            f"{args.cookie_env} is not set; provide cookies through an environment variable, not chat or command-line arguments",
-            status=crawler_status(root, args.cookie_env),
-        )
 
     output = Path(args.output).expanduser().resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -262,6 +281,7 @@ def cmd_run_crawler(args: argparse.Namespace) -> int:
         str(output),
     ]
     py = find_python(root, args.python)
+    cookie = os.environ.get(args.cookie_env, "")
 
     launcher = textwrap.dedent(
         f"""
@@ -294,9 +314,51 @@ def cmd_run_crawler(args: argparse.Namespace) -> int:
                 "cities": cities,
                 "cookie_env": args.cookie_env,
                 "cookie_configured": bool(cookie),
+                "auto_login_planned": bool(
+                    not cookie and not args.allow_empty_cookie and not args.no_auto_login
+                ),
+                "login_url": args.login_url,
                 "output": str(output),
             }
         )
+
+    auto_login_attempted = False
+    if not cookie and not args.allow_empty_cookie:
+        if args.no_auto_login:
+            return fail(
+                f"{args.cookie_env} is not set and automatic visible login was disabled; rerun without --no-auto-login or run scripts\\assist_dianping_cookie.ps1",
+                status=crawler_status(root, args.cookie_env),
+            )
+        if args.cookie_env != DEFAULT_COOKIE_ENV:
+            return fail(
+                f"automatic visible login saves {DEFAULT_COOKIE_ENV}, but --cookie-env requested {args.cookie_env}; use the default cookie env or configure the requested env var privately",
+                status=crawler_status(root, args.cookie_env),
+            )
+
+        print(
+            f"[dianping-explore] {args.cookie_env} is missing; opening visible Dianping login now.",
+            flush=True,
+        )
+        print(
+            "[dianping-explore] Complete login/CAPTCHA/MFA in the browser, then return here to continue the crawler.",
+            flush=True,
+        )
+        auto_login_attempted = True
+        helper_rc = run_visible_login_helper(py, args.login_url)
+        if helper_rc != 0:
+            return fail(
+                "visible Dianping login helper failed or was cancelled; crawler did not fall back to unauthenticated collection",
+                helper_returncode=helper_rc,
+                status=crawler_status(root, args.cookie_env),
+            )
+
+        refresh_private_env()
+        cookie = os.environ.get(args.cookie_env, "")
+        if not cookie:
+            return fail(
+                f"visible login completed but {args.cookie_env} is still not configured; crawler did not fall back to unauthenticated collection",
+                status=crawler_status(root, args.cookie_env),
+            )
 
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
@@ -319,6 +381,7 @@ def cmd_run_crawler(args: argparse.Namespace) -> int:
             "root": str(root),
             "output": str(output),
             "output_exists": output.exists(),
+            "auto_login_attempted": auto_login_attempted,
             "next": "Run normalize-csv on the output file if output_exists is true.",
         },
         0 if completed.returncode == 0 else 1,
@@ -424,7 +487,9 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--comment-pages", type=int, default=1)
     run_parser.add_argument("--output", required=True)
     run_parser.add_argument("--cookie-env", default=DEFAULT_COOKIE_ENV)
-    run_parser.add_argument("--allow-empty-cookie", action="store_true")
+    run_parser.add_argument("--allow-empty-cookie", action="store_true", help="explicitly run without cookies; this bypasses the auth-first default")
+    run_parser.add_argument("--no-auto-login", action="store_true", help="do not open the visible login helper when cookies are missing")
+    run_parser.add_argument("--login-url", default="https://www.dianping.com/", help="Dianping page opened by the visible login helper")
     run_parser.add_argument("--dry-run", action="store_true")
     run_parser.set_defaults(func=cmd_run_crawler)
 

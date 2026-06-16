@@ -1,4 +1,4 @@
 interface:
   display_name: "Dianping Explore"
-  short_description: "Search Dianping shops and export small review samples"
-  default_prompt: "Use $dianping-explore to search Dianping shops and export a small compliant review sample."
+  short_description: "Auth-first Dianping shop search and small review sampling"
+  default_prompt: "Use $dianping-explore to search Dianping shops and export a small compliant review sample, running the visible login helper first if cookies are missing."

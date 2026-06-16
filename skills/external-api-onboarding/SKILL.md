@@ -1,6 +1,6 @@
 ---
 name: external-api-onboarding
-description: Configure external API keys, OAuth MCP connections, browser-assisted provider console setup, private .env storage, Codex MCP config, and smoke tests without exposing secrets. Use when Codex is asked to set up or repair external provider access for skills, MCP servers, browser-use, AnySearch, OpenRouter ICU, Figma, Notion, GitHub, Hugging Face, Kaggle, or similar services.
+description: Configure external API keys, OAuth MCP connections, browser-assisted provider console setup, private .env storage, Codex MCP config, fallback audits, and smoke tests without exposing secrets. Use when Codex is asked to set up or repair external provider access for skills, MCP servers, browser-use, AnySearch, OpenRouter ICU, Figma, Notion, GitHub, Hugging Face, Kaggle, or similar services, especially when a skill might skip its authenticated main flow and fall back too early.
 ---
 
 # External API Onboarding
@@ -14,6 +14,8 @@ This skill does not harvest, reveal, or bypass credentials. It keeps login, MFA,
 For any setup that needs user authentication, the default UX must be assisted and visible: open the official provider console, token creation page, OAuth URL, or login page in a browser automatically when it is safe to do so. Do not leave the user with only a raw URL or a pasted command if the agent can open the official auth target directly. The user still completes login, MFA, CAPTCHA, billing consent, key reveal, and token copy.
 
 For browser-session providers that need cookies or storage state, prefer a provider-specific visible-login helper over manual cookie paste: launch a fresh tool-controlled browser session, let the user complete login/CAPTCHA/MFA, then save only that session's required cookies/state to private user-level storage without printing values. Do not read existing Chrome/Edge/browser profiles unless the user explicitly asks and the target workflow requires it.
+
+Audit fallback behavior before closing setup. If the target skill has a safe visible-login/OAuth/key helper but its instructions or scripts tend to stop at "credential missing", use anonymous mode, or report fallback results instead of driving the main authenticated flow, correct that skill or run the helper first. Fallback is a controlled exception, not the default path.
 
 ## Required Inputs
 
@@ -48,11 +50,15 @@ Ask one concise question only when the answer changes privacy, cost, provider sc
    - For browser-session auth, prefer a visible helper that automatically saves the fresh session cookies/state after the user completes login; fall back to hidden local prompt only when no safe helper exists.
    - For PAT/API-key auth, open the official provider page automatically and guide the user to paste secrets only into a hidden local prompt or provider-controlled UI.
    - Do not read, print, paste into chat, commit, or summarize secret values.
-5. Smoke test.
+5. Audit main-flow vs fallback behavior.
+   - Inspect the target skill's `SKILL.md`, provider references, and relevant CLI flags for fallback-prone defaults.
+   - If the skill would skip the main provider flow because a credential/cookie is missing while a safe helper exists, patch the skill or run the helper before using fallback.
+   - Allow fallback only when the user declines assisted auth, assisted auth fails after a reasonable attempt, the provider/runtime is unavailable, or the user explicitly asks for discovery-only/public cross-checking.
+6. Smoke test.
    - Prefer dry-run, `whoami`, `list`, `doc`, or one cheap read-only request.
    - For paid APIs or write-capable providers, ask before making a real request.
    - Report only status: key present/missing, server configured, login required, request succeeded/failed, or blocker.
-6. Close the loop.
+7. Close the loop.
    - Summarize provider, env var names, storage path, MCP server name, commands run, smoke-test result, and any restart needed.
    - Never include secret values, cookies, auth headers, or copied browser storage.
 
@@ -117,11 +123,13 @@ The helper runs `codex mcp login <server>`, watches for the official authorizati
 - `references/provider-patterns.md`: known provider routes, env var names, MCP command shapes, and smoke-test ideas.
 - `scripts/assist_oauth_login.ps1`: generic visible OAuth helper for Codex remote MCP servers.
 - Provider-specific visible-login helpers: preferred for cookie/storage-state providers; they should open a fresh browser, let the user authenticate, and save only status plus private state paths without printing secret values.
+- Fallback audit: required for skills with optional anonymous/public modes; verify the helper-backed main flow is attempted before fallback.
 
 ## Done Criteria
 
 - Credentials were stored only in the approved private target.
 - User-auth steps were assisted with an automatic browser/provider-page open, or a blocker explains why automatic opening was not possible.
+- Target skill defaults were checked for fallback drift; any "missing credential -> fallback" behavior was corrected or explicitly documented as user-approved.
 - No secret value appears in chat, committed files, command output, or final summary.
 - MCP or env configuration is documented by server name, env var name, and path only.
 - A smoke test ran, or the blocker and next human action are clear.

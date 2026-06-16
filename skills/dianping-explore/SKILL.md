@@ -1,6 +1,6 @@
 ---
 name: dianping-explore
-description: Dianping merchant discovery and low-volume review sampling. Use when Codex needs to search Dianping shops, collect a small public review sample, wrap an existing Dianping crawler, prepare the local Playwright runtime, normalize CSV/JSONL output, or troubleshoot Dianping crawler login, cookie, and environment setup.
+description: Auth-first Dianping merchant discovery and low-volume review sampling. Use when Codex needs to search Dianping shops, collect a small public review sample, wrap an existing Dianping crawler, prepare the local Playwright runtime, normalize CSV/JSONL output, or troubleshoot Dianping crawler login, cookie, and environment setup; if cookies are missing, prefer the visible login helper before any fallback.
 ---
 
 # Dianping Explore
@@ -16,6 +16,8 @@ python scripts\cli.py <子命令>
 ```
 
 不要把 Cookie、账号、代理密钥或浏览器 profile 写入 skill 仓库。不要在回答里输出 Cookie。不要做高频、大规模、绕过验证码或绕过访问控制的采集。遇到验证码或风控页面时，暂停并要求用户在可见浏览器中手动处理；不能自动破解。
+
+Auth-first is the default. If a requested Dianping collection needs cookies and `DIANPING_COOKIE` is missing, run the visible login helper and let the user complete login/CAPTCHA/MFA before collecting. Do not silently fall back to no-auth/public snippets or conclude that comments were not collected merely because cookies were initially absent. Use fallback only when the user declines visible login, the helper fails, or the user explicitly asks for discovery-only work.
 
 默认第三方适配源是 `HDdssX/dianping_crawler`。它必须安装在外部目录，例如 `%LOCALAPPDATA%\Codex\dianping-explore\HDdssX_dianping_crawler`，并通过 `DIANPING_CRAWLER_ROOT` 或 `--crawler-root` 指向。更多适配说明见 `references/third-party-adapters.md`。
 
@@ -51,21 +53,17 @@ python scripts\cli.py setup-source --with-venv --install-browser
 powershell -ExecutionPolicy Bypass -File scripts\setup_dianping_explore.ps1 -WithVenv -RunSmoke
 ```
 
-### 2. 配置 Cookie
+### 2. 配置 Cookie / 可见登录
 
-只用环境变量传入 Cookie，不要写进仓库或命令行：
-
-```powershell
-$env:DIANPING_COOKIE = "<从浏览器复制的 Cookie>"
-```
-
-如果用户需要长期保存，用登录辅助脚本打开可见浏览器；用户在浏览器中完成登录/验证后回到终端按 Enter，程序会自动保存本次 Playwright 会话里的大众点评 Cookie：
+默认不要要求用户复制粘贴 Cookie。用登录辅助脚本打开可见浏览器；用户在浏览器中完成登录/验证后回到终端按 Enter，程序会自动保存本次 Playwright 会话里的大众点评 Cookie：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\assist_dianping_cookie.ps1
 ```
 
 这个辅助脚本不会读取现有 Chrome/Edge profile，不需要用户复制粘贴 Cookie，也不会打印 Cookie 值。它只写入技能私有 `.env`。
+
+`run-crawler` 也会走同一条主流程：如果 `DIANPING_COOKIE` 缺失，默认自动打开可见登录助手，用户完成验证后继续爬虫。只有显式传入 `--no-auto-login` 或 `--allow-empty-cookie` 才会跳过这个默认流程。
 
 ### 3. 检查状态
 
@@ -114,7 +112,7 @@ python scripts\cli.py schema
 ## 失败处理
 
 - **找不到爬虫目录**：运行 `setup-source`，或让用户提供 `DIANPING_CRAWLER_ROOT`。
-- **Cookie 未配置**：提示用户设置 `DIANPING_COOKIE`，不要要求用户在聊天里粘贴真实 Cookie。
+- **Cookie 未配置**：默认运行 `scripts\assist_dianping_cookie.ps1` 或让 `run-crawler` 自动触发可见登录；不要要求用户在聊天里粘贴真实 Cookie，不要直接降级到 fallback。
 - **依赖缺失**：运行 `setup-source --with-venv --install-browser`。
 - **验证码/安全验证**：暂停，要求用户在可见浏览器中手动处理。
 - **无结果或字段缺失**：缩小城市/关键词/页数，先跑 `--max-pages 1 --comment-pages 1`。

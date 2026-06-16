@@ -126,9 +126,25 @@ Use this pattern for skills like `dianping-explore`, `zhihu-public-intel`, `xhs-
   - Report only path, cookie/state count, and login/status booleans.
 - Default prohibitions:
   - Do not ask the user to paste cookies manually when a safe visible helper exists.
+  - Do not stop at "cookie missing", run anonymous mode, or switch to search/snippet fallback when a safe visible helper exists and the user has not declined it.
   - Do not read existing Chrome/Edge/browser profiles unless the user explicitly asks and accepts the privacy risk.
   - Do not print cookie values, auth headers, local storage values, or browser-state JSON.
+- Fallback gate:
+  - Attempt the helper-backed main flow first for requested provider data.
+  - Use fallback only when login is declined, the helper fails after a reasonable attempt, the runtime is unavailable, or the user explicitly asks for discovery-only/public cross-checking.
+  - If a skill's CLI or instructions prefer fallback before assisted auth, patch the skill as part of onboarding.
 - Smoke test: prefer `status`, `check-login`, `cookie_status`, `whoami`, or one small read-only page/API call. Treat a cookie file's existence as insufficient unless a login/status check passes.
+
+## Dianping Explore
+
+- Access type: visible user login into a fresh Playwright Chromium session; saved as `DIANPING_COOKIE` in `%USERPROFILE%\.codex\skills\dianping-explore\.env`.
+- Helper:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\skills\dianping-explore\scripts\assist_dianping_cookie.ps1
+```
+
+- Main-flow requirement: `run-crawler` should automatically invoke the helper when `DIANPING_COOKIE` is missing, reload the private `.env`, and continue the small crawler run. Do not report "crawler available but no cookie so no comments were collected" unless visible login was declined, failed, or explicitly disabled.
 
 ## Zhihu Public Intel / zhihu-mcp
 
