@@ -13,7 +13,7 @@ This skill does not harvest, reveal, or bypass credentials. It keeps login, MFA,
 
 For any setup that needs user authentication, the default UX must be assisted and visible: open the official provider console, token creation page, OAuth URL, or login page in a browser automatically when it is safe to do so. Do not leave the user with only a raw URL or a pasted command if the agent can open the official auth target directly. The user still completes login, MFA, CAPTCHA, billing consent, key reveal, and token copy.
 
-For browser-session providers that need cookies or storage state, prefer a provider-specific visible-login helper over manual cookie paste: launch a fresh tool-controlled browser session, let the user complete login/CAPTCHA/MFA, then save only that session's required cookies/state to private user-level storage without printing values. Do not read existing Chrome/Edge/browser profiles unless the user explicitly asks and the target workflow requires it.
+For browser-session providers that need cookies or storage state, prefer a provider-specific visible-login helper over manual cookie paste: launch a fresh tool-controlled browser session, let the user complete login/CAPTCHA/MFA, then save only that session's required cookies/state to private user-level storage without printing values. The helper must work in non-interactive Codex terminals: do not require terminal `input()`, Enter presses, or pasted cookies; use browser-side confirmation, polling, OAuth callbacks, or provider status checks instead. Do not read existing Chrome/Edge/browser profiles unless the user explicitly asks and the target workflow requires it.
 
 Audit fallback behavior before closing setup. If the target skill has a safe visible-login/OAuth/key helper but its instructions or scripts tend to stop at "credential missing", use anonymous mode, or report fallback results instead of driving the main authenticated flow, correct that skill or run the helper first. Fallback is a controlled exception, not the default path.
 
@@ -53,7 +53,7 @@ Ask one concise question only when the answer changes privacy, cost, provider sc
 5. Audit main-flow vs fallback behavior.
    - Inspect the target skill's `SKILL.md`, provider references, and relevant CLI flags for fallback-prone defaults.
    - If the skill would skip the main provider flow because a credential/cookie is missing while a safe helper exists, patch the skill or run the helper before using fallback.
-   - Allow fallback only when the user declines assisted auth, assisted auth fails after a reasonable attempt, the provider/runtime is unavailable, or the user explicitly asks for discovery-only/public cross-checking.
+   - Treat assisted-auth failure as a blocker for authenticated collection. Allow fallback only when the user explicitly asks for discovery-only/public cross-checking, or when the task itself is no-auth by design.
 6. Smoke test.
    - Prefer dry-run, `whoami`, `list`, `doc`, or one cheap read-only request.
    - For paid APIs or write-capable providers, ask before making a real request.
@@ -129,6 +129,7 @@ The helper runs `codex mcp login <server>`, watches for the official authorizati
 
 - Credentials were stored only in the approved private target.
 - User-auth steps were assisted with an automatic browser/provider-page open, or a blocker explains why automatic opening was not possible.
+- Browser-session helpers were checked against non-interactive Codex execution and do not require terminal stdin to finish.
 - Target skill defaults were checked for fallback drift; any "missing credential -> fallback" behavior was corrected or explicitly documented as user-approved.
 - No secret value appears in chat, committed files, command output, or final summary.
 - MCP or env configuration is documented by server name, env var name, and path only.

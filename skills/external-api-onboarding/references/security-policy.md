@@ -57,6 +57,7 @@ If a provider uses browser session auth instead of OAuth or API keys, prefer a p
 - Before installing or running an MCP package with `npx`, `uvx`, `pipx`, or similar, make clear that it will execute provider/package code.
 - If a command prints an authorization URL instead of opening a browser, capture/open that URL with an assisted helper when feasible.
 - If a skill needs cookies/storage state, implement or use a helper with `--dry-run`, visible login, private output path, and redacted reporting. Verify state with a cheap status/whoami/read-only smoke when available.
+- Visible login helpers should not depend on terminal stdin in Codex. Prefer browser-side buttons, automatic cookie/status polling, OAuth callbacks, or provider-controlled success pages so the user can finish authentication entirely in the browser.
 - During onboarding, inspect whether the target skill's defaults prefer fallback over its helper-backed main flow. If they do, correct the skill or document the user's explicit fallback choice before closing setup.
 - For paid APIs, image generation, write-capable endpoints, or destructive actions, ask before the first real request.
 

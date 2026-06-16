@@ -122,6 +122,7 @@ Use this pattern for skills like `dianping-explore`, `zhihu-public-intel`, `xhs-
 - Default helper behavior:
   - Open the official site in a visible automation browser.
   - Let the user complete login, MFA, CAPTCHA, QR scan, or account verification manually.
+  - Avoid terminal stdin prompts; the helper must survive non-interactive Codex execution by polling provider state or exposing a browser-side confirmation control.
   - Save only the cookies/storage state from that helper-created session.
   - Report only path, cookie/state count, and login/status booleans.
 - Default prohibitions:
@@ -131,7 +132,7 @@ Use this pattern for skills like `dianping-explore`, `zhihu-public-intel`, `xhs-
   - Do not print cookie values, auth headers, local storage values, or browser-state JSON.
 - Fallback gate:
   - Attempt the helper-backed main flow first for requested provider data.
-  - Use fallback only when login is declined, the helper fails after a reasonable attempt, the runtime is unavailable, or the user explicitly asks for discovery-only/public cross-checking.
+  - Treat login refusal, helper failure, or runtime unavailability as blockers for authenticated collection; use fallback only when the user explicitly asks for discovery-only/public cross-checking.
   - If a skill's CLI or instructions prefer fallback before assisted auth, patch the skill as part of onboarding.
 - Smoke test: prefer `status`, `check-login`, `cookie_status`, `whoami`, or one small read-only page/API call. Treat a cookie file's existence as insufficient unless a login/status check passes.
 
@@ -144,7 +145,7 @@ Use this pattern for skills like `dianping-explore`, `zhihu-public-intel`, `xhs-
 powershell -ExecutionPolicy Bypass -File .\skills\dianping-explore\scripts\assist_dianping_cookie.ps1
 ```
 
-- Main-flow requirement: `run-crawler` should automatically invoke the helper when `DIANPING_COOKIE` is missing, reload the private `.env`, and continue the small crawler run. Do not report "crawler available but no cookie so no comments were collected" unless visible login was declined, failed, or explicitly disabled.
+- Main-flow requirement: `run-crawler` should automatically invoke the helper when `DIANPING_COOKIE` is missing, reload the private `.env`, and continue the small crawler run. Do not report "crawler available but no cookie so no comments were collected"; if visible login is declined, fails, or is disabled, report the crawler run as blocked rather than falling back to public snippets.
 
 ## Zhihu Public Intel / zhihu-mcp
 

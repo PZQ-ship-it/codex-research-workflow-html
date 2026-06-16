@@ -56,9 +56,9 @@ Use `DIANPING_COOKIE` for cookies. Do not write real cookies into:
 
 The setup command redacts the upstream sample `COOKIES` value in the local checkout by default. The runtime launcher injects the cookie from the environment before running `main.py`.
 
-Use `scripts/assist_dianping_cookie.ps1` when the user needs cookie setup. It launches a visible Playwright Chromium session, waits for the user to complete login/CAPTCHA/MFA manually, then saves only that session's Dianping cookies into the private `.env` without printing values. It must not read existing Chrome/Edge profiles.
+Use `scripts/assist_dianping_cookie.ps1` when the user needs cookie setup. It launches a visible Playwright Chromium session, waits for the user to complete login/CAPTCHA/MFA manually in the browser, then saves only that session's Dianping cookies into the private `.env` without printing values. The helper must not rely on terminal stdin; it should auto-detect login cookies. Use the browser-side/manual unverified save path only after the user confirms they are logged in and the site appears to have changed its login markers. It must not read existing Chrome/Edge profiles.
 
-`run-crawler` is auth-first by default: when `DIANPING_COOKIE` is missing, it should invoke the visible login helper, reload the private `.env`, and continue the crawler with the captured session. Do not treat a missing cookie as permission to skip the crawl, switch to public snippets, or report fallback-only results unless the user declines login, the helper fails, or discovery-only mode was explicitly requested.
+`run-crawler` is auth-first by default: when `DIANPING_COOKIE` is missing, it should invoke the visible login helper, reload the private `.env`, and continue the crawler with the captured session. Do not treat a missing cookie as permission to skip the crawl, switch to public snippets, or report fallback-only results. For review collection, helper failure is a blocker; public fallback is allowed only when discovery-only mode was explicitly requested.
 
 ## Adapter selection
 
@@ -67,7 +67,7 @@ Prefer the default Playwright adapter for small, user-supervised samples because
 Use heavier projects only after explicitly checking license, maintenance status, and data scope. If a different crawler is chosen, preserve this skill's CLI contract:
 
 - `status` reports readiness without secrets.
-- `run-crawler` accepts keyword, cities, page limits, output path, cookie env name, and visible-login controls.
+- `run-crawler` accepts keyword, cities, page limits, output path, cookie env name, and visible-login controls. It must not expose a no-cookie review-collection mode by default.
 - `normalize-csv` or an equivalent command emits JSONL matching `schema`.
 
 ## Operating limits

@@ -1,6 +1,9 @@
 param(
     [string]$EnvFile = "$env:USERPROFILE\.codex\skills\dianping-explore\.env",
     [string]$ProviderUrl = "https://www.dianping.com/",
+    [int]$TimeoutSeconds = 600,
+    [switch]$Headless,
+    [switch]$AllowUnverifiedSave,
     [switch]$DryRun
 )
 
@@ -20,8 +23,17 @@ if ([string]::IsNullOrWhiteSpace($python) -or -not (Test-Path -LiteralPath $pyth
 $argsList = @(
     $Helper,
     "--env-file", $EnvFile,
-    "--url", $ProviderUrl
+    "--url", $ProviderUrl,
+    "--timeout-seconds", $TimeoutSeconds
 )
+
+if ($Headless) {
+    $argsList += "--headless"
+}
+
+if ($AllowUnverifiedSave) {
+    $argsList += "--allow-unverified-save"
+}
 
 if ($DryRun) {
     $argsList += "--dry-run"

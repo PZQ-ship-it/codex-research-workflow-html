@@ -238,21 +238,31 @@ def split_csv(value: str) -> List[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
-def run_visible_login_helper(py: str, login_url: str) -> int:
+def run_visible_login_helper(
+    py: str,
+    login_url: str,
+    timeout_seconds: int,
+    headless: bool = False,
+    allow_unverified_save: bool = False,
+) -> int:
     helper = SKILL_DIR / "scripts" / "assist_dianping_cookie.py"
     if not helper.exists():
         return 127
-    completed = subprocess.run(
-        [
-            py,
-            str(helper),
-            "--env-file",
-            str(PRIVATE_ENV_FILE),
-            "--url",
-            login_url,
-        ],
-        check=False,
-    )
+    cmd = [
+        py,
+        str(helper),
+        "--env-file",
+        str(PRIVATE_ENV_FILE),
+        "--url",
+        login_url,
+        "--timeout-seconds",
+        str(timeout_seconds),
+    ]
+    if headless:
+        cmd.append("--headless")
+    if allow_unverified_save:
+        cmd.append("--allow-unverified-save")
+    completed = subprocess.run(cmd, check=False)
     return completed.returncode
 
 
@@ -314,16 +324,17 @@ def cmd_run_crawler(args: argparse.Namespace) -> int:
                 "cities": cities,
                 "cookie_env": args.cookie_env,
                 "cookie_configured": bool(cookie),
-                "auto_login_planned": bool(
-                    not cookie and not args.allow_empty_cookie and not args.no_auto_login
-                ),
+                "auto_login_planned": bool(not cookie and not args.no_auto_login),
                 "login_url": args.login_url,
+                "login_timeout_seconds": args.login_timeout_seconds,
+                "login_headless": args.login_headless,
+                "login_allow_unverified_save": args.login_allow_unverified_save,
                 "output": str(output),
             }
         )
 
     auto_login_attempted = False
-    if not cookie and not args.allow_empty_cookie:
+    if not cookie:
         if args.no_auto_login:
             return fail(
                 f"{args.cookie_env} is not set and automatic visible login was disabled; rerun without --no-auto-login or run scripts\\assist_dianping_cookie.ps1",
@@ -340,11 +351,17 @@ def cmd_run_crawler(args: argparse.Namespace) -> int:
             flush=True,
         )
         print(
-            "[dianping-explore] Complete login/CAPTCHA/MFA in the browser, then return here to continue the crawler.",
+            "[dianping-explore] Complete login/CAPTCHA/MFA in the browser. No terminal input is required.",
             flush=True,
         )
         auto_login_attempted = True
-        helper_rc = run_visible_login_helper(py, args.login_url)
+        helper_rc = run_visible_login_helper(
+            py,
+            args.login_url,
+            timeout_seconds=args.login_timeout_seconds,
+            headless=args.login_headless,
+            allow_unverified_save=args.login_allow_unverified_save,
+        )
         if helper_rc != 0:
             return fail(
                 "visible Dianping login helper failed or was cancelled; crawler did not fall back to unauthenticated collection",
@@ -487,9 +504,11 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--comment-pages", type=int, default=1)
     run_parser.add_argument("--output", required=True)
     run_parser.add_argument("--cookie-env", default=DEFAULT_COOKIE_ENV)
-    run_parser.add_argument("--allow-empty-cookie", action="store_true", help="explicitly run without cookies; this bypasses the auth-first default")
     run_parser.add_argument("--no-auto-login", action="store_true", help="do not open the visible login helper when cookies are missing")
     run_parser.add_argument("--login-url", default="https://www.dianping.com/", help="Dianping page opened by the visible login helper")
+    run_parser.add_argument("--login-timeout-seconds", type=int, default=600, help="seconds to wait for visible login before failing without fallback")
+    run_parser.add_argument("--login-headless", action="store_true", help="test mode only; run the login helper headless")
+    run_parser.add_argument("--login-allow-unverified-save", action="store_true", help="escape hatch only; save cookies after browser confirmation even without known login markers")
     run_parser.add_argument("--dry-run", action="store_true")
     run_parser.set_defaults(func=cmd_run_crawler)
 
