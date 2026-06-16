@@ -38,3 +38,14 @@ This file records third-party skill snapshots vendored into this repository.
 - Upstream path: `professor-fit-analyser`
 - Commit: `71e9c42c60636602e87985f4306d134a3b63809e`
 - Install note: moved the upstream `compatibility` frontmatter field under `metadata.compatibility` to satisfy the local Codex skill validator while preserving the compatibility note.
+
+## External Crawler Adapters
+
+These sources are not vendored into this repository. Repo-local skills only store wrappers, setup helpers, and output contracts.
+
+### Dianping Explore
+
+- Skill directory: `skills/dianping-explore/`
+- Default external crawler: `https://github.com/HDdssX/dianping_crawler`
+- Storage note: clone into an external runtime directory such as `%LOCALAPPDATA%\Codex\dianping-explore\HDdssX_dianping_crawler` via `python scripts\cli.py setup-source`.
+- Boundary note: keep real cookies, browser profiles, third-party source checkouts, and crawler outputs outside git.
