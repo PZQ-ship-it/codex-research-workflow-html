@@ -113,6 +113,23 @@ codex mcp add browser_use -- uvx --from "browser-use[cli]" browser-use --mcp
 - Do not set `BROWSER_USE_DISABLE_SECURITY=true` unless the user explicitly accepts the risk for a controlled local target.
 - Smoke test: open a benign page and read non-secret state. Do not use it to extract provider secrets.
 
+## Browser Session Cookie/Storage Providers
+
+Use this pattern for skills like `dianping-explore`, `zhihu-public-intel`, `xhs-explore`, or platform crawlers that require a logged-in browser session rather than an API key or OAuth MCP login.
+
+- Access type: visible user login into a fresh tool-controlled browser session.
+- Preferred storage: `%USERPROFILE%\.codex\skills\<skill-name>\.env`, `runtime\cookies.json`, or another skill-private runtime path.
+- Default helper behavior:
+  - Open the official site in a visible automation browser.
+  - Let the user complete login, MFA, CAPTCHA, QR scan, or account verification manually.
+  - Save only the cookies/storage state from that helper-created session.
+  - Report only path, cookie/state count, and login/status booleans.
+- Default prohibitions:
+  - Do not ask the user to paste cookies manually when a safe visible helper exists.
+  - Do not read existing Chrome/Edge/browser profiles unless the user explicitly asks and accepts the privacy risk.
+  - Do not print cookie values, auth headers, local storage values, or browser-state JSON.
+- Smoke test: prefer `status`, `check-login`, `cookie_status`, `whoami`, or one small read-only page/API call. Treat a cookie file's existence as insufficient unless a login/status check passes.
+
 ## Zhihu Public Intel / zhihu-mcp
 
 - Access type: local stdio MCP with user-authorized browser login by default; public AnySearch fallback only when login is declined, two assisted login attempts fail, the MCP runtime remains unavailable, or public-index cross-checking is requested.

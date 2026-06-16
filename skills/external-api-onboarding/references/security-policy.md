@@ -12,6 +12,7 @@ Use this reference before touching credentials, OAuth, provider consoles, browse
   - user environment variables
   - `%USERPROFILE%\.codex\config.toml` for MCP server definitions
 - Treat repo-local `.env`, `cookies.json`, `auth.json`, browser storage state, and token dumps as private and untracked unless the user explicitly says otherwise.
+- For cookie/storage-state providers, prefer saving a fresh visible helper session over asking the user to paste cookies manually. Store only the target provider's required state in private user-level storage.
 - Use least privilege: narrow scopes, short expiry, read-only access, and provider-specific project keys when available.
 
 ## Browser and OAuth Guardrails
@@ -20,6 +21,7 @@ Allowed browser assistance:
 
 - Navigate to official provider docs, provider consoles, or official OAuth login pages.
 - Automatically open official auth targets when user action is required, including OAuth authorization URLs, login pages, API-key consoles, and token-creation pages.
+- Launch a fresh visible automation browser for providers that require web login, wait for the user to complete login/MFA/CAPTCHA, and save only the resulting target-site cookies or storage state needed by the workflow.
 - Read non-secret page text, field labels, scope names, button labels, and success/error status.
 - Help fill non-secret metadata such as key names, app names, local callback URLs, redirect URIs, or descriptions.
 - Pause for the user to complete login, MFA, CAPTCHA, consent, key reveal, or key copy.
@@ -28,6 +30,8 @@ Forbidden browser assistance:
 
 - Bypassing MFA, CAPTCHA, rate limits, paywalls, SSO controls, or account restrictions.
 - Extracting secret values from the page state, network panel, screenshots, clipboard, cookies, local storage, or headers.
+- Reading, copying, or migrating cookies/storage from an existing Chrome, Edge, or browser profile unless the user explicitly asks and accepts that privacy risk.
+- Printing, logging, or summarizing captured cookies/storage state. Report only path, count, and verification status.
 - Creating broad admin, billing, production-write, or organization-wide keys when a narrower key is enough.
 - Regenerating, deleting, rotating, or disabling credentials without explicit user confirmation.
 
@@ -42,6 +46,8 @@ The user should complete the browser consent flow. When possible, wrap `codex mc
 
 If a provider uses PAT/API-key auth instead of OAuth, open the official token/key creation page in the browser, then use hidden local storage such as `scripts/set_env_secret.ps1` or a user environment variable. Do not ask the user to paste the secret into chat.
 
+If a provider uses browser session auth instead of OAuth or API keys, prefer a provider-specific helper that opens a fresh tool-controlled browser and automatically saves the session after the user completes login. Avoid manual cookie paste when the helper can safely capture the fresh session, and avoid existing browser profile extraction by default.
+
 ## Command and Storage Rules
 
 - Prefer hidden prompts for real API keys. Use `scripts/set_env_secret.ps1` rather than command-line `-Value`.
@@ -49,6 +55,7 @@ If a provider uses PAT/API-key auth instead of OAuth, open the official token/ke
 - Before writing global config, state the target path and what key/server name will be changed.
 - Before installing or running an MCP package with `npx`, `uvx`, `pipx`, or similar, make clear that it will execute provider/package code.
 - If a command prints an authorization URL instead of opening a browser, capture/open that URL with an assisted helper when feasible.
+- If a skill needs cookies/storage state, implement or use a helper with `--dry-run`, visible login, private output path, and redacted reporting. Verify state with a cheap status/whoami/read-only smoke when available.
 - For paid APIs, image generation, write-capable endpoints, or destructive actions, ask before the first real request.
 
 ## Reporting

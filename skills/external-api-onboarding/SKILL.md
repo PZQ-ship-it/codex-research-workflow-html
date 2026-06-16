@@ -13,6 +13,8 @@ This skill does not harvest, reveal, or bypass credentials. It keeps login, MFA,
 
 For any setup that needs user authentication, the default UX must be assisted and visible: open the official provider console, token creation page, OAuth URL, or login page in a browser automatically when it is safe to do so. Do not leave the user with only a raw URL or a pasted command if the agent can open the official auth target directly. The user still completes login, MFA, CAPTCHA, billing consent, key reveal, and token copy.
 
+For browser-session providers that need cookies or storage state, prefer a provider-specific visible-login helper over manual cookie paste: launch a fresh tool-controlled browser session, let the user complete login/CAPTCHA/MFA, then save only that session's required cookies/state to private user-level storage without printing values. Do not read existing Chrome/Edge/browser profiles unless the user explicitly asks and the target workflow requires it.
+
 ## Required Inputs
 
 - Provider or target skill/MCP, inferred from context when possible.
@@ -29,6 +31,7 @@ Ask one concise question only when the answer changes privacy, cost, provider sc
    - Streamable HTTP MCP with OAuth or bearer token.
    - Local stdio MCP that needs env vars.
    - Browser-assisted provider console setup.
+   - Browser-session login that should save a fresh tool-controlled cookie/storage state.
    - Provider CLI login or no-auth fallback.
 2. Load the relevant references.
    - Always follow `references/security-policy.md` before handling secrets or browser sessions.
@@ -42,7 +45,8 @@ Ask one concise question only when the answer changes privacy, cost, provider sc
    - For API keys, prefer `scripts/set_env_secret.ps1` so the value is entered hidden and not printed.
    - For MCP servers, prefer `codex mcp add ...` or explicit `config.toml` edits.
    - For OAuth MCP, prefer `scripts/assist_oauth_login.ps1 -ServerName <server-name>` after the server is configured so the official authorization URL is opened automatically. If a provider-specific assisted login helper exists, use that helper.
-   - For browser/PAT/API-key auth, open the official provider page automatically and guide the user to paste secrets only into a hidden local prompt or provider-controlled UI.
+   - For browser-session auth, prefer a visible helper that automatically saves the fresh session cookies/state after the user completes login; fall back to hidden local prompt only when no safe helper exists.
+   - For PAT/API-key auth, open the official provider page automatically and guide the user to paste secrets only into a hidden local prompt or provider-controlled UI.
    - Do not read, print, paste into chat, commit, or summarize secret values.
 5. Smoke test.
    - Prefer dry-run, `whoami`, `list`, `doc`, or one cheap read-only request.
@@ -58,6 +62,7 @@ Allowed:
 
 - Open the official provider docs or console.
 - Automatically open official login, OAuth authorization, API-key creation, or token creation pages when user authentication is required.
+- Launch a fresh visible automation browser, wait for the user to complete login/CAPTCHA/MFA, then save only the required session cookies/storage state into private user-level storage when the target workflow explicitly needs it.
 - Help the user find account, developer, API key, OAuth app, or MCP setup pages.
 - Click documented non-destructive controls after the user approves the goal.
 - Read non-secret labels such as key name, scope names, redirect URL fields, and status messages.
@@ -67,7 +72,8 @@ Not allowed:
 
 - Bypass MFA, CAPTCHA, rate limits, paywalls, or account controls.
 - Reveal, copy into chat, log, screenshot, or extract secret key values.
-- Store cookies, browser storage, request headers, or session exports unless the user explicitly asks and the target workflow requires it.
+- Store cookies, browser storage, request headers, or session exports unless the target workflow explicitly requires it and the user performs the login in a visible, tool-controlled session.
+- Read existing Chrome/Edge/browser profiles or copy browser storage from an unrelated profile unless the user explicitly asks and accepts the privacy risk.
 - Create broad admin/billing/write scopes when a narrower read scope is enough.
 - Delete, rotate, or regenerate credentials without explicit confirmation.
 
@@ -110,6 +116,7 @@ The helper runs `codex mcp login <server>`, watches for the official authorizati
 - `references/security-policy.md`: required guardrails for secrets, OAuth, browser sessions, storage, and reporting.
 - `references/provider-patterns.md`: known provider routes, env var names, MCP command shapes, and smoke-test ideas.
 - `scripts/assist_oauth_login.ps1`: generic visible OAuth helper for Codex remote MCP servers.
+- Provider-specific visible-login helpers: preferred for cookie/storage-state providers; they should open a fresh browser, let the user authenticate, and save only status plus private state paths without printing secret values.
 
 ## Done Criteria
 
