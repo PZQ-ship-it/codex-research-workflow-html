@@ -18,6 +18,8 @@ from typing import Any, Dict, Iterable, List
 
 
 DEFAULT_SOURCE_URL = "https://github.com/HDdssX/dianping_crawler.git"
+SKILL_DIR = Path(__file__).resolve().parents[1]
+PRIVATE_ENV_FILE = Path.home() / ".codex" / "skills" / "dianping-explore" / ".env"
 DEFAULT_ROOT = (
     Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
     / "Codex"
@@ -26,6 +28,40 @@ DEFAULT_ROOT = (
 )
 REQUIRED_FILES = ("main.py", "config.py", "pw.py")
 DEFAULT_COOKIE_ENV = "DIANPING_COOKIE"
+
+
+def parse_env_line(raw: str) -> tuple[str, str] | None:
+    line = raw.strip().lstrip("\ufeff")
+    if not line or line.startswith("#") or "=" not in line:
+        return None
+    key, value = line.split("=", 1)
+    key = key.strip()
+    value = value.strip()
+    if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", key):
+        return None
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+        value = value[1:-1]
+        if raw.strip().split("=", 1)[1].strip().startswith('"'):
+            value = value.replace('\\"', '"').replace("\\\\", "\\")
+    return key, value
+
+
+def load_private_env(env_file: Path = PRIVATE_ENV_FILE) -> List[str]:
+    loaded: List[str] = []
+    if not env_file.exists():
+        return loaded
+    for raw in env_file.read_text(encoding="utf-8", errors="replace").splitlines():
+        parsed = parse_env_line(raw)
+        if not parsed:
+            continue
+        key, value = parsed
+        if key.startswith("DIANPING_") and key not in os.environ:
+            os.environ[key] = value
+            loaded.append(key)
+    return loaded
+
+
+LOADED_PRIVATE_ENV = load_private_env()
 
 
 def emit(payload: Dict[str, Any], code: int = 0) -> int:
@@ -69,6 +105,8 @@ def crawler_status(root: Path, cookie_env: str = DEFAULT_COOKIE_ENV) -> Dict[str
         "venv_python": str(venv_python) if venv_python.exists() else None,
         "cookie_env": cookie_env,
         "cookie_configured": bool(os.environ.get(cookie_env)),
+        "private_env_file": str(PRIVATE_ENV_FILE),
+        "loaded_private_env_keys": sorted(LOADED_PRIVATE_ENV),
     }
 
 
@@ -343,6 +381,7 @@ def cmd_schema(_: argparse.Namespace) -> int:
     return emit(
         {
             "ok": True,
+            "private_env_file": str(PRIVATE_ENV_FILE),
             "schema": {
                 "source": "constant: dianping",
                 "source_file": "absolute path of the CSV source",

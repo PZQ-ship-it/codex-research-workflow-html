@@ -32,6 +32,17 @@ Do not vendor third-party crawler source into this skill. Keep it in an external
 
 Use `DIANPING_CRAWLER_ROOT` or `--crawler-root` when the checkout lives elsewhere.
 
+The wrapper auto-loads private user-level configuration from:
+
+```text
+%USERPROFILE%\.codex\skills\dianping-explore\.env
+```
+
+Supported keys:
+
+- `DIANPING_CRAWLER_ROOT`
+- `DIANPING_COOKIE`
+
 ## Secrets boundary
 
 Use `DIANPING_COOKIE` for cookies. Do not write real cookies into:
@@ -44,6 +55,8 @@ Use `DIANPING_COOKIE` for cookies. Do not write real cookies into:
 - chat responses
 
 The setup command redacts the upstream sample `COOKIES` value in the local checkout by default. The runtime launcher injects the cookie from the environment before running `main.py`.
+
+Use `scripts/assist_dianping_cookie.ps1` when the user wants assisted cookie setup. It opens `https://www.dianping.com/` and delegates storage to `external-api-onboarding/scripts/set_env_secret.ps1` with hidden input.
 
 ## Adapter selection
 

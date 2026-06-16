@@ -19,6 +19,8 @@ python scripts\cli.py <子命令>
 
 默认第三方适配源是 `HDdssX/dianping_crawler`。它必须安装在外部目录，例如 `%LOCALAPPDATA%\Codex\dianping-explore\HDdssX_dianping_crawler`，并通过 `DIANPING_CRAWLER_ROOT` 或 `--crawler-root` 指向。更多适配说明见 `references/third-party-adapters.md`。
 
+CLI 会自动读取技能私有 `.env`：`%USERPROFILE%\.codex\skills\dianping-explore\.env`。这个文件只能保存在用户级目录，不能提交进 repo。
+
 ## 子命令
 
 | 子命令 | 用途 |
@@ -57,7 +59,13 @@ powershell -ExecutionPolicy Bypass -File scripts\setup_dianping_explore.ps1 -Wit
 $env:DIANPING_COOKIE = "<从浏览器复制的 Cookie>"
 ```
 
-如果用户需要长期保存，建议让用户自己放到私有 `.env` 或系统环境变量中；不要代写含真实 Cookie 的文件。
+如果用户需要长期保存，用 `external-api-onboarding` 的隐藏输入 helper 写入技能私有 `.env`，不要在聊天或命令行里传真实 Cookie：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\assist_dianping_cookie.ps1
+```
+
+这个辅助脚本会打开大众点评页面，用户在浏览器里完成登录/验证并自行复制 Cookie，再在本地隐藏提示中粘贴；脚本只保存变量，不打印 Cookie。
 
 ### 3. 检查状态
 
