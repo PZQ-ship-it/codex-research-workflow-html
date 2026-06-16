@@ -1,9 +1,9 @@
 ---
 name: dianping-explore
-description: 大众点评内容探索与低频采集技能。用于搜索大众点评商户、采集少量公开商户评论、封装现成 Dianping 爬虫、准备本地 Playwright 运行环境、规范化 CSV/JSONL 输出，或排查大众点评爬虫环境和登录/Cookie 配置问题。
+description: Dianping merchant discovery and low-volume review sampling. Use when Codex needs to search Dianping shops, collect a small public review sample, wrap an existing Dianping crawler, prepare the local Playwright runtime, normalize CSV/JSONL output, or troubleshoot Dianping crawler login, cookie, and environment setup.
 ---
 
-# 大众点评内容探索
+# Dianping Explore
 
 帮助用户以低频、人工可控的方式搜索大众点评商户并导出少量评论样本。技能本身只提供流程、包装器、环境检查和输出规范；第三方爬虫源码应放在技能目录外，由 `scripts/cli.py setup-source` 克隆或由用户指定。
 

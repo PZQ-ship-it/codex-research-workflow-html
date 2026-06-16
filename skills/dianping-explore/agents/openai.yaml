@@ -1,4 +1,4 @@
 interface:
-  display_name: "大众点评探索"
+  display_name: "Dianping Explore"
   short_description: "Search Dianping shops and export small review samples"
   default_prompt: "Use $dianping-explore to search Dianping shops and export a small compliant review sample."
