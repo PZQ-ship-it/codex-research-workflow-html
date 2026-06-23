@@ -1,14 +1,13 @@
 ---
 name: intro-drafter
 description: >-
-  Drafts a 6-paragraph Introduction outline for a technical paper from a
-  structured Flowchart: background and running example, existing
-  limitations, problem essence and goal, key challenges, solution
-  overview, contributions. Positions the paper as Technique or New
-  Problem/Setting and aligns contributions with challenges. Use when
-  the user asks to 'draft the Introduction', 'outline the
-  Introduction', 'intro logic needs clarifying', 'help structure the
-  paper story', or before writing any Introduction prose.
+  Creates a sentence-level outline for a technical paper Introduction from a
+  structured six-paragraph Flowchart: background and running example, existing
+  limitations, problem essence and goal, key challenges, solution overview,
+  contributions. Produces what each sentence should accomplish, not polished
+  prose. Positions the paper as Technique or New Problem/Setting and aligns
+  contributions with challenges. Use when the user asks to plan, draft,
+  outline, or clarify the Introduction, especially before writing final prose.
 license: CC-BY-4.0
 ---
 
@@ -25,11 +24,12 @@ Introduction, so the logical throughline has to be airtight.
 
 This skill takes a small set of inputs (research area, limitations,
 hard constraints, key idea, challenges, solution overview) and
-produces a six-paragraph outline with an explicit purpose and writing
-points for every paragraph, plus a positioning as Technique Paper or
-New Problem/Setting Paper. It enforces the rule that contributions
-align one-to-one with challenges, and that every claim has a section
-to deliver it.
+produces a six-paragraph, sentence-level outline. For each paragraph,
+it states what each sentence should do, which evidence or concept it
+should contain, and what prose trap it should avoid. It does not write
+final Introduction text. It enforces the rule that contributions align
+one-to-one with challenges, and that every claim has a section to
+deliver it.
 
 ## When to use this skill
 
@@ -42,7 +42,7 @@ to deliver it.
 - The paper's contributions are clear, but the storyline connecting
   them is not.
 - `idea-evaluator` has returned Strong Accept and the next step is
-  drafting.
+  planning the Introduction.
 
 ## When NOT to use this skill
 
@@ -51,6 +51,9 @@ to deliver it.
   instead; the flowchart differs.
 - The user wants to polish Introduction prose that is already
   structured. Use `pre-submission-reviewer` instead.
+- The user explicitly asks for final publishable Introduction prose.
+  First offer this sentence-level plan, then use a writing/review skill
+  only if the user confirms they want prose.
 - The user wants to evaluate whether the Introduction is ready for
   submission. Use `pre-submission-reviewer`.
 
@@ -75,16 +78,19 @@ The positioning decides how much weight Paragraph 3 carries: in
 Technique papers it is a short bridge; in New Problem papers it is a
 load-bearing paragraph.
 
-### Step 2: Paragraph-by-paragraph outline
+### Step 2: Paragraph-by-paragraph sentence plan
 
 See: references/flowchart.md for each paragraph's canonical purpose,
-writing points, and common failures.
+sentence roles, and common failures.
 
 For each of the six paragraphs, return a mini-section containing:
 
 - **Purpose**: one sentence.
-- **Writing points**: three to five bullets derived from the user's
-  inputs, each actionable.
+- **Target sentence count**: normally 3 to 6 sentences, adjusted by
+  paper type and paragraph role.
+- **Sentence plan**: S1, S2, ... bullets. Each bullet describes the
+  job of that sentence, the concrete input it must use, and the claim
+  boundary. Do not write a final sentence.
 - **Gaps**: what the user's inputs do not yet cover for this
   paragraph. Tag each with severity (CRITICAL, MAJOR, MINOR).
 
@@ -114,9 +120,9 @@ examples.
 
 If the user's inputs do not yet include a running example, propose
 two or three candidate examples and ask the user to pick. Record the
-chosen example in Paragraph 1 and make sure Paragraph 5 references
-it ("the Methodology section applies DynaGraph's hotspot detector to
-the running example from Section 1").
+chosen example in Paragraph 1's sentence plan and make sure Paragraph
+5 includes a sentence slot that reuses it. Describe this as a writing
+instruction, not a polished sentence.
 
 ### Step 4: Contribution alignment check
 
@@ -131,6 +137,9 @@ For each contribution bullet, verify:
 - Specific, not vague ("comprehensive evaluation" is not a
   contribution).
 - Cites the section number that delivers it.
+- Is phrased as a contribution plan: what the contribution must name,
+  what evidence/result it must include, and which section it should
+  cite. Do not emit final contribution prose.
 
 ### Step 5: Flowchart consistency check
 
@@ -154,6 +163,23 @@ section below.
 
 Emit the outline in the Output format below. For `interactive` mode,
 do not emit; converse one paragraph at a time.
+
+## Prose control
+
+The output is a planning artifact, not Introduction text.
+
+- Do not write polished paragraph prose.
+- Do not write a "Goal sentence candidate" or final wording for a
+  contribution.
+- Do not use quotation marks around sentence candidates.
+- Use imperative sentence roles, for example "S2: Name the specific
+  deployment setting and cite the motivating application evidence",
+  not a sentence that could be pasted into the paper.
+- Keep each sentence-plan item short enough to preserve authorial
+  control: normally one line, with optional `Inputs:` and `Avoid:`
+  fragments when useful.
+- When the user supplied little detail, mark the slot as a gap instead
+  of inventing smooth prose.
 
 ## Integrity gate
 
@@ -191,32 +217,44 @@ and do not claim the outline is complete.
 ### 1. Paragraph 1: Background and Motivation
 - Purpose: <...>
 - Running example: <...>
-- Writing points:
-  1. ...
-  2. ...
+- Target sentence count: <3-6>
+- Sentence plan:
+  - S1: <what this sentence must establish; Inputs: ...; Avoid: ...>
+  - S2: <...>
+  - S3: <...>
 - Gaps: <list with severity>
 
 ### 2. Paragraph 2: Limitations (at most 3)
 - Purpose: <...>
-- Writing points:
-  - Limitation 1: ...
-  - Limitation 2: ...
-  - Limitation 3: ... (if applicable)
+- Target sentence count: <3-5>
+- Sentence plan:
+  - S1: <transition from motivation to prior-work families>
+  - S2: <Limitation 1: named prior work/capability and missing property>
+  - S3: <Limitation 2: ...>
+  - S4: <Limitation 3 if needed, otherwise omit>
+  - S5: <bridge from limitations to the problem essence, if needed>
 - Gaps: <list with severity>
 
 ### 3. Paragraph 3: Problem Essence and Our Goal
 - Purpose: <...>
 - Hard constraints: <...>
-- Goal sentence candidate: "<...>"
-- Writing points: <list>
+- Target sentence count: <2-5 for Technique; 4-7 for New Problem/Setting>
+- Sentence plan:
+  - S1: <state the intrinsic problem property or setting boundary>
+  - S2: <name hard constraints>
+  - S3: <define the goal or research question as a role, not final wording>
+  - S4: <connect goal to key idea or paper type, if needed>
 - Gaps: <list with severity>
 
 ### 4. Paragraph 4: Key Challenges (at most 3)
 - Purpose: <...>
-- Writing points:
-  - Challenge 1: ... why naive fails
-  - Challenge 2: ...
-  - Challenge 3: ...
+- Target sentence count: <3-6>
+- Sentence plan:
+  - S1: <set up why the goal is non-trivial>
+  - S2: <Challenge 1: obstacle plus why naive extension fails>
+  - S3: <Challenge 2: obstacle plus why naive extension fails>
+  - S4: <Challenge 3 if needed>
+  - S5: <synthesis sentence linking challenges to needed design principles>
 - Gaps: <list with severity>
 
 ### 5. Paragraph 5: Solution Overview
@@ -225,14 +263,22 @@ and do not claim the outline is complete.
   - Challenge 1 -> Module A
   - Challenge 2 -> Module B
   - Challenge 3 -> Module C
-- Writing points: <list>
+- Target sentence count: <4-6>
+- Sentence plan:
+  - S1: <name the solution framework and its high-level principle>
+  - S2: <Module A handles Challenge 1; include section pointer>
+  - S3: <Module B handles Challenge 2; include section pointer>
+  - S4: <Module C handles Challenge 3, if present>
+  - S5: <reuse the running example or forecast the case study>
 - Gaps: <list with severity>
 
 ### 6. Paragraph 6: Contributions
-1. <contribution 1> (Section <X>)
-2. <contribution 2> (Section <Y>)
-3. <contribution 3> (Section <Z>)
-4. <contribution 4 if applicable> (Section <W>)
+- Target sentence/bullet count: <3-4 contribution bullets>
+- Contribution sentence plan:
+  1. C1: <what the contribution bullet must name; evidence/result to include; Section <X>>
+  2. C2: <...; Section <Y>>
+  3. C3: <...; Section <Z>>
+  4. C4: <optional; Section <W>>
 - Gaps: <list with severity>
 
 ### 7. Flowchart consistency

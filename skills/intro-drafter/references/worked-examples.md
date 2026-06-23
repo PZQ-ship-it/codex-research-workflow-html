@@ -11,14 +11,14 @@
 ## 1. How to read these examples
 
 Each example below reverse-engineers a published Introduction into
-the six-paragraph outline this skill produces. The outlines are
-faithful to the published papers, with some writing points
-paraphrased. Sources are
+the six-paragraph, sentence-level outline this skill produces. The
+plans are faithful to the published papers, but they intentionally
+avoid reusable final prose. Sources are
 `handbook/06_Case_Studies/6.1`, `6.2`, and
 `6.3`.
 
-The purpose is to show the outline at the level of detail this skill
-should produce when given similar inputs.
+The purpose is to show the level of sentence-planning detail this
+skill should produce when given similar inputs.
 
 ## 2. Example A: Alpha-SQL (ICML 2025), Technique
 
@@ -32,33 +32,43 @@ Paragraph 3 is a one-sentence bridge.
 
 ### Outline
 
-1. **Background and Motivation**. Real-world Text-to-SQL applications
-   in production analytics; running example: a multi-table aggregation
-   query on a retail database. Existing open-source LLM-based SQL
-   generators struggle on complex cases.
+1. **Background and Motivation**.
+   - S1: Establish production Text-to-SQL as the task.
+   - S2: Introduce a retail-database multi-table aggregation as the
+     running example.
+   - S3: Use the example to surface complex JOIN reasoning.
+   - S4: Motivate why open-source LLM-based SQL generation matters.
 2. **Limitations of existing work**:
-   - L1: prior open-source methods rely on single-pass generation and
-     fail on complex JOIN reasoning.
-   - L2: fine-tuning approaches are expensive and do not generalise
+   - S1: Transition from task importance to current open-source
+     methods.
+   - S2: L1 slot: single-pass generation fails on complex JOIN
+     reasoning.
+   - S3: L2 slot: fine-tuning is expensive and does not generalise
      across schemas.
-   - L3 is not claimed; the paper uses only two limitations to keep
-     focus.
-3. **Problem essence and Goal**. Hard constraint: open-source
-   deployable without fine-tuning. Goal bridge: "Our goal is to
-   improve complex-query SQL generation on open-source LLMs without
-   fine-tuning."
+   - S4: Do not invent L3; bridge to why inference-time search is
+     needed.
+3. **Problem essence and Goal**.
+   - S1: State the hard constraint: deployable on open-source LLMs
+     without fine-tuning.
+   - S2: Allocate a brief goal slot for improving complex-query SQL
+     generation under that constraint.
 4. **Key challenges**:
-   - Ch1: decision-space explosion when enumerating SQL candidates.
-   - Ch2: reward modelling without a trained critic.
-5. **Solution overview**. Alpha-SQL with MCTS-guided inference and
-   self-supervised reward signals. Module A addresses Ch1 via
-   structured search. Module B addresses Ch2 via execution feedback.
+   - S1: Set up why inference-time search is non-trivial.
+   - S2: Ch1 slot: decision-space explosion when enumerating SQL
+     candidates.
+   - S3: Ch2 slot: reward modelling without a trained critic.
+5. **Solution overview**.
+   - S1: Name Alpha-SQL and its MCTS-guided inference principle.
+   - S2: Map structured search to Ch1.
+   - S3: Map execution-feedback reward signals to Ch2.
+   - S4: Reconnect the method to the retail-query running example.
 6. **Contributions**:
-   1. MCTS-based inference search for Text-to-SQL (Section 3).
-   2. Self-supervised reward design from execution feedback
-      (Section 4).
-   3. Experiments on BIRD and Spider, showing N-point accuracy gains
-      over strong open-source baselines (Section 5).
+   1. C1 plan: Name MCTS-based inference search for Text-to-SQL and
+      cite Section 3.
+   2. C2 plan: Name self-supervised reward design from execution
+      feedback and cite Section 4.
+   3. C3 plan: Name BIRD and Spider, include the main accuracy-gain
+      evidence over open-source baselines, and cite Section 5.
 
 ## 3. Example B: AFlow (ICLR 2025), Technique with cross-domain framing
 
@@ -73,32 +83,39 @@ and 5.
 
 ### Outline
 
-1. **Background and Motivation**. LLM agents for code generation;
-   running example: an agent workflow for HumanEval tasks that fails
-   when operators are mis-composed.
+1. **Background and Motivation**.
+   - S1: Establish LLM agents for code generation as the task.
+   - S2: Introduce a HumanEval workflow as the running example.
+   - S3: Use operator mis-composition in the example to make the
+     failure concrete.
 2. **Limitations of existing work**:
-   - L1: prompt-engineering alone produces brittle workflows.
-   - L2: single-agent architectures do not capture operator
+   - S1: Transition to current workflow-design approaches.
+   - S2: L1 slot: prompt-engineering alone yields brittle workflows.
+   - S3: L2 slot: single-agent architectures miss operator
      composition.
-   - L3: hand-designed workflows do not generalise across task
-     families.
-3. **Problem essence and Goal**. Hard constraint: workflow design
-   must generalise to unseen operators. Goal bridge: "Our goal is
-   to automate workflow design for code-generation agents."
+   - S4: L3 slot: hand-designed workflows fail to generalise across
+     task families.
+3. **Problem essence and Goal**.
+   - S1: State the hard constraint: workflow design should generalise
+     to unseen operators.
+   - S2: Allocate a brief goal slot for automated workflow design in
+     code-generation agents.
 4. **Key challenges**:
-   - Ch1: search space of operator graphs is combinatorial.
-   - Ch2: evaluation signal for a workflow is discrete and sparse.
-5. **Solution overview**. AFlow with operator-graph search (borrowed
-   from NAS) and structured reward via code execution. Module A
-   addresses Ch1; Module B addresses Ch2.
+   - S1: Explain why workflow automation is a search problem.
+   - S2: Ch1 slot: combinatorial operator-graph search space.
+   - S3: Ch2 slot: discrete and sparse workflow evaluation signal.
+5. **Solution overview**.
+   - S1: Name AFlow and the operator-graph-search principle.
+   - S2: Map graph search, borrowed from NAS, to Ch1.
+   - S3: Map code-execution reward to Ch2.
+   - S4: Reconnect to the HumanEval running example.
 6. **Contributions**:
-   1. Formulate agent-workflow design as operator-graph search
-      (Section 2).
-   2. AFlow algorithm with search guided by execution feedback
-      (Section 3).
-   3. Evaluation on HumanEval, MBPP, and adjacent benchmarks showing
-      consistent gains over hand-designed and prompt-engineered
-      workflows (Section 4).
+   1. C1 plan: State the operator-graph-search formulation and cite
+      Section 2.
+   2. C2 plan: Name the AFlow algorithm and execution-feedback search,
+      citing Section 3.
+   3. C3 plan: Name HumanEval, MBPP, adjacent benchmarks, comparison
+      families, and consistent-gain evidence, citing Section 4.
 
 ## 4. Example C: LEAD (VLDB 2026), New Problem/Setting
 
@@ -110,39 +127,47 @@ additional inference".
 
 ### Outline
 
-1. **Background and Motivation**. LLM instruction tuning; data
-   quality beats quantity. Running example: a 50k-sample instruction
-   corpus where iterative selection improves tuning quality but
-   incurs full-dataset inference per round.
+1. **Background and Motivation**.
+   - S1: Establish LLM instruction tuning and data quality as the
+     task context.
+   - S2: Introduce a 50k-sample instruction corpus as the running
+     example.
+   - S3: Use iterative selection in the example to show the
+     quality-cost tension.
 2. **Limitations of existing work**:
-   - L1: non-iterative selection does not adapt to model evolution.
-   - L2: iterative methods require expensive full-dataset inference
-     per round.
-3. **Problem essence and Goal**. Hard constraint: no additional
-   inference budget on top of the existing fine-tuning loop.
-   Research question as the core contribution: "Can iterative
-   selection benefits be preserved while eliminating repeated
-   full-dataset inference?" Key Idea: use the training loss already
-   computed inside the fine-tuning loop as a zero-overhead utility
-   signal.
+   - S1: Transition to data-selection methods.
+   - S2: L1 slot: non-iterative selection does not adapt to model
+     evolution.
+   - S3: L2 slot: iterative methods require full-dataset inference in
+     every round.
+3. **Problem essence and Goal**.
+   - S1: State the hard constraint: no additional inference budget
+     beyond the fine-tuning loop.
+   - S2: Allocate a load-bearing research-question slot about
+     preserving iterative-selection benefits without repeated
+     inference.
+   - S3: Add the key-idea slot: use training loss already computed in
+     fine-tuning as a zero-overhead utility signal.
 4. **Key challenges**:
-   - Ch1: extract a reliable utility signal from noisy training-loss
-     trajectories.
-   - Ch2: integrate the selection signal into the training loop
-     without disturbing convergence.
-5. **Solution overview**. LEAD framework with Instance-level Dynamic
-   Uncertainty (IDU) as the utility signal; selection runs inline
-   with training. Module A addresses Ch1 via statistical
-   denoising; Module B addresses Ch2 via deferred selection.
+   - S1: Explain why reusing training loss is not automatically
+     reliable.
+   - S2: Ch1 slot: extracting utility from noisy loss trajectories.
+   - S3: Ch2 slot: integrating selection without disturbing
+     convergence.
+5. **Solution overview**.
+   - S1: Name LEAD and its inline selection principle.
+   - S2: Map Instance-level Dynamic Uncertainty to Ch1.
+   - S3: Map deferred selection to Ch2.
+   - S4: Reconnect to the 50k-sample running example and cost
+     constraint.
 6. **Contributions**:
-   1. Formulation of iterative data selection without additional
-      inference as a new problem setting (Section 2).
-   2. Instance-level Dynamic Uncertainty signal and its theoretical
-      analysis (Sections 3, 4).
-   3. LEAD framework design (Section 3).
-   4. Extensive experiments on multiple instruction-tuning
-      benchmarks, showing matched-or-better quality at an order-of-
-      magnitude lower cost (Section 5).
+   1. C1 plan: Name the new setting, iterative data selection without
+      additional inference, and cite Section 2.
+   2. C2 plan: Name Instance-level Dynamic Uncertainty, theoretical
+      analysis, and cite Sections 3 and 4.
+   3. C3 plan: Name LEAD framework design and cite Section 3.
+   4. C4 plan: Name instruction-tuning benchmarks, matched-or-better
+      quality, order-of-magnitude cost reduction, and cite Section 5.
 
 ## 5. What the examples teach
 

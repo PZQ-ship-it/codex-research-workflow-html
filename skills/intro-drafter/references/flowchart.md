@@ -34,16 +34,17 @@ Introduce the research object, motivate why the problem matters in
 the real world, and ground the rest of the paper in a concrete
 running example.
 
-### Writing points
+### Sentence roles
 
-- Open with the task, not the technique. The reader should care
-  about the problem before hearing about the solution.
-- Include a specific running example, ideally with an accompanying
-  figure (Figure 1). The example should be self-contained and show
-  the problem's complexity in under 30 seconds of reading.
-- Cite three to five recent real applications or deployments as
-  evidence of importance.
-- One paragraph, approximately 150-200 words.
+- S1: Open with the task or research object, not the technique.
+- S2: Name the real-world setting where the problem matters.
+- S3: Introduce a specific running example, ideally tied to Figure 1.
+- S4: Point to three to five recent applications, deployments, or
+  empirical signals as importance evidence.
+- S5: Bridge from the example to why current approaches must be
+  examined.
+- Avoid final prose; describe what each sentence must do and which
+  input it should use.
 
 ### Common failures
 
@@ -58,15 +59,15 @@ running example.
 Identify what prior work does not address, in at most three
 limitations.
 
-### Writing points
+### Sentence roles
 
-- Each limitation is framed as "prior work X does not handle Y".
-- Each limitation is specific enough that a reader can name the
-  capability that is missing.
-- Limitations motivate the challenges in Paragraph 4. There should
-  be a visible link: each challenge addresses a limitation.
+- S1: Transition from the motivated task to the relevant prior-work
+  families.
+- S2-S4: Assign one sentence slot per limitation. Each slot must name
+  the prior work family or capability and the missing property.
+- S5: Bridge the limitations to the problem essence or hard
+  constraints if the connection would otherwise be implicit.
 - Two limitations is acceptable; do not pad to three artificially.
-- One paragraph, approximately 150-200 words.
 
 ### Common failures
 
@@ -82,21 +83,18 @@ limitations.
 Characterise the problem's intrinsic properties and hard constraints,
 then state the research goal or key idea.
 
-### Writing points
+### Sentence roles
 
-- Hard constraints are explicit: scale, dynamicity, heterogeneity,
-  end-to-end latency, correctness, or consistency requirements.
-- For a Technique Paper, the Goal is a one-sentence bridge: "Our
-  goal is to handle Y with better accuracy." Key Idea carries the
-  weight.
-- For a New Problem / Setting Paper, the Goal is the paper's core
-  contribution: "Our goal is to handle Y under constraint Z, a
-  setting that has not been studied." Key Idea supports "why this
-  definition is reasonable".
-- If a Research Question is better than a Goal, state it as a
-  question.
-- One paragraph, approximately 100-150 words for Technique papers,
-  200-250 words for New Problem papers.
+- S1: Characterise the intrinsic problem property or setting boundary.
+- S2: Name the hard constraints: scale, dynamicity, heterogeneity,
+  end-to-end latency, correctness, consistency, or similar.
+- S3: Allocate the goal or research-question slot. For a Technique
+  Paper this is a short bridge; for a New Problem / Setting Paper it
+  carries the main contribution.
+- S4: Connect the goal to the key idea or to why the setting is worth
+  formalising.
+- Technique papers normally need 2 to 4 sentence slots here; New
+  Problem / Setting papers normally need 4 to 7.
 
 ### Common failures
 
@@ -113,10 +111,13 @@ then state the research goal or key idea.
 Enumerate the two or three obstacles that prevent a naive extension
 of prior work from solving the problem.
 
-### Writing points
+### Sentence roles
 
-- Each challenge is one sentence naming the obstacle plus one to
-  two sentences explaining why naive methods fail.
+- S1: Set up why the goal is non-trivial.
+- S2-S4: Assign one sentence slot per challenge. Each slot must name
+  the obstacle and explain why a naive extension of prior work fails.
+- S5: If useful, synthesise the design requirements implied by the
+  challenges.
 - Challenges address the limitations from Paragraph 2 or the hard
   constraints from Paragraph 3.
 - Common challenge categories:
@@ -125,7 +126,6 @@ of prior work from solving the problem.
   - End-to-end closed-loop difficulty.
   - Theoretical or engineering conflict.
 - At most three challenges. Four or more signals scope issues.
-- One paragraph, approximately 150-200 words.
 
 ### Common failures
 
@@ -141,15 +141,15 @@ Present the paper's methodology at a high level, with a one-to-one
 mapping between the challenges in Paragraph 4 and the modules or
 components introduced here.
 
-### Writing points
+### Sentence roles
 
-- Start with a one-sentence topic sentence naming the solution
-  framework.
-- For each challenge, name the module that addresses it.
-- Explicit one-to-one mapping; if a module addresses two challenges,
-  say so.
-- Methodology section numbers are forward-referenced in parentheses.
-- One paragraph, approximately 150-200 words.
+- S1: Name the solution framework and its high-level principle.
+- S2-S4: Assign one sentence slot per challenge-to-module mapping.
+  Each slot names the module, the challenge it addresses, and the
+  methodology section pointer.
+- S5: Reuse the running example or forecast a case study so the
+  Introduction loop closes.
+- If a module addresses two challenges, make that mapping explicit.
 
 ### Common failures
 
@@ -165,7 +165,7 @@ components introduced here.
 Summarise the paper's contributions in three or four numbered bullets,
 each mapped to a section or set of sections.
 
-### Writing points
+### Sentence roles
 
 - Canonical structure:
   - C1: Problem definition or problem-setting contribution (if the
@@ -180,7 +180,9 @@ each mapped to a section or set of sections.
   4-5)".
 - No single contribution is a vague phrase like "extensive
   experiments".
-- One paragraph or a numbered list; approximately 100-150 words.
+- Output each contribution as a bullet-level plan: what the final
+  bullet must name, what evidence or result it must include, and which
+  section should deliver it.
 
 ### Common failures
 

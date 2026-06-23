@@ -25,26 +25,27 @@ contributions:
 
 Each contribution should be:
 
-- One to two sentences long.
+- Planned as one bullet or one to two final sentences, but this skill
+  should output only the plan for that bullet.
 - Specific enough that removing it changes the paper's claim.
 - Mapped to a section number or set of section numbers.
 
 ## 2. Strong contribution phrasing
 
-Strong contributions name the specific mechanism or result, cite a
-section, and are defensible against a reviewer who asks "where in
-the paper do you deliver this?".
+Strong contribution plans name the specific mechanism or result that
+the final bullet must contain, cite a section, and are defensible
+against a reviewer who asks "where in the paper do you deliver this?".
 
 Examples:
 
-- "We propose `<framework name>`, the first system to do X under
-  constraint Y, described in Section 3."
-- "We introduce `<algorithm name>`, which reduces Z from O(n^2) to
-  O(n log n), with proofs in Section 4."
-- "We evaluate on `<benchmark>` against 12 baselines and show <gain>
-  point gains on <metric>, with fine-grained analysis in Section 5."
-- "We release `<dataset name>`, the first dataset to contain
-  <property>, available at <url>. See Section 6."
+- C1 plan: Name `<framework name>`, specify first-system or
+  first-setting claim under constraint Y, cite Section 3.
+- C2 plan: Name `<algorithm name>`, state the asymptotic or measured
+  improvement to include, cite Section 4.
+- C3 plan: Name `<benchmark>`, baseline count, main metric gain, and
+  fine-grained analysis section.
+- C4 plan: Name `<dataset name>` or released artefact, specify the
+  unique property and availability pointer, cite Section 6.
 
 ## 3. Weak contribution phrasing
 
@@ -96,11 +97,12 @@ overreach; fix accordingly.
 
 ## 6. Pre-submission contribution audit
 
-Before submitting, run this quick audit on the Contributions
-paragraph.
+Before submitting, run this quick audit on the Contributions paragraph
+or on the sentence-level contribution plan.
 
 - [ ] Contribution count is 3 or 4.
-- [ ] Each contribution fits one to two sentences.
+- [ ] Each contribution plan can become one bullet or one to two final
+  sentences without adding new claims.
 - [ ] Each contribution names a specific mechanism, result, or
   artefact.
 - [ ] Each contribution cites a section.
