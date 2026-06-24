@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Wide Scout"
+  short_description: "Broad parallel scouting for fuzzy problems"
+  default_prompt: "Use $codex-wide-scout to map several plausible directions before choosing what to deepen."
