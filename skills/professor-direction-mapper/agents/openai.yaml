@@ -1,0 +1,4 @@
+interface:
+  display_name: "Professor Direction Mapper"
+  short_description: "Map current professor mainlines"
+  default_prompt: "Map this professor's current research mainline, historical lines, student-led publication spine, and next reading route."

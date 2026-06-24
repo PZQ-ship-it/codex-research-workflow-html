@@ -1,0 +1,4 @@
+interface:
+  display_name: "Candidate Mainline Ranker"
+  short_description: "Rank candidate-set mainline directions"
+  default_prompt: "Rank the most valuable current mainline directions across this professor candidate set using weighted occurrence counts."

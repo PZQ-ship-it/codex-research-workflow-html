@@ -1,0 +1,4 @@
+interface:
+  display_name: "Student Lead Spine Finder"
+  short_description: "Find recent student-led lab spine"
+  default_prompt: "Find the recent student-led publication spine for this professor or lab and return candidate names, directions, and evidence."
