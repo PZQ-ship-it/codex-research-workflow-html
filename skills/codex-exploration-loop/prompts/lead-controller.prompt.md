@@ -13,6 +13,12 @@ Budget:
 - max_rounds: <max-rounds>
 - round_timebox_minutes: <round-timebox-minutes>
 
+Interpretation:
+- A round is one branch probe and one ledger record.
+- A fanout layer creates sibling branches and consumes one round per sibling probe.
+- Do not interpret max_rounds as "that many fanout layers".
+- After beam selection, deepen or split retained branches; do not restart same-layer parallel probing every round.
+
 Allowed:
 <allowed-actions>
 
@@ -21,10 +27,11 @@ credentials, paid calls, destructive edits, commit/push, merge, production chang
 
 Loop:
 1. Read brief.md, frontier.json, and recent ledger records.
-2. Decide whether this should be a single-branch round or a Tree-of-Thoughts fanout layer.
-3. For a single branch: select one branch, start the round, execute one concrete probe, and finish the round.
-4. For fanout: create sibling branches, dispatch independent branch workers or subagents, collect all sibling results, then run beam selection.
-5. Do not select a beam before the sibling layer has been collected or explicitly marked failed/aborted.
-6. Stop or continue based on budget and frontier state.
+2. Decide the next frontier action: deepen one retained branch, compare retained branches, fan out one branch, promote, prune, or stop.
+3. Fan out only at an expansion point with independent hypotheses; otherwise run a single-branch probe.
+4. For a single branch: select one branch, start the round, execute one concrete probe, and finish the round.
+5. For fanout: create sibling branches, dispatch independent branch workers or subagents, collect all sibling results, then run beam selection.
+6. Do not select a beam before the sibling layer has been collected or explicitly marked failed/aborted.
+7. Stop or continue based on budget and frontier state.
 
 Final output must list best leads, dead ends, artifacts, and recommended next lane.

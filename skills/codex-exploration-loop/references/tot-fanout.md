@@ -2,6 +2,15 @@
 
 Use fanout when breadth is the point: several plausible hypotheses exist, early commitment is risky, or the user explicitly asks for parallel exploration.
 
+## Concepts
+
+- `round`: one branch probe and one ledger record.
+- `layer`: one fanout/collection/beam-selection event.
+- `generation`: sibling branches created by the same fanout layer.
+- `beam`: retained branches after selection.
+
+Do not equate `max_rounds` with fanout layers. `max_rounds = 8` means eight total probes. A first layer with four sibling probes already uses four rounds.
+
 ## Default Shape
 
 - `scout`: avoid fanout unless explicitly requested.
@@ -26,6 +35,25 @@ Use fanout when breadth is the point: several plausible hypotheses exist, early 
    - Keep an extra diversity branch when novelty is high and cost is acceptable.
    - Park unselected branches instead of deleting them.
 5. Continue, pivot, promote, or run another fanout layer.
+   - Continue means deepen one retained branch.
+   - Run another fanout only from a retained branch that needs sub-hypotheses.
+   - Do not fan out every round by default.
+
+Example with `max_rounds = 8`:
+
+1. Layer 1: create four sibling branches and run four probes. Rounds used: 1-4.
+2. Beam-select: keep two branches plus one diversity branch.
+3. Deepen the best retained branch for two probes. Rounds used: 5-6.
+4. If still fuzzy, fan out from that retained branch into two children. Rounds used: 7-8.
+5. Stop, summarize, or promote. Do not create eight separate top-level sibling layers.
+
+## Controller Decision Rule
+
+- Fan out when the current branch question is still broad and has independent plausible hypotheses.
+- Deepen when one branch has concrete evidence but needs another probe.
+- Compare when two retained branches are close in score or imply different next actions.
+- Promote when the next step has become implementation, review, write-up, or human decision.
+- Stop when the remaining budget cannot improve the decision.
 
 ## Subagent Prompt Shape
 

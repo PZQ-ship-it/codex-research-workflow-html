@@ -2,6 +2,13 @@
 
 Use the v2.0 runner when a fuzzy exploration should advance across multiple bounded rounds with durable state.
 
+Terminology:
+
+- A runner `round` is one branch probe and one ledger record.
+- A ToT `fanout layer` is not a round. It creates sibling branches, runs one probe per sibling, then performs beam selection.
+- `max_rounds` limits total branch probes, not the number of fanout layers.
+- A plan should not schedule every remaining round as a fresh same-layer fanout.
+
 ## Contract
 
 The runner owns:
@@ -11,6 +18,12 @@ The runner owns:
 - running deterministic `mock`, `replay`, or external `codex exec` rounds;
 - recording attempts, failures, and final state;
 - calling `digest` after the planned budget.
+
+The lead/controller owns:
+
+- deciding whether the next frontier action is deepen, compare, fanout, promote, prune, or stop;
+- ensuring a fanout layer is collected before beam selection;
+- continuing from retained beam branches rather than repeatedly restarting top-level parallel exploration.
 
 The runner does not own:
 

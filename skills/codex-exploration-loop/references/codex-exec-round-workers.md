@@ -1,6 +1,8 @@
 # Codex Exec Round Workers
 
-Use `codex exec` when a branch round should run as a scripted worker and return a schema-valid result.
+Use `codex exec` when one branch probe should run as a scripted worker and return a schema-valid round result.
+
+One worker equals one branch probe. In a ToT fanout layer, prepare one worker per sibling branch and import each result before beam selection.
 
 ## v1.5 Adapter
 
@@ -30,7 +32,7 @@ python <skill-dir>\scripts\explore_ledger.py finish-worker `
 - `<branch>-round-<n>.events.jsonl` path for Codex JSON events
 - `<branch>-round-<n>.result.json` path for the schema result
 
-It also starts `pending_round.json` unless `--no-start` is passed.
+It also starts `pending_rounds/<branch>-round-<n>.json` unless `--no-start` is passed.
 
 Use `--portable` when the artifact directory may be committed, shared, or moved. It writes relative manifest fields and copies the schema beside the generated worker script.
 
@@ -50,6 +52,7 @@ codex exec `
 ## Rules
 
 - Give the worker one branch, one probe, and one budget.
+- Do not ask a branch worker to run the whole fanout layer.
 - Pass only compact branch memory and required paths.
 - Do not pass hidden expected answers.
 - Require the worker to output only the round result object.

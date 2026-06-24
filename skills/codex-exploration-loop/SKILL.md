@@ -15,23 +15,30 @@ Run a bounded exploration loop for fuzzy work. The goal is leads, evidence, and 
    - `max_rounds`: `6`
    - `round_timebox_minutes`: `10`
    - `workspace`: current repo
+   - `max_rounds` counts branch probe records, not fanout layers.
 3. Gate risky actions:
    - Allowed by default: read/search, scratch edits, public network, local tests, local skills.
    - Ask first: destructive edits, paid/authenticated calls, credentials, commit/push, merge, production systems.
 4. Initialize a run directory with `scripts/explore_ledger.py init`.
-5. For each round:
+5. Choose the next frontier action; do not pre-plan all remaining rounds as fanout:
+   - continue one active branch for one concrete probe;
+   - fan out one selected branch when breadth is needed;
+   - prune, pivot, promote, or stop.
+6. For a single-branch round:
    - select a branch from `frontier.json`;
    - write `start-round`;
    - run one concrete probe;
    - write `finish-round` with evidence, score, reflection, and decision.
    - For scripted branch workers, use `prepare-worker`, run the generated `codex-exec.ps1`, then `finish-worker`.
-6. When the problem benefits from Tree-of-Thoughts breadth, run a fanout layer:
+7. For a Tree-of-Thoughts fanout layer:
    - create 3-5 candidate branches with `fanout`;
    - explore them in parallel with native subagents or `codex exec` workers when authorized;
+   - count each sibling probe as one round record;
    - import each branch result;
    - run `beam-select` to keep the best branches plus optional diversity.
-7. Stop when the round budget is used, a lead is promoted, all branches are blocked/pruned/parked, or the user redirects.
-8. End with best leads, dead ends, parked branches, artifacts, and the recommended next lane.
+8. After beam selection, deepen or split only the retained branches. Do not restart every remaining round as another same-layer fanout.
+9. Stop when the round budget is used, a lead is promoted, all branches are blocked/pruned/parked, or the user redirects.
+10. End with best leads, dead ends, parked branches, artifacts, and the recommended next lane.
 
 ## Modes
 
@@ -52,7 +59,7 @@ Bull:
 
 - 10 rounds, 15 minutes each.
 - Scratch worktree required for edits.
-- Bounded subagents and branch fanout are expected when the problem has independent hypotheses.
+- Bounded subagents and branch fanout are expected at real expansion points when the problem has independent hypotheses.
 - Default ToT settings: fanout width 4, beam width 2, diversity branch 1.
 - Keep explicit gates for paid, authenticated, destructive, commit/push, and merge actions.
 
@@ -60,13 +67,27 @@ Bull:
 
 Use ToT fanout when the user wants parallel exploration, there are several plausible hypotheses, or single-branch probing is likely to tunnel too early.
 
+Round/layer relationship:
+
+- A `run` contains one frontier and many round records.
+- A `round` is one concrete probe on one branch.
+- A `fanout layer` is an expand-collect-select event that creates sibling branches and usually consumes multiple round records, one per sibling probe.
+- A `generation` is the sibling set created by one fanout layer.
+- `max_rounds = 8` means up to eight branch probes total; it does not mean eight separate same-layer fanouts.
+
 Layer cycle:
 
 1. `expand`: write several branch hypotheses and probes.
 2. `parallel probe`: dispatch independent branches through native subagents or schema-backed `codex exec` workers.
 3. `evaluate`: import each branch result as a normal round record.
 4. `beam select`: keep top-scoring branches and optionally one high-novelty diversity branch.
-5. `iterate`: continue, pivot, promote, or run another fanout layer.
+5. `iterate`: continue a retained branch, split a retained branch, compare retained branches, promote a lead, or stop.
+
+Avoid this anti-pattern:
+
+- Do not say "I will set 8 rounds and keep every round as same-layer parallel probing."
+- Do not create fresh unrelated sibling sets after every round.
+- Do not fan out again before the previous sibling layer has been collected and selected.
 
 Use native subagents only when the user explicitly authorized subagents, parallel agents, delegation, or this skill's ToT fanout. The lead agent still owns context reading, branch prompts, scoring integration, and final recommendations.
 

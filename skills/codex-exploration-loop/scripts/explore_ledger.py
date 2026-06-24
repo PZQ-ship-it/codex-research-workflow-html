@@ -899,6 +899,7 @@ def default_runner_plan(run_dir: Path) -> Dict[str, Any]:
         "mode": "mock",
         "max_rounds": int(run_meta.get("max_rounds", 1)),
         "round_timebox_minutes": float(run_meta.get("round_timebox_minutes", 5)),
+        "budget_unit": "branch_probe",
         "workspace": run_meta.get("root", ""),
         "sandbox": "workspace-write",
         "profile": "",
