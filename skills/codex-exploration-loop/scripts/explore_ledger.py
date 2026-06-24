@@ -69,6 +69,13 @@ def read_text(path: Path) -> str:
 
 
 def parse_json_text(text: str) -> Dict[str, Any]:
+    loaded = parse_json_value_text(text)
+    if not isinstance(loaded, dict):
+        raise ValueError("JSON value must be an object")
+    return loaded
+
+
+def parse_json_value_text(text: str) -> Any:
     value = text.strip()
     if value.startswith("```"):
         lines = value.splitlines()
@@ -85,8 +92,6 @@ def parse_json_text(text: str) -> Dict[str, Any]:
         if start == -1 or end == -1 or end <= start:
             raise
         loaded = json.loads(value[start : end + 1])
-    if not isinstance(loaded, dict):
-        raise ValueError("JSON value must be an object")
     return loaded
 
 
@@ -95,6 +100,13 @@ def load_json_arg(value: str) -> Dict[str, Any]:
     if candidate.exists():
         return parse_json_text(read_text(candidate))
     return parse_json_text(value)
+
+
+def load_json_value_arg(value: str) -> Any:
+    candidate = Path(value)
+    if candidate.exists():
+        return parse_json_value_text(read_text(candidate))
+    return parse_json_value_text(value)
 
 
 def load_json_file(path: Path, default: Any = None) -> Any:
@@ -155,6 +167,8 @@ def validate_record(record: Dict[str, Any]) -> None:
         raise ValueError("actions must be a list")
     if not isinstance(record["evidence"], list):
         raise ValueError("evidence must be a list")
+    if "proposed_branches" in record and not isinstance(record["proposed_branches"], list):
+        raise ValueError("proposed_branches must be a list when present")
     scores = record["scores"]
     if not isinstance(scores, dict):
         raise ValueError("scores must be an object")
@@ -170,7 +184,24 @@ def ensure_run_dir(run_dir: Path) -> None:
 
 
 def active_pending_round(run_dir: Path) -> Dict[str, Any]:
-    return read_json(run_dir / "pending_round.json", {})
+    legacy = run_dir / "pending_round.json"
+    if legacy.exists():
+        pending = read_json(legacy, {})
+        pending["_path"] = str(legacy)
+        return pending
+    pending_dir = run_dir / "pending_rounds"
+    if not pending_dir.exists():
+        return {}
+    pending_files = sorted(pending_dir.glob("*.json"), key=lambda item: item.stat().st_mtime, reverse=True)
+    if not pending_files:
+        return {}
+    pending = read_json(pending_files[0], {})
+    pending["_path"] = str(pending_files[0])
+    return pending
+
+
+def pending_round_path(run_dir: Path, round_number: int, branch_id: str) -> Path:
+    return run_dir / "pending_rounds" / f"{branch_id}-round-{round_number:03d}.json"
 
 
 def write_pending_round(run_dir: Path, round_number: int, branch_id: str, timebox_minutes: float) -> Dict[str, Any]:
@@ -181,7 +212,7 @@ def write_pending_round(run_dir: Path, round_number: int, branch_id: str, timebo
         "started_at": now_iso(),
         "status": "pending",
     }
-    write_json(run_dir / "pending_round.json", pending)
+    write_json(pending_round_path(run_dir, round_number, branch_id), pending)
     return pending
 
 
@@ -225,6 +256,9 @@ def normalize_public_path(value: str) -> str:
 def initial_frontier(question: str) -> Dict[str, Any]:
     return {
         "active": ["b001"],
+        "max_active": 3,
+        "fanout_width": 1,
+        "beam_width": 2,
         "branches": {
             "b001": {
                 "status": "active",
@@ -236,6 +270,23 @@ def initial_frontier(question: str) -> Dict[str, Any]:
             }
         },
     }
+
+
+def next_branch_id(branches: Dict[str, Any]) -> str:
+    highest = 0
+    for branch_id in branches:
+        match = re.match(r"^b([0-9]+)$", str(branch_id))
+        if match:
+            highest = max(highest, int(match.group(1)))
+    return f"b{highest + 1:03d}"
+
+
+def active_branch_ids(frontier: Dict[str, Any]) -> List[str]:
+    branches = frontier.get("branches", {})
+    active = [bid for bid, item in branches.items() if item.get("status") == "active"]
+    active.sort(key=lambda bid: branches[bid].get("last_score", 0), reverse=True)
+    max_active = int(frontier.get("max_active", 3) or 3)
+    return active[:max_active]
 
 
 def update_frontier(run_dir: Path, record: Dict[str, Any]) -> Dict[str, Any]:
@@ -259,6 +310,7 @@ def update_frontier(run_dir: Path, record: Dict[str, Any]) -> Dict[str, Any]:
         scores["total"] = compute_total(scores)
     branch["hypothesis"] = record["hypothesis"]
     branch["last_score"] = scores["total"]
+    branch["last_scores"] = dict(scores)
     branch.setdefault("rounds", []).append(record["round"])
     recent = branch.setdefault("recent_reflections", [])
     recent.append(record["reflection"])
@@ -271,14 +323,257 @@ def update_frontier(run_dir: Path, record: Dict[str, Any]) -> Dict[str, Any]:
     elif decision in {"continue", "pivot", "branch"}:
         branch["status"] = "active"
 
-    active = []
-    for bid, item in branches.items():
-        if item.get("status") == "active":
-            active.append(bid)
-    active.sort(key=lambda bid: branches[bid].get("last_score", 0), reverse=True)
-    frontier["active"] = active[:3]
+    proposed = record.get("proposed_branches") or []
+    if decision == "branch" and proposed:
+        layer_id = f"l{int(frontier.get('next_layer', 1)):03d}"
+        created = create_child_branches(run_dir, frontier, branch_id, proposed, layer_id)
+        if created:
+            branch["status"] = "branched"
+            branch["child_branch_ids"] = branch.get("child_branch_ids", []) + created
+            frontier["last_fanout"] = {
+                "layer_id": layer_id,
+                "parent_branch_id": branch_id,
+                "branch_ids": created,
+                "created_at": now_iso(),
+                "source": "proposed_branches",
+            }
+            frontier["next_layer"] = int(frontier.get("next_layer", 1)) + 1
+            append_jsonl(
+                run_dir / "fanout.jsonl",
+                {
+                    "event": "proposed-branches",
+                    "layer_id": layer_id,
+                    "parent_branch_id": branch_id,
+                    "branch_ids": created,
+                    "timestamp": now_iso(),
+                },
+            )
+
+    frontier["active"] = active_branch_ids(frontier)
     write_json(frontier_path, frontier)
     return frontier
+
+
+def split_candidate(value: str) -> Dict[str, str]:
+    separators = ["|||", "::", "=>"]
+    for separator in separators:
+        if separator in value:
+            hypothesis, next_probe = value.split(separator, 1)
+            return {"hypothesis": hypothesis.strip(), "next_probe": next_probe.strip()}
+    stripped = value.strip()
+    return {"hypothesis": stripped, "next_probe": "Run the smallest useful probe for this branch."}
+
+
+def load_candidates(args: argparse.Namespace) -> List[Dict[str, Any]]:
+    candidates: List[Dict[str, Any]] = []
+    for item in args.candidate or []:
+        candidates.append(split_candidate(item))
+    if args.candidate_json:
+        loaded = load_json_value_arg(args.candidate_json)
+        if isinstance(loaded, dict) and "candidates" in loaded:
+            raw_items = loaded["candidates"]
+        else:
+            raw_items = loaded
+        if not isinstance(raw_items, list):
+            raise ValueError("candidate-json must be a JSON array or an object with candidates")
+        for raw in raw_items:
+            if not isinstance(raw, dict):
+                raise ValueError("each candidate-json item must be an object")
+            hypothesis = str(raw.get("hypothesis") or "").strip()
+            if not hypothesis:
+                raise ValueError("each candidate-json item needs hypothesis")
+            candidates.append(
+                {
+                    "hypothesis": hypothesis,
+                    "next_probe": str(raw.get("next_probe") or raw.get("probe") or "Run the smallest useful probe for this branch.").strip(),
+                    "notes": str(raw.get("notes") or "").strip(),
+                    "operator": str(raw.get("operator") or "").strip(),
+                }
+            )
+    if not candidates:
+        raise ValueError("fanout needs at least one --candidate or --candidate-json item")
+    return candidates
+
+
+def write_branch_note(run_dir: Path, branch_id: str, branch: Dict[str, Any]) -> None:
+    lines = [
+        f"# {branch_id}",
+        "",
+        f"Hypothesis: {branch.get('hypothesis', '')}",
+        "",
+        f"Next probe: {branch.get('next_probe', '')}",
+    ]
+    if branch.get("parent_branch_id"):
+        lines.extend(["", f"Parent: {branch.get('parent_branch_id')}"])
+    if branch.get("layer_id"):
+        lines.append(f"Layer: {branch.get('layer_id')}")
+    if branch.get("notes"):
+        lines.extend(["", f"Notes: {branch.get('notes')}"])
+    write_text(run_dir / "branches" / f"{branch_id}.md", "\n".join(lines) + "\n")
+
+
+def create_child_branches(
+    run_dir: Path,
+    frontier: Dict[str, Any],
+    parent_branch_id: str,
+    proposed_branches: List[Dict[str, Any]],
+    layer_id: str,
+) -> List[str]:
+    branches = frontier.setdefault("branches", {})
+    created: List[str] = []
+    for raw in proposed_branches:
+        if not isinstance(raw, dict):
+            continue
+        hypothesis = str(raw.get("hypothesis") or "").strip()
+        if not hypothesis:
+            continue
+        branch_id = next_branch_id(branches)
+        branch = {
+            "status": "active",
+            "hypothesis": hypothesis,
+            "last_score": 0,
+            "rounds": [],
+            "recent_reflections": [],
+            "next_probe": str(raw.get("next_probe") or raw.get("probe") or "Run the smallest useful probe for this branch.").strip(),
+            "parent_branch_id": parent_branch_id,
+            "layer_id": layer_id,
+            "fanout_source": "proposed_branches",
+            "diversity_key": str(raw.get("diversity_key") or "").strip(),
+            "notes": str(raw.get("rationale") or raw.get("risk_note") or "").strip(),
+            "estimated_cost": raw.get("estimated_cost"),
+            "created_at": now_iso(),
+        }
+        branches[branch_id] = branch
+        write_branch_note(run_dir, branch_id, branch)
+        created.append(branch_id)
+    return created
+
+
+def cmd_fanout(args: argparse.Namespace) -> int:
+    run_dir = Path(args.run_dir).resolve()
+    ensure_run_dir(run_dir)
+    frontier_path = run_dir / "frontier.json"
+    frontier = read_json(frontier_path, {})
+    branches = frontier.setdefault("branches", {})
+    parent = choose_branch(frontier, args.parent_branch)
+    if parent not in branches:
+        raise ValueError(f"unknown parent branch: {parent}")
+    candidates = load_candidates(args)
+    layer_id = args.layer_id or f"l{int(frontier.get('next_layer', 1)):03d}"
+    new_ids: List[str] = []
+    for candidate in candidates:
+        branch_id = next_branch_id(branches)
+        branch = {
+            "status": "active",
+            "hypothesis": candidate["hypothesis"],
+            "last_score": 0,
+            "rounds": [],
+            "recent_reflections": [],
+            "next_probe": candidate.get("next_probe") or "Run the smallest useful probe for this branch.",
+            "parent_branch_id": parent,
+            "layer_id": layer_id,
+            "fanout_source": "tot-fanout",
+            "operator": candidate.get("operator", ""),
+            "notes": candidate.get("notes", ""),
+            "created_at": now_iso(),
+        }
+        branches[branch_id] = branch
+        write_branch_note(run_dir, branch_id, branch)
+        new_ids.append(branch_id)
+    if not args.keep_parent_active:
+        branches[parent]["status"] = "branched"
+    active = [bid for bid in frontier.get("active", []) if branches.get(bid, {}).get("status") == "active"]
+    for branch_id in new_ids:
+        if branch_id not in active:
+            active.append(branch_id)
+    frontier["active"] = active
+    frontier["max_active"] = max(int(frontier.get("max_active", 3) or 3), len(active))
+    frontier["fanout_width"] = len(new_ids)
+    frontier["beam_width"] = int(args.beam_width)
+    frontier["last_fanout"] = {
+        "layer_id": layer_id,
+        "parent_branch_id": parent,
+        "branch_ids": new_ids,
+        "beam_width": int(args.beam_width),
+        "created_at": now_iso(),
+    }
+    frontier["next_layer"] = int(frontier.get("next_layer", 1)) + 1
+    write_json(frontier_path, frontier)
+    append_jsonl(
+        run_dir / "fanout.jsonl",
+        {
+            "event": "fanout",
+            "layer_id": layer_id,
+            "parent_branch_id": parent,
+            "branch_ids": new_ids,
+            "beam_width": int(args.beam_width),
+            "timestamp": now_iso(),
+        },
+    )
+    print(json.dumps({"layer_id": layer_id, "parent_branch_id": parent, "branch_ids": new_ids}, ensure_ascii=False, indent=2))
+    return 0
+
+
+def diversity_score(branch: Dict[str, Any]) -> float:
+    scores = branch.get("last_scores") or {}
+    novelty = float(scores.get("novelty", 0))
+    cost = float(scores.get("cost", 0))
+    return novelty - 0.5 * cost
+
+
+def cmd_beam_select(args: argparse.Namespace) -> int:
+    run_dir = Path(args.run_dir).resolve()
+    ensure_run_dir(run_dir)
+    frontier_path = run_dir / "frontier.json"
+    frontier = read_json(frontier_path, {})
+    branches = frontier.setdefault("branches", {})
+    scoped = []
+    for branch_id, branch in branches.items():
+        if branch.get("status") != "active":
+            continue
+        if args.layer_id and branch.get("layer_id") != args.layer_id:
+            continue
+        scoped.append(branch_id)
+    scoped.sort(key=lambda bid: branches[bid].get("last_score", 0), reverse=True)
+    selected = scoped[: args.beam_width]
+    remaining = [bid for bid in scoped if bid not in selected]
+    if args.diversity_count:
+        remaining.sort(key=lambda bid: diversity_score(branches[bid]), reverse=True)
+        for branch_id in remaining:
+            if branch_id not in selected:
+                selected.append(branch_id)
+            if len(selected) >= args.beam_width + args.diversity_count:
+                break
+    parked = [bid for bid in scoped if bid not in selected]
+    for branch_id in selected:
+        branches[branch_id]["status"] = "active"
+    if not args.keep_unselected_active:
+        for branch_id in parked:
+            branches[branch_id]["status"] = "parked"
+    frontier["beam_width"] = int(args.beam_width)
+    frontier["max_active"] = max(int(args.beam_width) + int(args.diversity_count), 1)
+    frontier["active"] = active_branch_ids(frontier)
+    frontier["last_beam_select"] = {
+        "layer_id": args.layer_id or "",
+        "selected": selected,
+        "parked": parked if not args.keep_unselected_active else [],
+        "beam_width": int(args.beam_width),
+        "diversity_count": int(args.diversity_count),
+        "created_at": now_iso(),
+    }
+    write_json(frontier_path, frontier)
+    append_jsonl(
+        run_dir / "fanout.jsonl",
+        {
+            "event": "beam-select",
+            "layer_id": args.layer_id or "",
+            "selected": selected,
+            "parked": parked if not args.keep_unselected_active else [],
+            "timestamp": now_iso(),
+        },
+    )
+    print(json.dumps({"selected": selected, "parked": parked if not args.keep_unselected_active else []}, ensure_ascii=False, indent=2))
+    return 0
 
 
 def cmd_init(args: argparse.Namespace) -> int:
@@ -335,25 +630,23 @@ def cmd_init(args: argparse.Namespace) -> int:
 def cmd_start_round(args: argparse.Namespace) -> int:
     run_dir = Path(args.run_dir).resolve()
     ensure_run_dir(run_dir)
-    pending = {
-        "round": args.round,
-        "branch_id": args.branch_id,
-        "timebox_minutes": args.timebox_minutes,
-        "started_at": now_iso(),
-        "status": "pending",
-    }
-    write_json(run_dir / "pending_round.json", pending)
+    pending = write_pending_round(run_dir, args.round, args.branch_id, args.timebox_minutes)
     print(json.dumps(pending, ensure_ascii=False))
     return 0
 
 
 def finish_record(run_dir: Path, record: Dict[str, Any]) -> Dict[str, Any]:
     ensure_run_dir(run_dir)
-    pending_path = run_dir / "pending_round.json"
-    if pending_path.exists():
+    pending_paths = [
+        pending_round_path(run_dir, int(record.get("round", 0) or 0), str(record.get("branch_id", ""))),
+        run_dir / "pending_round.json",
+    ]
+    pending_path = next((path for path in pending_paths if path.exists()), None)
+    if pending_path:
         pending = read_json(pending_path, {})
-        record.setdefault("started_at", pending.get("started_at"))
-        record.setdefault("timebox_minutes", pending.get("timebox_minutes"))
+        if str(pending.get("branch_id", record.get("branch_id"))) == str(record.get("branch_id")):
+            record.setdefault("started_at", pending.get("started_at"))
+            record.setdefault("timebox_minutes", pending.get("timebox_minutes"))
     record.setdefault("ended_at", now_iso())
     record.setdefault("network_used", False)
     record.setdefault("skills_used", [])
@@ -363,7 +656,7 @@ def finish_record(run_dir: Path, record: Dict[str, Any]) -> Dict[str, Any]:
     record["scores"]["total"] = compute_total(record["scores"])
     append_jsonl(run_dir / "ledger.jsonl", record)
     update_frontier(run_dir, record)
-    if pending_path.exists():
+    if pending_path and pending_path.exists():
         pending_path.unlink()
     return record
 
@@ -602,7 +895,7 @@ def cmd_finish_worker(args: argparse.Namespace) -> int:
 def default_runner_plan(run_dir: Path) -> Dict[str, Any]:
     run_meta = read_json(run_dir / "run.json", {})
     return {
-        "version": "2.0",
+        "version": "2.1",
         "mode": "mock",
         "max_rounds": int(run_meta.get("max_rounds", 1)),
         "round_timebox_minutes": float(run_meta.get("round_timebox_minutes", 5)),
@@ -612,6 +905,9 @@ def default_runner_plan(run_dir: Path) -> Dict[str, Any]:
         "portable": True,
         "stop_on_decisions": sorted(RUNNER_STOP_DECISIONS),
         "max_failures": 2,
+        "fanout_width": 3,
+        "beam_width": 2,
+        "diversity_count": 1,
         "rounds": [],
     }
 
@@ -866,8 +1162,14 @@ def cmd_run_plan(args: argparse.Namespace) -> int:
 def cmd_abort_round(args: argparse.Namespace) -> int:
     run_dir = Path(args.run_dir).resolve()
     ensure_run_dir(run_dir)
-    pending_path = run_dir / "pending_round.json"
-    pending = read_json(pending_path, {})
+    round_number = int(args.round or 0)
+    branch_id = args.branch_id or ""
+    pending_paths = []
+    if round_number and branch_id:
+        pending_paths.append(pending_round_path(run_dir, round_number, branch_id))
+    pending_paths.append(run_dir / "pending_round.json")
+    pending_path = next((path for path in pending_paths if path.exists()), None)
+    pending = read_json(pending_path, {}) if pending_path else {}
     record = {
         "round": int(pending.get("round", args.round or 1)),
         "started_at": pending.get("started_at", now_iso()),
@@ -890,7 +1192,7 @@ def cmd_abort_round(args: argparse.Namespace) -> int:
     record["scores"]["total"] = compute_total(record["scores"])
     append_jsonl(run_dir / "ledger.jsonl", record)
     update_frontier(run_dir, record)
-    if pending_path.exists():
+    if pending_path and pending_path.exists():
         pending_path.unlink()
     print(json.dumps({"aborted": True}, ensure_ascii=False))
     return 0
@@ -914,8 +1216,10 @@ def cmd_digest(args: argparse.Namespace) -> int:
     ensure_run_dir(run_dir)
     records = list(iter_ledger(run_dir))
     frontier = read_json(run_dir / "frontier.json", {})
+    branches = frontier.get("branches", {})
     promoted = [r for r in records if r.get("decision") == "promote"]
     pruned = [r for r in records if r.get("decision") == "prune"]
+    parked = [bid for bid, item in branches.items() if item.get("status") == "parked"]
     lines = [
         "# Exploration Digest",
         "",
@@ -940,6 +1244,13 @@ def cmd_digest(args: argparse.Namespace) -> int:
     if pruned:
         for item in pruned:
             lines.append(f"- {item.get('branch_id')}: {item.get('reflection')}")
+    else:
+        lines.append("- None recorded.")
+    lines.extend(["", "## Parked Branches"])
+    if parked:
+        for branch_id in parked:
+            branch = branches.get(branch_id, {})
+            lines.append(f"- {branch_id}: {branch.get('hypothesis', '')}")
     else:
         lines.append("- None recorded.")
     lines.extend(["", "## Recommended Next Lane"])
@@ -983,6 +1294,24 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--run-dir", required=True)
     p.add_argument("--record-json", required=True)
     p.set_defaults(func=cmd_finish_round)
+
+    p = sub.add_parser("fanout")
+    p.add_argument("--run-dir", required=True)
+    p.add_argument("--parent-branch", default="")
+    p.add_argument("--layer-id", default="")
+    p.add_argument("--candidate", action="append", help="Use 'hypothesis ||| next probe'. Can be repeated.")
+    p.add_argument("--candidate-json", default="", help="JSON object or path with a candidates array.")
+    p.add_argument("--beam-width", type=int, default=2)
+    p.add_argument("--keep-parent-active", action="store_true")
+    p.set_defaults(func=cmd_fanout)
+
+    p = sub.add_parser("beam-select")
+    p.add_argument("--run-dir", required=True)
+    p.add_argument("--layer-id", default="")
+    p.add_argument("--beam-width", type=int, default=2)
+    p.add_argument("--diversity-count", type=int, default=1)
+    p.add_argument("--keep-unselected-active", action="store_true")
+    p.set_defaults(func=cmd_beam_select)
 
     p = sub.add_parser("prepare-worker")
     p.add_argument("--run-dir", required=True)

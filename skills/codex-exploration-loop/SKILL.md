@@ -25,8 +25,13 @@ Run a bounded exploration loop for fuzzy work. The goal is leads, evidence, and 
    - run one concrete probe;
    - write `finish-round` with evidence, score, reflection, and decision.
    - For scripted branch workers, use `prepare-worker`, run the generated `codex-exec.ps1`, then `finish-worker`.
-6. Stop when the round budget is used, a lead is promoted, all branches are blocked/pruned, or the user redirects.
-7. End with best leads, dead ends, artifacts, and the recommended next lane.
+6. When the problem benefits from Tree-of-Thoughts breadth, run a fanout layer:
+   - create 3-5 candidate branches with `fanout`;
+   - explore them in parallel with native subagents or `codex exec` workers when authorized;
+   - import each branch result;
+   - run `beam-select` to keep the best branches plus optional diversity.
+7. Stop when the round budget is used, a lead is promoted, all branches are blocked/pruned/parked, or the user redirects.
+8. End with best leads, dead ends, parked branches, artifacts, and the recommended next lane.
 
 ## Modes
 
@@ -41,13 +46,29 @@ Standard:
 - 6 rounds, 10 minutes each.
 - Use a scratch worktree for edit-heavy probes.
 - Public network, local commands, local skills, and one independent branch worker are allowed when useful.
+- If the user asks for breadth or ToT-style exploration, use fanout width 3 and beam width 2.
 
 Bull:
 
 - 10 rounds, 15 minutes each.
 - Scratch worktree required for edits.
-- Bounded subagents and branch fanout are allowed.
+- Bounded subagents and branch fanout are expected when the problem has independent hypotheses.
+- Default ToT settings: fanout width 4, beam width 2, diversity branch 1.
 - Keep explicit gates for paid, authenticated, destructive, commit/push, and merge actions.
+
+## Tree-of-Thoughts Fanout
+
+Use ToT fanout when the user wants parallel exploration, there are several plausible hypotheses, or single-branch probing is likely to tunnel too early.
+
+Layer cycle:
+
+1. `expand`: write several branch hypotheses and probes.
+2. `parallel probe`: dispatch independent branches through native subagents or schema-backed `codex exec` workers.
+3. `evaluate`: import each branch result as a normal round record.
+4. `beam select`: keep top-scoring branches and optionally one high-novelty diversity branch.
+5. `iterate`: continue, pivot, promote, or run another fanout layer.
+
+Use native subagents only when the user explicitly authorized subagents, parallel agents, delegation, or this skill's ToT fanout. The lead agent still owns context reading, branch prompts, scoring integration, and final recommendations.
 
 ## Round Discipline
 
@@ -85,6 +106,7 @@ Read only what is needed:
 - `references/ledger-schema.md`: ledger files, JSON shapes, scoring, and recovery.
 - `references/worktree-isolation.md`: scratch worktree and path-safety rules.
 - `references/branch-operators.md`: branch decisions, scoring, and local-skill operators.
+- `references/tot-fanout.md`: Tree-of-Thoughts fanout, subagent branch prompts, beam select, and safety rules.
 - `references/official-codex-mechanisms.md`: when to use Codex skills, subagents, `codex exec`, automations, SDK, and MCP.
 - `references/codex-exec-round-workers.md`: how to run schema-backed non-interactive branch workers.
 - `references/automation-and-sdk-runner.md`: v2 guidance for recurring or programmatic runs.
@@ -115,6 +137,24 @@ Start and finish a round:
 ```powershell
 python <skill-dir>\scripts\explore_ledger.py start-round --run-dir <run-dir> --round 1 --branch-id b001 --timebox-minutes 10
 python <skill-dir>\scripts\explore_ledger.py finish-round --run-dir <run-dir> --record-json <round-result.json>
+```
+
+Create and select a ToT fanout layer:
+
+```powershell
+python <skill-dir>\scripts\explore_ledger.py fanout `
+  --run-dir <run-dir> `
+  --parent-branch b001 `
+  --candidate "Hypothesis A ||| Probe A" `
+  --candidate "Hypothesis B ||| Probe B" `
+  --candidate "Hypothesis C ||| Probe C" `
+  --beam-width 2
+
+python <skill-dir>\scripts\explore_ledger.py beam-select `
+  --run-dir <run-dir> `
+  --layer-id l001 `
+  --beam-width 2 `
+  --diversity-count 1
 ```
 
 Summarize:

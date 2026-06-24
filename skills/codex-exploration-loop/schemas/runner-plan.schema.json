@@ -40,6 +40,26 @@
       "type": "number",
       "minimum": 0
     },
+    "fanout_width": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "beam_width": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "diversity_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "max_parallel": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "barrier": {
+      "type": "string",
+      "enum": ["none", "generation"]
+    },
     "stop_on_decisions": {
       "type": "array",
       "items": {

@@ -34,6 +34,13 @@
       "type": "string",
       "pattern": "^b[0-9]{3,}$"
     },
+    "parent_branch_id": {
+      "type": "string",
+      "pattern": "^b[0-9]{3,}$"
+    },
+    "layer_id": {
+      "type": "string"
+    },
     "hypothesis": {
       "type": "string",
       "minLength": 1
@@ -141,6 +148,35 @@
     "reflection": {
       "type": "string",
       "minLength": 1
+    },
+    "proposed_branches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["hypothesis", "next_probe", "rationale"],
+        "properties": {
+          "hypothesis": {
+            "type": "string",
+            "minLength": 1
+          },
+          "next_probe": {
+            "type": "string"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "diversity_key": {
+            "type": "string"
+          },
+          "estimated_cost": {
+            "type": "string"
+          },
+          "risk_note": {
+            "type": "string"
+          }
+        }
+      }
     },
     "decision": {
       "type": "string",

@@ -32,6 +32,15 @@ Default frontier policy:
 - Prune branches with two stale rounds and no new evidence.
 - Pivot when the top branch is blocked or low-evidence after repeated probes.
 
+Tree-of-Thoughts fanout policy:
+
+- Expand 3-5 sibling branches only when breadth is useful.
+- Run sibling probes independently, preferably through native subagents or schema-backed workers.
+- Collect all sibling results before selection.
+- Use `beam-select` to keep top total-score branches plus optional diversity.
+- Park unselected branches so they can be resumed later.
+- Let workers propose `proposed_branches`, but only the lead/controller updates `frontier.json`.
+
 ## Promotion
 
 Promote only when:

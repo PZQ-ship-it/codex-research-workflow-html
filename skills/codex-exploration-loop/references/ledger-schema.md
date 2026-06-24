@@ -19,7 +19,9 @@ explorations/<YYYY-MM-DD>-<slug>/
     b001-round-002.worker.json
     b001-round-002.events.jsonl
     b001-round-002.result.json
-  pending_round.json
+  pending_rounds/
+    b001-round-002.json
+  fanout.jsonl
   scratch-worktree.md
   final-digest.md
 ```
@@ -33,11 +35,16 @@ When the target repo is public-sensitive, prefer a public-safe lab repo or an ig
 ```json
 {
   "active": ["b001"],
+  "max_active": 3,
+  "fanout_width": 3,
+  "beam_width": 2,
   "branches": {
     "b001": {
       "status": "active",
       "hypothesis": "Initial broad exploration branch.",
       "last_score": 0,
+      "parent_branch_id": "",
+      "layer_id": "",
       "rounds": [],
       "recent_reflections": [],
       "next_probe": "Inspect the workspace and form first probes."
@@ -53,6 +60,8 @@ Statuses:
 - `pruned`: likely dead end.
 - `promoted`: yielded a lead for completion/review.
 - `merged`: folded into another branch.
+- `branched`: split into child branches.
+- `parked`: outside the current beam; can be resumed later.
 
 ## Round Record
 
@@ -67,8 +76,17 @@ Use `schemas/round-result.schema.json` as the authoritative schema. Required fie
 - `scores`
 - `reflection`
 - `decision`
+- `next_probe`
 
 All records are appended to `ledger.jsonl` as one compact JSON object per line.
+
+Optional fanout fields:
+
+- `parent_branch_id`
+- `layer_id`
+- `proposed_branches`: child branch candidates. When `decision = branch`, the controller may turn these into child branches in `frontier.json`.
+
+Fanout and selection coordination events are appended to `fanout.jsonl`; they do not replace round records.
 
 ## Scoring
 
@@ -95,7 +113,7 @@ Interpretation:
 
 ## Recovery
 
-Use `start-round` before a probe. It writes `pending_round.json`.
+Use `start-round` before a probe. It writes `pending_rounds/<branch>-round-<n>.json`. Older runs with `pending_round.json` remain readable.
 
 Use `finish-round` after a probe. It validates and appends the final record, updates frontier state, and removes the pending file.
 

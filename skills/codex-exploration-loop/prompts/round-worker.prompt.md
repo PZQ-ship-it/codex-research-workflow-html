@@ -35,3 +35,9 @@ Do:
 - score novelty, promise, evidence, risk, and cost from 0 to 5;
 - write a delta-oriented reflection;
 - choose one decision: continue, pivot, branch, prune, promote, or stop.
+- include proposed_branches only when decision is branch and the branch should split further.
+
+Do not:
+- edit frontier.json, ledger.jsonl, runner state, or beam-selection artifacts;
+- decide the overall beam;
+- continue into sibling branches outside this assignment.
