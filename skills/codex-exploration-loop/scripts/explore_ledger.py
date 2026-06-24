@@ -32,7 +32,7 @@ def slugify(value: str) -> str:
 def read_json(path: Path, default: Any) -> Any:
     if not path.exists():
         return default
-    with path.open("r", encoding="utf-8") as f:
+    with path.open("r", encoding="utf-8-sig") as f:
         return json.load(f)
 
 
@@ -69,7 +69,7 @@ def iter_ledger(run_dir: Path) -> Iterable[Dict[str, Any]]:
     if not ledger.exists():
         return []
     records: List[Dict[str, Any]] = []
-    with ledger.open("r", encoding="utf-8") as f:
+    with ledger.open("r", encoding="utf-8-sig") as f:
         for line in f:
             line = line.strip()
             if line:
@@ -323,6 +323,7 @@ def cmd_frontier(args: argparse.Namespace) -> int:
 
 
 def cmd_digest(args: argparse.Namespace) -> int:
+    run_dir_display = args.run_dir
     run_dir = Path(args.run_dir).resolve()
     ensure_run_dir(run_dir)
     records = list(iter_ledger(run_dir))
@@ -332,7 +333,7 @@ def cmd_digest(args: argparse.Namespace) -> int:
     lines = [
         "# Exploration Digest",
         "",
-        f"- Run dir: {run_dir}",
+        f"- Run dir: {run_dir_display}",
         f"- Records: {len(records)}",
         f"- Active branches: {', '.join(frontier.get('active', [])) or '(none)'}",
         "",
