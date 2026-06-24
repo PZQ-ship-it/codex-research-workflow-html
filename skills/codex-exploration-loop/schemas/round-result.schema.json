@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Codex Exploration Loop Round Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "round",
+    "branch_id",
+    "hypothesis",
+    "probe",
+    "actions",
+    "evidence",
+    "scores",
+    "reflection",
+    "decision",
+    "next_probe"
+  ],
+  "properties": {
+    "round": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "ended_at": {
+      "type": "string"
+    },
+    "timebox_minutes": {
+      "type": "number",
+      "minimum": 0
+    },
+    "branch_id": {
+      "type": "string",
+      "pattern": "^b[0-9]{3,}$"
+    },
+    "hypothesis": {
+      "type": "string",
+      "minLength": 1
+    },
+    "probe": {
+      "type": "string",
+      "minLength": 1
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "summary", "result"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["read", "search", "shell", "edit", "test", "web", "skill", "subagent", "other"]
+          },
+          "summary": {
+            "type": "string"
+          },
+          "result": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "network_used": {
+      "type": "boolean"
+    },
+    "skills_used": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "subagents_used": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "files_touched": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path_or_url", "supports", "confidence"],
+        "properties": {
+          "path_or_url": {
+            "type": "string"
+          },
+          "supports": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": ["low", "medium", "high"]
+          }
+        }
+      }
+    },
+    "scores": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["novelty", "promise", "evidence", "risk", "cost"],
+      "properties": {
+        "novelty": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "promise": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "evidence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "risk": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "cost": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "total": {
+          "type": "number"
+        }
+      }
+    },
+    "reflection": {
+      "type": "string",
+      "minLength": 1
+    },
+    "decision": {
+      "type": "string",
+      "enum": ["continue", "pivot", "branch", "prune", "promote", "stop"]
+    },
+    "next_probe": {
+      "type": "string"
+    }
+  }
+}

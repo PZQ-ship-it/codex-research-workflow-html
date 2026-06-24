@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Exploration Loop"
+  short_description: "Round-based fuzzy problem exploration"
+  default_prompt: "Use $codex-exploration-loop to explore this fuzzy problem for a few bounded rounds."
