@@ -13,11 +13,16 @@ import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, Iterable, List, Optional
 
 
 DECISIONS = {"continue", "pivot", "branch", "prune", "promote", "stop"}
 SCORE_KEYS = ("novelty", "promise", "evidence", "risk", "cost")
+SKILL_DIR = Path(__file__).resolve().parents[1]
+DEFAULT_ALLOWED_ACTIONS = (
+    "read/search, local shell probes, scratch edits, tests, local skills, "
+    "and public network when useful"
+)
 
 
 def now_iso() -> str:
@@ -56,12 +61,38 @@ def write_text(path: Path, text: str) -> None:
         f.write(text)
 
 
+def read_text(path: Path) -> str:
+    with path.open("r", encoding="utf-8-sig") as f:
+        return f.read()
+
+
+def parse_json_text(text: str) -> Dict[str, Any]:
+    value = text.strip()
+    if value.startswith("```"):
+        lines = value.splitlines()
+        if lines and lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        value = "\n".join(lines).strip()
+    try:
+        loaded = json.loads(value)
+    except json.JSONDecodeError:
+        start = value.find("{")
+        end = value.rfind("}")
+        if start == -1 or end == -1 or end <= start:
+            raise
+        loaded = json.loads(value[start : end + 1])
+    if not isinstance(loaded, dict):
+        raise ValueError("JSON value must be an object")
+    return loaded
+
+
 def load_json_arg(value: str) -> Dict[str, Any]:
     candidate = Path(value)
     if candidate.exists():
-        with candidate.open("r", encoding="utf-8-sig") as f:
-            return json.load(f)
-    return json.loads(value)
+        return parse_json_text(read_text(candidate))
+    return parse_json_text(value)
 
 
 def iter_ledger(run_dir: Path) -> Iterable[Dict[str, Any]]:
@@ -129,6 +160,18 @@ def ensure_run_dir(run_dir: Path) -> None:
         raise SystemExit(f"run dir is missing frontier.json: {run_dir}")
 
 
+def write_pending_round(run_dir: Path, round_number: int, branch_id: str, timebox_minutes: float) -> Dict[str, Any]:
+    pending = {
+        "round": round_number,
+        "branch_id": branch_id,
+        "timebox_minutes": timebox_minutes,
+        "started_at": now_iso(),
+        "status": "pending",
+    }
+    write_json(run_dir / "pending_round.json", pending)
+    return pending
+
+
 def initial_frontier(question: str) -> Dict[str, Any]:
     return {
         "active": ["b001"],
@@ -190,6 +233,7 @@ def update_frontier(run_dir: Path, record: Dict[str, Any]) -> Dict[str, Any]:
 
 def cmd_init(args: argparse.Namespace) -> int:
     root = Path(args.root).resolve()
+    root_display = args.root_label or str(root)
     slug = slugify(args.slug)
     date = datetime.now().strftime("%Y-%m-%d")
     base = Path(args.output_dir).resolve() if args.output_dir else root / "explorations"
@@ -203,7 +247,7 @@ def cmd_init(args: argparse.Namespace) -> int:
         "mode": args.mode,
         "max_rounds": args.max_rounds,
         "round_timebox_minutes": args.round_timebox_minutes,
-        "root": str(root),
+        "root": root_display,
         "created_at": now_iso(),
         "scratch_worktree": args.scratch_worktree or "",
     }
@@ -224,7 +268,7 @@ def cmd_init(args: argparse.Namespace) -> int:
                 f"- Mode: {args.mode}",
                 f"- Max rounds: {args.max_rounds}",
                 f"- Round timebox minutes: {args.round_timebox_minutes}",
-                f"- Root: {root}",
+                f"- Root: {root_display}",
                 f"- Scratch worktree: {args.scratch_worktree or '(not set)'}",
                 "",
                 "## Safety",
@@ -253,10 +297,8 @@ def cmd_start_round(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_finish_round(args: argparse.Namespace) -> int:
-    run_dir = Path(args.run_dir).resolve()
+def finish_record(run_dir: Path, record: Dict[str, Any]) -> Dict[str, Any]:
     ensure_run_dir(run_dir)
-    record = load_json_arg(args.record_json)
     pending_path = run_dir / "pending_round.json"
     if pending_path.exists():
         pending = read_json(pending_path, {})
@@ -273,7 +315,197 @@ def cmd_finish_round(args: argparse.Namespace) -> int:
     update_frontier(run_dir, record)
     if pending_path.exists():
         pending_path.unlink()
+    return record
+
+
+def cmd_finish_round(args: argparse.Namespace) -> int:
+    run_dir = Path(args.run_dir).resolve()
+    record = load_json_arg(args.record_json)
+    record = finish_record(run_dir, record)
     print(json.dumps({"appended": True, "total": record["scores"]["total"]}, ensure_ascii=False))
+    return 0
+
+
+def ps_quote(value: str) -> str:
+    return "'" + value.replace("'", "''") + "'"
+
+
+def choose_branch(frontier: Dict[str, Any], branch_id: Optional[str]) -> str:
+    if branch_id:
+        return branch_id
+    active = frontier.get("active", [])
+    if not active:
+        raise ValueError("frontier has no active branches")
+    return active[0]
+
+
+def render_worker_prompt(
+    template: str,
+    question: str,
+    round_number: int,
+    branch_id: str,
+    hypothesis: str,
+    probe: str,
+    workspace: str,
+    minutes: float,
+    allowed_actions: str,
+) -> str:
+    replacements = {
+        "<question>": question,
+        "<round>": str(round_number),
+        "<branch-id>": branch_id,
+        "<hypothesis>": hypothesis,
+        "<probe>": probe,
+        "<workspace>": workspace,
+        "<minutes>": str(minutes),
+        "<allowed-actions>": allowed_actions,
+    }
+    output = template
+    for needle, replacement in replacements.items():
+        output = output.replace(needle, replacement)
+    return output
+
+
+def write_codex_exec_script(
+    script_path: Path,
+    prompt_path: Path,
+    workspace: str,
+    sandbox: str,
+    profile: str,
+    schema_path: Path,
+    result_path: Path,
+    events_path: Path,
+    portable: bool,
+) -> None:
+    if portable:
+        prompt_ref = "$promptPath"
+        schema_ref = "$schemaPath"
+        result_ref = "$resultPath"
+        header = [
+            "$ErrorActionPreference = 'Stop'",
+            "$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path",
+            f"$promptPath = Join-Path $scriptDir {ps_quote(prompt_path.name)}",
+            f"$schemaPath = Join-Path $scriptDir {ps_quote(schema_path.name)}",
+            f"$resultPath = Join-Path $scriptDir {ps_quote(result_path.name)}",
+            f"$eventsPath = Join-Path $scriptDir {ps_quote(events_path.name)}",
+            "$prompt = Get-Content -Raw -Encoding UTF8 $promptPath",
+        ]
+        event_target = "$eventsPath"
+    else:
+        prompt_ref = str(prompt_path)
+        schema_ref = str(schema_path)
+        result_ref = str(result_path)
+        header = [
+            "$ErrorActionPreference = 'Stop'",
+            f"$prompt = Get-Content -Raw -Encoding UTF8 {ps_quote(str(prompt_path))}",
+        ]
+        event_target = ps_quote(str(events_path))
+    args = [
+        "exec",
+        "--cd",
+        workspace,
+        "--sandbox",
+        sandbox,
+        "--output-schema",
+        schema_ref,
+        "--output-last-message",
+        result_ref,
+        "--json",
+    ]
+    if profile:
+        args[5:5] = ["--profile", profile]
+    args.append("-")
+    arg_lines = []
+    for item in args:
+        if portable and item.startswith("$"):
+            arg_lines.append("  " + item)
+        else:
+            arg_lines.append("  " + ps_quote(item))
+    content = "\n".join(header + ["$codexArgs = @(", ",\n".join(arg_lines), ")", f"$prompt | & codex @codexArgs 2>&1 | Tee-Object -FilePath {event_target}", ""])
+    write_text(script_path, content)
+
+
+def cmd_prepare_worker(args: argparse.Namespace) -> int:
+    run_dir = Path(args.run_dir).resolve()
+    ensure_run_dir(run_dir)
+    run_meta = read_json(run_dir / "run.json", {})
+    frontier = read_json(run_dir / "frontier.json", {})
+    branch_id = choose_branch(frontier, args.branch_id)
+    branch = frontier.get("branches", {}).get(branch_id)
+    if not branch:
+        raise ValueError(f"unknown branch_id: {branch_id}")
+    round_number = args.round
+    timebox_minutes = args.timebox_minutes or float(run_meta.get("round_timebox_minutes", 10))
+    workspace = args.workspace or run_meta.get("scratch_worktree") or run_meta.get("root") or str(Path.cwd())
+    probe = args.probe or branch.get("next_probe") or "Run the next smallest useful probe."
+    hypothesis = args.hypothesis or branch.get("hypothesis") or run_meta.get("question", "")
+    skill_dir = Path(args.skill_dir).resolve() if args.skill_dir else SKILL_DIR
+    schema_path = Path(args.schema_path).resolve() if args.schema_path else skill_dir / "schemas" / "round-result.schema.json"
+    template_path = skill_dir / "prompts" / "round-worker.prompt.md"
+    template = read_text(template_path)
+    prefix = f"{branch_id}-round-{round_number:03d}"
+    artifacts_dir = run_dir / "artifacts"
+    prompt_path = artifacts_dir / f"{prefix}.prompt.md"
+    result_path = artifacts_dir / f"{prefix}.result.json"
+    events_path = artifacts_dir / f"{prefix}.events.jsonl"
+    script_path = artifacts_dir / f"{prefix}.codex-exec.ps1"
+    manifest_path = artifacts_dir / f"{prefix}.worker.json"
+    if args.portable:
+        bundled_schema_path = artifacts_dir / f"{prefix}.schema.json"
+        write_text(bundled_schema_path, read_text(schema_path))
+        worker_schema_path = bundled_schema_path
+    else:
+        worker_schema_path = schema_path
+    prompt = render_worker_prompt(
+        template,
+        run_meta.get("question", ""),
+        round_number,
+        branch_id,
+        hypothesis,
+        probe,
+        workspace,
+        timebox_minutes,
+        args.allowed_actions,
+    )
+    write_text(prompt_path, prompt)
+    write_codex_exec_script(
+        script_path,
+        prompt_path,
+        workspace,
+        args.sandbox,
+        args.profile,
+        worker_schema_path,
+        result_path,
+        events_path,
+        args.portable,
+    )
+    pending = None
+    if not args.no_start:
+        pending = write_pending_round(run_dir, round_number, branch_id, timebox_minutes)
+    manifest = {
+        "round": round_number,
+        "branch_id": branch_id,
+        "workspace": workspace,
+        "sandbox": args.sandbox,
+        "profile": args.profile,
+        "schema_path": worker_schema_path.name if args.portable else str(worker_schema_path),
+        "prompt_path": prompt_path.name if args.portable else str(prompt_path),
+        "result_path": result_path.name if args.portable else str(result_path),
+        "events_path": events_path.name if args.portable else str(events_path),
+        "script_path": script_path.name if args.portable else str(script_path),
+        "portable": bool(args.portable),
+        "pending_started": bool(pending),
+    }
+    write_json(manifest_path, manifest)
+    print(json.dumps(manifest, ensure_ascii=False, indent=2))
+    return 0
+
+
+def cmd_finish_worker(args: argparse.Namespace) -> int:
+    run_dir = Path(args.run_dir).resolve()
+    record = load_json_arg(args.worker_output)
+    record = finish_record(run_dir, record)
+    print(json.dumps({"imported": True, "total": record["scores"]["total"]}, ensure_ascii=False))
     return 0
 
 
@@ -375,6 +607,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("init")
     p.add_argument("--root", required=True)
+    p.add_argument("--root-label", default="")
     p.add_argument("--slug", required=True)
     p.add_argument("--question", required=True)
     p.add_argument("--max-rounds", type=int, default=6)
@@ -396,6 +629,33 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--run-dir", required=True)
     p.add_argument("--record-json", required=True)
     p.set_defaults(func=cmd_finish_round)
+
+    p = sub.add_parser("prepare-worker")
+    p.add_argument("--run-dir", required=True)
+    p.add_argument("--round", type=int, required=True)
+    p.add_argument("--branch-id")
+    p.add_argument("--timebox-minutes", type=float)
+    p.add_argument("--workspace", default="")
+    p.add_argument("--probe", default="")
+    p.add_argument("--hypothesis", default="")
+    p.add_argument("--allowed-actions", default=DEFAULT_ALLOWED_ACTIONS)
+    p.add_argument("--sandbox", choices=["read-only", "workspace-write", "danger-full-access"], default="workspace-write")
+    p.add_argument("--profile", default="")
+    p.add_argument("--skill-dir", default="")
+    p.add_argument("--schema-path", default="")
+    p.add_argument("--portable", action="store_true")
+    p.add_argument("--no-start", action="store_true")
+    p.set_defaults(func=cmd_prepare_worker)
+
+    p = sub.add_parser("finish-worker")
+    p.add_argument("--run-dir", required=True)
+    p.add_argument("--worker-output", required=True)
+    p.set_defaults(func=cmd_finish_worker)
+
+    p = sub.add_parser("import-worker")
+    p.add_argument("--run-dir", required=True)
+    p.add_argument("--worker-output", required=True)
+    p.set_defaults(func=cmd_finish_worker)
 
     p = sub.add_parser("abort-round")
     p.add_argument("--run-dir", required=True)

@@ -24,6 +24,7 @@ Run a bounded exploration loop for fuzzy work. The goal is leads, evidence, and 
    - write `start-round`;
    - run one concrete probe;
    - write `finish-round` with evidence, score, reflection, and decision.
+   - For scripted branch workers, use `prepare-worker`, run the generated `codex-exec.ps1`, then `finish-worker`.
 6. Stop when the round budget is used, a lead is promoted, all branches are blocked/pruned, or the user redirects.
 7. End with best leads, dead ends, artifacts, and the recommended next lane.
 
@@ -98,6 +99,7 @@ Initialize:
 ```powershell
 python <skill-dir>\scripts\explore_ledger.py init `
   --root <workspace> `
+  --root-label <public-or-short-label> `
   --slug <slug> `
   --question "<question>" `
   --max-rounds 6 `
@@ -118,6 +120,26 @@ Summarize:
 python <skill-dir>\scripts\explore_ledger.py frontier --run-dir <run-dir>
 python <skill-dir>\scripts\explore_ledger.py digest --run-dir <run-dir>
 ```
+
+Prepare a v1.5 schema-backed `codex exec` worker:
+
+```powershell
+python <skill-dir>\scripts\explore_ledger.py prepare-worker `
+  --run-dir <run-dir> `
+  --round 2 `
+  --branch-id b001 `
+  --workspace <scratch-worktree-or-repo> `
+  --probe "Run the smallest useful probe for this branch." `
+  --portable
+
+& <run-dir>\artifacts\b001-round-002.codex-exec.ps1
+
+python <skill-dir>\scripts\explore_ledger.py finish-worker `
+  --run-dir <run-dir> `
+  --worker-output <run-dir>\artifacts\b001-round-002.result.json
+```
+
+Use `--portable` for public or shared experiment artifacts; it copies the schema beside the worker files and avoids local absolute paths in the worker manifest.
 
 ## Output
 

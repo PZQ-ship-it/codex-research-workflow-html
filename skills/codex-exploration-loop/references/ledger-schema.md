@@ -14,6 +14,11 @@ explorations/<YYYY-MM-DD>-<slug>/
   branches/
     b001.md
   artifacts/
+    b001-round-002.prompt.md
+    b001-round-002.codex-exec.ps1
+    b001-round-002.worker.json
+    b001-round-002.events.jsonl
+    b001-round-002.result.json
   pending_round.json
   scratch-worktree.md
   final-digest.md
