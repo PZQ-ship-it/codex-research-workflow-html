@@ -31,6 +31,16 @@ Use this checklist before trusting a new or modified Codex skill.
 - Failures preserve useful intermediate artifacts.
 - The final answer cites evidence paths, commands, or screenshots as appropriate.
 
+## Goal-Mode Coverage
+
+- The skill states when native goal mode is appropriate and when it is not.
+- Goal objectives are narrow enough to complete with evidence.
+- A state artifact such as `evals/skill-eval/<skill-name>/goal-status.md` is created or updated during multi-step eval work.
+- Completion criteria name required commands, traces, reports, files, screenshots, or other artifacts.
+- Blocked criteria distinguish external blockers from ordinary failed tests that should be fixed or reported.
+- Human gates are explicit and cannot be crossed automatically by goal mode.
+- Goal-mode evals include at least one positive case and one blocked or negative-boundary case when practical.
+
 ## Optimization Signals
 
 - False negative trigger: improve the `description` with clearer trigger words.
@@ -45,5 +55,6 @@ Use this checklist before trusting a new or modified Codex skill.
 - `quick_validate.py` passes.
 - `skill_eval_harness.py static-check` passes.
 - At least one positive and one negative eval case were run or explicitly deferred.
+- For goal-mode changes, `goal-status.md` or an equivalent state artifact was inspected, and completion/blocked criteria were tested or explicitly deferred.
 - Any external API/MCP dependency has a private storage path, setup route, and smoke-test status.
 - The final report names residual risk instead of implying total certainty.

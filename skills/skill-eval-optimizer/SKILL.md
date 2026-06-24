@@ -1,6 +1,6 @@
 ---
 name: skill-eval-optimizer
-description: Test, evaluate, harden, and optimize Codex skills from SKILL.md folders, run traces, eval prompts, failure reports, and user feedback. Use when Codex needs to validate skill structure, check trigger behavior, build codex exec JSONL evals, compare before/after skill behavior, diagnose skill failures, improve skill descriptions or bundled resources, or close optional API/MCP setup loops through external-api-onboarding.
+description: Test, evaluate, harden, and optimize Codex skills from SKILL.md folders, run traces, eval prompts, failure reports, and user feedback. Use when Codex needs to validate skill structure, check trigger behavior, build codex exec JSONL evals, compare before/after skill behavior, diagnose skill failures, improve skill descriptions or bundled resources, test or add native goal-mode contracts, or close optional API/MCP setup loops through external-api-onboarding.
 ---
 
 # Skill Eval Optimizer
@@ -11,11 +11,32 @@ Use this skill to turn skill maintenance from "it seems better" into an evidence
 
 The base workflow requires no external API key. If the eval depends on live web search, provider docs, GitHub/Hugging Face/Kaggle evidence, browser automation, or remote MCP access, invoke `$external-api-onboarding` and follow `references/external-api-closure.md` before making live calls.
 
+## Goal Mode
+
+Use native goal mode when the user asks Codex to carry a skill improvement through repeated validation, resume a multi-case eval, or add and test goal-mode support for another skill. Goal mode is useful only when the work has a durable target, evidence artifacts, and a clear completion or blocked condition.
+
+Good goal objectives are narrow and evidence-based:
+
+- "Harden `<skill-name>` until static validation and the agreed eval pack pass."
+- "Add goal-mode guidance to `<skill-name>` and prove it with one positive and one negative eval."
+- "Diagnose this skill failure from traces, patch the smallest contract issue, and rerun the failing case."
+
+When goal tools are active:
+
+1. Create or update `evals/skill-eval/<skill-name>/goal-status.md` unless the repo already has a stronger status convention.
+2. Record the objective, target skill path, eval cases, current phase, last validation command, artifacts, residual risks, and next action.
+3. Work in bounded loops: validate, run or inspect the smallest relevant eval, patch only evidence-backed issues, rerun, and update the status file.
+4. Mark complete only after the requested validation evidence exists and the final report names the exact commands, traces, artifacts, and remaining risks.
+5. Mark blocked only after the same external blocker repeats across bounded attempts, such as missing credentials, unavailable provider access, unavailable subagent/runtime support, or a user confirmation gate.
+
+Do not use goal mode to skip human gates, hide failed eval cases, or declare a skill stable from prose review alone.
+
 ## Workflow
 
 1. Define the target.
    - Identify the skill directory, expected users, trigger examples, negative examples, bundled scripts, references, and output contract.
    - Separate structure problems, trigger problems, execution problems, output-quality problems, and external-provider problems.
+   - If the task is goal-mode work, define the objective shape, state artifact, completion criteria, blocked criteria, and human gates before editing.
    - Preserve user changes. Do not rewrite unrelated skills or docs while improving one skill.
 
 2. Run static validation.
@@ -82,6 +103,7 @@ python skills\skill-eval-optimizer\scripts\skill_eval_harness.py summarize-trace
 
 8. Close with an evidence report.
    - Report the skill inspected, files changed, validation commands, eval prompts, trace/artifact paths, before/after findings, remaining risks, and whether a restart is needed for discovery.
+   - If goal mode was active, include the final `goal-status.md` path and state whether the goal is complete, blocked, or intentionally left open for human review.
 
 ## External API Closure
 
@@ -92,7 +114,7 @@ Default rule: no secret in chat, no committed `.env`, no copied cookie or token 
 ## References
 
 - `references/checklist.md`: compact static, trigger, execution, output, and closure checklist.
-- `references/eval-loop.md`: eval pack structure, `codex exec --json` trace pattern, deterministic checks, and rubric grading.
+- `references/eval-loop.md`: eval pack structure, goal-mode status layout, `codex exec --json` trace pattern, deterministic checks, and rubric grading.
 - `references/external-api-closure.md`: how to invoke `$external-api-onboarding` for optional providers and smoke tests.
 
 ## Output Shape
@@ -117,6 +139,12 @@ Optimizations
 2. Workflow/body
 3. Scripts/resources
 4. External API/MCP closure
+
+Goal Mode
+- Goal status:
+- Completion criteria:
+- Blocked criteria:
+- Human gates:
 
 Residual Risk
 - ...

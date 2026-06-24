@@ -26,6 +26,38 @@ implicit-01,true,"Please ...",,
 negative-01,false,"Adjacent task that should not use the skill",,
 ```
 
+## Goal Mode Layout
+
+When an eval or optimization run uses native goal mode, add a status file beside the eval pack:
+
+```text
+evals/
+  skill-eval/
+    <skill-name>/
+      goal-status.md
+      prompts.csv
+      style-rubric.schema.json
+      artifacts/
+```
+
+`goal-status.md` should stay short and current:
+
+```markdown
+# Goal Status: <skill-name>
+
+- Objective:
+- Target skill path:
+- Current phase: static | eval-pack | before-run | diagnosis | patch | after-run | report | blocked | complete
+- Eval cases:
+- Last validation command:
+- Evidence artifacts:
+- Remaining risks:
+- Next action:
+- Blockers:
+```
+
+Use this file as coordination evidence, not as proof of success. The goal is complete only when the requested commands, traces, artifacts, and final report exist.
+
 ## Run Pattern
 
 Use isolated workspaces. If the target skill writes files, run in a scratch directory or disposable branch.
@@ -85,6 +117,7 @@ Compare:
 
 - trigger correctness
 - required step completion
+- goal-mode state updates, completion criteria, blocked criteria, and human gates when relevant
 - output contract stability
 - command count
 - token use
@@ -92,3 +125,12 @@ Compare:
 - cleanup status
 
 Only call a change an improvement when the target failure improves without introducing a worse regression.
+
+## Goal-Mode Regression Cases
+
+For a skill that claims goal-mode support, include at least two cases when practical:
+
+- positive goal case: a bounded objective with a status artifact and verifiable completion criteria;
+- blocked goal case: missing credentials, unavailable runtime, or an explicit human gate that must stop instead of being bypassed.
+
+The trace should show that Codex updates status, keeps the goal honest, and does not mark complete from intention alone.
