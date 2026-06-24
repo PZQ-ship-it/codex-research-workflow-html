@@ -25,6 +25,7 @@ Do not equate `max_rounds` with fanout layers. `max_rounds = 8` means eight tota
 2. Dispatch sibling branches.
    - Use native subagents for independent read/search/design lanes when authorized.
    - Use `prepare-worker` / `finish-worker` for schema-backed `codex exec` branch workers.
+   - Use `prepare-worktree` first for any sibling branch that may edit files; omit `--workspace` in `prepare-worker` so the worker inherits that branch worktree.
    - Give every worker one branch, one probe, one budget, and the same safety gates.
 3. Collect all sibling results before selection.
    - Do not beam-select early just because one branch finished first.

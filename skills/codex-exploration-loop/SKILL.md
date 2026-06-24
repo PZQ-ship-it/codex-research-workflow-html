@@ -32,6 +32,7 @@ Run a bounded exploration loop for fuzzy work. The goal is leads, evidence, and 
    - For scripted branch workers, use `prepare-worker`, run the generated `codex-exec.ps1`, then `finish-worker`.
 7. For a Tree-of-Thoughts fanout layer:
    - create 3-5 candidate branches with `fanout`;
+   - create per-branch Git worktrees with `prepare-worktree` before edit-heavy sibling probes;
    - explore them in parallel with native subagents or `codex exec` workers when authorized;
    - count each sibling probe as one round record;
    - import each branch result;
@@ -188,11 +189,15 @@ python <skill-dir>\scripts\explore_ledger.py digest --run-dir <run-dir>
 Prepare a v1.5 schema-backed `codex exec` worker:
 
 ```powershell
+python <skill-dir>\scripts\explore_ledger.py prepare-worktree `
+  --run-dir <run-dir> `
+  --branch-id b001 `
+  --repo-root <git-repo>
+
 python <skill-dir>\scripts\explore_ledger.py prepare-worker `
   --run-dir <run-dir> `
   --round 2 `
   --branch-id b001 `
-  --workspace <scratch-worktree-or-repo> `
   --probe "Run the smallest useful probe for this branch." `
   --portable
 
@@ -203,7 +208,16 @@ python <skill-dir>\scripts\explore_ledger.py finish-worker `
   --worker-output <run-dir>\artifacts\b001-round-002.result.json
 ```
 
+When `--workspace` is omitted, `prepare-worker` uses the active worktree recorded for that branch, then falls back to `scratch_worktree`, then the run root.
+
 Use `--portable` for public or shared experiment artifacts; it copies the schema beside the worker files and avoids local absolute paths in the worker manifest.
+
+Retire an isolated branch worktree after the lead has been promoted or abandoned:
+
+```powershell
+python <skill-dir>\scripts\explore_ledger.py promote-worktree --run-dir <run-dir> --branch-id b001
+python <skill-dir>\scripts\explore_ledger.py retire-worktree --run-dir <run-dir> --branch-id b001
+```
 
 Run a v2.0 plan:
 

@@ -25,6 +25,7 @@ DEFAULT_ALLOWED_ACTIONS = (
     "and public network when useful"
 )
 RUNNER_STOP_DECISIONS = {"promote", "stop"}
+WORKTREE_USABLE_STATES = {"active", "promoted"}
 
 
 def now_iso() -> str:
@@ -66,6 +67,55 @@ def write_text(path: Path, text: str) -> None:
 def read_text(path: Path) -> str:
     with path.open("r", encoding="utf-8-sig") as f:
         return f.read()
+
+
+def is_relative_to_path(path: Path, parent: Path) -> bool:
+    try:
+        path.resolve().relative_to(parent.resolve())
+        return True
+    except ValueError:
+        return False
+
+
+def run_command(command: List[str], cwd: Path) -> str:
+    completed = subprocess.run(
+        command,
+        cwd=str(cwd),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    if completed.returncode != 0:
+        output = completed.stdout.strip()
+        raise RuntimeError(f"{' '.join(command)} failed with exit code {completed.returncode}: {output}")
+    return completed.stdout.strip()
+
+
+def git_toplevel(path: Path) -> Path:
+    output = run_command(["git", "rev-parse", "--show-toplevel"], path)
+    if not output:
+        raise ValueError(f"not a git repository: {path}")
+    return Path(output.splitlines()[-1]).resolve()
+
+
+def git_status_lines(repo_root: Path) -> List[str]:
+    output = run_command(["git", "status", "--short", "--branch"], repo_root)
+    return [line for line in output.splitlines() if line.strip()]
+
+
+def git_branch_exists(repo_root: Path, branch_name: str) -> bool:
+    completed = subprocess.run(
+        ["git", "show-ref", "--verify", "--quiet", f"refs/heads/{branch_name}"],
+        cwd=str(repo_root),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    return completed.returncode == 0
 
 
 def parse_json_text(text: str) -> Dict[str, Any]:
@@ -593,6 +643,7 @@ def cmd_init(args: argparse.Namespace) -> int:
         "max_rounds": args.max_rounds,
         "round_timebox_minutes": args.round_timebox_minutes,
         "root": root_display,
+        "root_path": str(root),
         "created_at": now_iso(),
         "scratch_worktree": args.scratch_worktree or "",
     }
@@ -680,6 +731,198 @@ def choose_branch(frontier: Dict[str, Any], branch_id: Optional[str]) -> str:
     if not active:
         raise ValueError("frontier has no active branches")
     return active[0]
+
+
+def load_worktree_state(run_dir: Path) -> Dict[str, Any]:
+    return read_json(
+        run_dir / "worktrees.json",
+        {
+            "version": "1.0",
+            "repo_root": "",
+            "default_root": str(run_dir / "worktrees"),
+            "items": {},
+        },
+    )
+
+
+def write_worktree_state(run_dir: Path, state: Dict[str, Any]) -> None:
+    state["updated_at"] = now_iso()
+    write_json(run_dir / "worktrees.json", state)
+
+
+def repo_root_from_args(run_dir: Path, value: str) -> Path:
+    run_meta = read_json(run_dir / "run.json", {})
+    raw = value or run_meta.get("root_path") or run_meta.get("root") or ""
+    if not raw:
+        raise ValueError("repo root is not known; pass --repo-root")
+    candidate = Path(str(raw)).resolve()
+    return git_toplevel(candidate)
+
+
+def default_worktree_root(run_dir: Path, repo_root: Path) -> Path:
+    if is_relative_to_path(run_dir, repo_root):
+        return repo_root.parent / f"{repo_root.name}-codex-worktrees" / run_dir.name
+    return run_dir / "worktrees"
+
+
+def branch_worktree(run_dir: Path, branch_id: str) -> Optional[Dict[str, Any]]:
+    state = load_worktree_state(run_dir)
+    item = state.get("items", {}).get(branch_id)
+    if not isinstance(item, dict):
+        return None
+    if item.get("status") not in WORKTREE_USABLE_STATES:
+        return None
+    path = str(item.get("path") or "")
+    if not path:
+        return None
+    return item
+
+
+def resolve_worker_workspace(run_dir: Path, branch_id: str, workspace_arg: str, run_meta: Dict[str, Any]) -> str:
+    if workspace_arg:
+        return workspace_arg
+    worktree = branch_worktree(run_dir, branch_id)
+    if worktree:
+        path = Path(str(worktree["path"])).resolve()
+        if not path.exists():
+            raise ValueError(f"recorded worktree for {branch_id} does not exist; recreate or retire it first: {path}")
+        return str(path)
+    return run_meta.get("scratch_worktree") or run_meta.get("root_path") or run_meta.get("root") or str(Path.cwd())
+
+
+def cmd_prepare_worktree(args: argparse.Namespace) -> int:
+    run_dir = Path(args.run_dir).resolve()
+    ensure_run_dir(run_dir)
+    frontier_path = run_dir / "frontier.json"
+    frontier = read_json(frontier_path, {})
+    branch_id = choose_branch(frontier, args.branch_id)
+    branch = frontier.get("branches", {}).get(branch_id)
+    if not branch:
+        raise ValueError(f"unknown branch_id: {branch_id}")
+
+    repo_root = repo_root_from_args(run_dir, args.repo_root)
+    state = load_worktree_state(run_dir)
+    items = state.setdefault("items", {})
+    existing = items.get(branch_id)
+    if existing and existing.get("status") in WORKTREE_USABLE_STATES and not args.reuse_existing:
+        raise ValueError(f"branch already has an active worktree: {branch_id}")
+
+    if args.path:
+        target_path = Path(args.path).resolve()
+    else:
+        worktree_root = Path(args.worktree_root).resolve() if args.worktree_root else default_worktree_root(run_dir, repo_root)
+        target_path = worktree_root / branch_id
+    if target_path.exists() and not args.reuse_existing:
+        raise FileExistsError(f"worktree path already exists: {target_path}")
+
+    git_branch = args.git_branch or f"explore/{slugify(run_dir.name)}-{branch_id}"
+    base_ref = args.base_ref or "HEAD"
+    pre_status = git_status_lines(repo_root)
+    if not (target_path.exists() and args.reuse_existing):
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        if git_branch_exists(repo_root, git_branch):
+            run_command(["git", "worktree", "add", str(target_path), git_branch], repo_root)
+        else:
+            run_command(["git", "worktree", "add", "-b", git_branch, str(target_path), base_ref], repo_root)
+
+    item = {
+        "branch_id": branch_id,
+        "path": str(target_path),
+        "git_branch": git_branch,
+        "base_ref": base_ref,
+        "repo_root": str(repo_root),
+        "status": "active",
+        "created_at": existing.get("created_at") if isinstance(existing, dict) else now_iso(),
+        "last_pre_status": pre_status,
+    }
+    items[branch_id] = item
+    state["repo_root"] = str(repo_root)
+    state["default_root"] = str(default_worktree_root(run_dir, repo_root))
+    write_worktree_state(run_dir, state)
+
+    branch["worktree_path"] = str(target_path)
+    branch["git_branch"] = git_branch
+    branch["worktree_status"] = "active"
+    write_json(frontier_path, frontier)
+    print(json.dumps(item, ensure_ascii=False, indent=2))
+    return 0
+
+
+def cmd_list_worktrees(args: argparse.Namespace) -> int:
+    run_dir = Path(args.run_dir).resolve()
+    ensure_run_dir(run_dir)
+    print(json.dumps(load_worktree_state(run_dir), ensure_ascii=False, indent=2))
+    return 0
+
+
+def cmd_promote_worktree(args: argparse.Namespace) -> int:
+    run_dir = Path(args.run_dir).resolve()
+    ensure_run_dir(run_dir)
+    state = load_worktree_state(run_dir)
+    item = state.get("items", {}).get(args.branch_id)
+    if not isinstance(item, dict):
+        raise ValueError(f"unknown worktree branch_id: {args.branch_id}")
+    raw_path = str(item.get("path") or "")
+    if not raw_path:
+        raise ValueError(f"worktree path missing for branch_id: {args.branch_id}")
+    path = Path(raw_path).resolve()
+    status = git_status_lines(path)
+    diff_stat = run_command(["git", "diff", "--stat"], path)
+    item["status"] = "promoted"
+    item["promoted_at"] = now_iso()
+    item["last_status"] = status
+    item["last_diff_stat"] = diff_stat
+    write_worktree_state(run_dir, state)
+    frontier_path = run_dir / "frontier.json"
+    frontier = read_json(frontier_path, {})
+    branch = frontier.get("branches", {}).get(args.branch_id, {})
+    if branch:
+        branch["worktree_status"] = "promoted"
+        write_json(frontier_path, frontier)
+    print(json.dumps(item, ensure_ascii=False, indent=2))
+    return 0
+
+
+def cmd_retire_worktree(args: argparse.Namespace) -> int:
+    run_dir = Path(args.run_dir).resolve()
+    ensure_run_dir(run_dir)
+    state = load_worktree_state(run_dir)
+    item = state.get("items", {}).get(args.branch_id)
+    if not isinstance(item, dict):
+        raise ValueError(f"unknown worktree branch_id: {args.branch_id}")
+    raw_path = str(item.get("path") or "")
+    if not raw_path:
+        raise ValueError(f"worktree path missing for branch_id: {args.branch_id}")
+    path = Path(raw_path).resolve()
+    allowed_roots = [run_dir / "worktrees"]
+    if state.get("default_root"):
+        allowed_roots.append(Path(str(state["default_root"])))
+    if not args.allow_outside_run_dir and not any(is_relative_to_path(path, root) for root in allowed_roots):
+        raise ValueError("refusing to remove a worktree outside the recorded default root without --allow-outside-run-dir")
+    raw_repo_root = str(item.get("repo_root") or state.get("repo_root") or "")
+    if raw_repo_root:
+        repo_root = Path(raw_repo_root).resolve()
+    else:
+        repo_root = repo_root_from_args(run_dir, args.repo_root)
+    if not repo_root.exists():
+        repo_root = repo_root_from_args(run_dir, args.repo_root)
+    command = ["git", "worktree", "remove"]
+    if args.force:
+        command.append("--force")
+    command.append(str(path))
+    run_command(command, repo_root)
+    run_command(["git", "worktree", "prune"], repo_root)
+    item["status"] = "retired"
+    item["retired_at"] = now_iso()
+    write_worktree_state(run_dir, state)
+    frontier_path = run_dir / "frontier.json"
+    frontier = read_json(frontier_path, {})
+    branch = frontier.get("branches", {}).get(args.branch_id, {})
+    if branch:
+        branch["worktree_status"] = "retired"
+        write_json(frontier_path, frontier)
+    print(json.dumps({"retired": args.branch_id, "path": str(path)}, ensure_ascii=False, indent=2))
+    return 0
 
 
 def render_worker_prompt(
@@ -792,7 +1035,7 @@ def prepare_worker(
     if not branch:
         raise ValueError(f"unknown branch_id: {branch_id}")
     timebox_minutes = timebox_minutes_arg or float(run_meta.get("round_timebox_minutes", 10))
-    workspace = workspace_arg or run_meta.get("scratch_worktree") or run_meta.get("root") or str(Path.cwd())
+    workspace = resolve_worker_workspace(run_dir, branch_id, workspace_arg, run_meta)
     probe = probe_arg or branch.get("next_probe") or "Run the next smallest useful probe."
     hypothesis = hypothesis_arg or branch.get("hypothesis") or run_meta.get("question", "")
     skill_dir = Path(skill_dir_arg).resolve() if skill_dir_arg else SKILL_DIR
@@ -1313,6 +1556,34 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--diversity-count", type=int, default=1)
     p.add_argument("--keep-unselected-active", action="store_true")
     p.set_defaults(func=cmd_beam_select)
+
+    p = sub.add_parser("prepare-worktree")
+    p.add_argument("--run-dir", required=True)
+    p.add_argument("--branch-id", default="")
+    p.add_argument("--repo-root", default="")
+    p.add_argument("--base-ref", default="HEAD")
+    p.add_argument("--worktree-root", default="")
+    p.add_argument("--path", default="")
+    p.add_argument("--git-branch", default="")
+    p.add_argument("--reuse-existing", action="store_true")
+    p.set_defaults(func=cmd_prepare_worktree)
+
+    p = sub.add_parser("list-worktrees")
+    p.add_argument("--run-dir", required=True)
+    p.set_defaults(func=cmd_list_worktrees)
+
+    p = sub.add_parser("promote-worktree")
+    p.add_argument("--run-dir", required=True)
+    p.add_argument("--branch-id", required=True)
+    p.set_defaults(func=cmd_promote_worktree)
+
+    p = sub.add_parser("retire-worktree")
+    p.add_argument("--run-dir", required=True)
+    p.add_argument("--branch-id", required=True)
+    p.add_argument("--repo-root", default="")
+    p.add_argument("--force", action="store_true")
+    p.add_argument("--allow-outside-run-dir", action="store_true")
+    p.set_defaults(func=cmd_retire_worktree)
 
     p = sub.add_parser("prepare-worker")
     p.add_argument("--run-dir", required=True)

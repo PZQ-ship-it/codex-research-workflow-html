@@ -13,7 +13,6 @@ python <skill-dir>\scripts\explore_ledger.py prepare-worker `
   --run-dir <run-dir> `
   --round 2 `
   --branch-id b001 `
-  --workspace <scratch-worktree-or-repo> `
   --probe "Run the next smallest useful probe." `
   --portable
 
@@ -33,6 +32,8 @@ python <skill-dir>\scripts\explore_ledger.py finish-worker `
 - `<branch>-round-<n>.result.json` path for the schema result
 
 It also starts `pending_rounds/<branch>-round-<n>.json` unless `--no-start` is passed.
+
+If `--workspace` is omitted, `prepare-worker` first uses the active worktree recorded for that branch by `prepare-worktree`, then falls back to the run's scratch worktree, then the run root.
 
 Use `--portable` when the artifact directory may be committed, shared, or moved. It writes relative manifest fields and copies the schema beside the generated worker script.
 

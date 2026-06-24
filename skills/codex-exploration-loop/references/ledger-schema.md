@@ -11,6 +11,7 @@ explorations/<YYYY-MM-DD>-<slug>/
   brief.md
   ledger.jsonl
   frontier.json
+  worktrees.json
   branches/
     b001.md
   artifacts/
@@ -87,6 +88,36 @@ Optional fanout fields:
 - `proposed_branches`: child branch candidates. When `decision = branch`, the controller may turn these into child branches in `frontier.json`.
 
 Fanout and selection coordination events are appended to `fanout.jsonl`; they do not replace round records.
+
+## Worktree State
+
+`worktrees.json` records branch-level Git worktree isolation:
+
+```json
+{
+  "version": "1.0",
+  "repo_root": "D:/repo",
+  "default_root": "D:/repo/explorations/2026-06-25-demo/worktrees",
+  "items": {
+    "b002": {
+      "branch_id": "b002",
+      "path": "D:/repo/explorations/2026-06-25-demo/worktrees/b002",
+      "git_branch": "explore/2026-06-25-demo-b002",
+      "base_ref": "HEAD",
+      "repo_root": "D:/repo",
+      "status": "active",
+      "created_at": "2026-06-25T10:00:00+08:00",
+      "last_pre_status": ["## master...origin/master"]
+    }
+  }
+}
+```
+
+Statuses:
+
+- `active`: eligible as the default workspace for that branch.
+- `promoted`: kept for follow-up completion or review; still usable by `prepare-worker`.
+- `retired`: removed from disk through `git worktree remove`.
 
 ## Scoring
 
