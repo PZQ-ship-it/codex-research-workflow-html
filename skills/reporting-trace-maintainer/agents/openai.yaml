@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reporting Trace Maintainer"
+  short_description: "Maintain report-ready work traces"
+  default_prompt: "Use $reporting-trace-maintainer to maintain report-ready work traces while executing this task."
