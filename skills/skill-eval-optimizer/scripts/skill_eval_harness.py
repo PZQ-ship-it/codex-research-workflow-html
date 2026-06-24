@@ -117,6 +117,103 @@ def static_check(args: argparse.Namespace) -> int:
     return print_result(result)
 
 
+def has_any(text: str, patterns: Iterable[str]) -> bool:
+    return any(re.search(pattern, text, flags=re.IGNORECASE | re.MULTILINE) for pattern in patterns)
+
+
+def goal_check(args: argparse.Namespace) -> int:
+    skill_dir = Path(args.skill_dir).resolve()
+    skill_md = skill_dir / "SKILL.md"
+    errors: List[str] = []
+    warnings: List[str] = []
+
+    if not skill_md.exists():
+        errors.append("SKILL.md missing")
+        return print_result({"ok": False, "errors": errors, "warnings": warnings})
+
+    skill_text = read_text(skill_md)
+    frontmatter, fm_issues = parse_frontmatter(skill_text)
+    errors.extend(fm_issues)
+    description = frontmatter.get("description", "")
+
+    markdown_files = [skill_md]
+    references_dir = skill_dir / "references"
+    if references_dir.exists():
+        markdown_files.extend(sorted(references_dir.glob("*.md")))
+
+    combined_parts: List[str] = []
+    scanned_files: List[str] = []
+    for path in markdown_files:
+        try:
+            combined_parts.append(read_text(path))
+            scanned_files.append(str(path.relative_to(skill_dir)))
+        except UnicodeDecodeError:
+            warnings.append(f"could not read {path.relative_to(skill_dir)} as UTF-8")
+
+    combined = "\n\n".join(combined_parts)
+
+    checks = {
+        "description_mentions_goal": has_any(description, [r"\bgoal\b", r"goal-mode", r"native goal"]),
+        "section_found": has_any(skill_text, [r"^#{1,3}\s+.*\bGoal\b", r"^#{1,3}\s+.*goal-mode", r"^#{1,3}\s+.*Native Goal"]),
+        "objective_found": has_any(combined, [r"\bobjective\b", r"goal objective", r"objective shape"]),
+        "state_artifact_found": has_any(
+            combined,
+            [
+                r"goal-status\.md",
+                r"state artifact",
+                r"status artifact",
+                r"status file",
+                r"\bmanifest\b",
+                r"\bcheckpoint\b",
+            ],
+        ),
+        "completion_criteria_found": has_any(
+            combined,
+            [r"completion criteria", r"mark complete", r"complete only after", r"\bcomplete\b.*\bevidence\b"],
+        ),
+        "blocked_criteria_found": has_any(
+            combined,
+            [r"blocked criteria", r"mark blocked", r"\bblockers?\b", r"\bblocked\b.*\battempt"],
+        ),
+        "human_gate_found": has_any(
+            combined,
+            [r"human gate", r"human confirmation", r"user confirmation", r"must stop", r"cannot be crossed"],
+        ),
+        "regression_cases_found": has_any(
+            combined,
+            [r"Goal-Mode Regression Cases", r"positive goal case", r"blocked goal case", r"negative-boundary case"],
+        ),
+    }
+
+    required = [
+        "section_found",
+        "objective_found",
+        "state_artifact_found",
+        "completion_criteria_found",
+        "blocked_criteria_found",
+        "human_gate_found",
+    ]
+    for key in required:
+        if not checks[key]:
+            errors.append(f"goal-mode {key} missing")
+
+    if not checks["description_mentions_goal"]:
+        warnings.append("frontmatter.description does not mention goal-mode support")
+    if not checks["regression_cases_found"]:
+        warnings.append("goal-mode regression cases are not documented")
+
+    result = {
+        "ok": not errors,
+        "skill_dir": str(skill_dir),
+        "name": frontmatter.get("name", skill_dir.name),
+        "goal_mode": checks,
+        "scanned_files": scanned_files,
+        "errors": errors,
+        "warnings": warnings,
+    }
+    return print_result(result)
+
+
 def init_eval(args: argparse.Namespace) -> int:
     skill_dir = Path(args.skill_dir).resolve()
     out_dir = Path(args.out_dir).resolve()
@@ -272,6 +369,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_static = sub.add_parser("static-check", help="Check a skill folder for common structural issues.")
     p_static.add_argument("skill_dir")
     p_static.set_defaults(func=static_check)
+
+    p_goal = sub.add_parser("goal-check", help="Check whether a skill declares a usable native goal-mode contract.")
+    p_goal.add_argument("skill_dir")
+    p_goal.set_defaults(func=goal_check)
 
     p_init = sub.add_parser("init-eval", help="Create a starter eval pack for a skill.")
     p_init.add_argument("--skill-dir", required=True)

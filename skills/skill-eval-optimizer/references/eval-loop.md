@@ -58,6 +58,12 @@ evals/
 
 Use this file as coordination evidence, not as proof of success. The goal is complete only when the requested commands, traces, artifacts, and final report exist.
 
+Run the lightweight goal contract check before behavior evals:
+
+```powershell
+python skills\skill-eval-optimizer\scripts\skill_eval_harness.py goal-check <skill-dir>
+```
+
 ## Run Pattern
 
 Use isolated workspaces. If the target skill writes files, run in a scratch directory or disposable branch.

@@ -54,6 +54,7 @@ Use this checklist before trusting a new or modified Codex skill.
 
 - `quick_validate.py` passes.
 - `skill_eval_harness.py static-check` passes.
+- If the skill claims goal-mode support, `skill_eval_harness.py goal-check` passes or its warnings are documented.
 - At least one positive and one negative eval case were run or explicitly deferred.
 - For goal-mode changes, `goal-status.md` or an equivalent state artifact was inspected, and completion/blocked criteria were tested or explicitly deferred.
 - Any external API/MCP dependency has a private storage path, setup route, and smoke-test status.

@@ -53,6 +53,11 @@ python skills\skill-eval-optimizer\scripts\skill_eval_harness.py static-check <s
 ```
 
    - Fix frontmatter, stale scaffold markers, `agents/openai.yaml`, broken references, placeholder examples, unsafe secret patterns, and missing smoke-test guidance before deeper evals.
+   - If the skill claims native goal-mode support, run:
+
+```powershell
+python skills\skill-eval-optimizer\scripts\skill_eval_harness.py goal-check <skill-dir>
+```
 
 3. Build an eval pack.
    - Use realistic user prompts, not only direct `$skill-name` invocations.
