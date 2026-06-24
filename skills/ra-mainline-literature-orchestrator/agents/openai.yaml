@@ -1,0 +1,4 @@
+interface:
+  display_name: "RA Mainline Literature Orchestrator"
+  short_description: "Batch RA direction surveys and papers"
+  default_prompt: "Use $ra-mainline-literature-orchestrator to turn my RA mainline ranking into batched literature collection work orders."
