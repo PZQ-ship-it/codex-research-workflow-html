@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Codex Exploration Loop Runner Plan",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["mock", "replay", "external"]
+    },
+    "max_rounds": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "round_timebox_minutes": {
+      "type": "number",
+      "minimum": 0
+    },
+    "workspace": {
+      "type": "string"
+    },
+    "sandbox": {
+      "type": "string",
+      "enum": ["read-only", "workspace-write", "danger-full-access"]
+    },
+    "profile": {
+      "type": "string"
+    },
+    "portable": {
+      "type": "boolean"
+    },
+    "max_failures": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "timeout_seconds": {
+      "type": "number",
+      "minimum": 0
+    },
+    "stop_on_decisions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["continue", "pivot", "branch", "prune", "promote", "stop"]
+      }
+    },
+    "rounds": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "round": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "branch_id": {
+            "type": "string",
+            "pattern": "^b[0-9]{3,}$"
+          },
+          "probe": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["mock", "replay", "external"]
+          },
+          "mock_decision": {
+            "type": "string",
+            "enum": ["continue", "pivot", "branch", "prune", "promote", "stop"]
+          },
+          "worker_output": {
+            "type": "string"
+          },
+          "timeout_seconds": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      }
+    }
+  }
+}

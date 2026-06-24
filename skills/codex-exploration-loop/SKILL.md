@@ -73,7 +73,8 @@ Use Codex mechanisms before custom harness code:
 - Native subagents for bounded independent branch scouts.
 - MCP/connectors/web search for external tools.
 - `codex exec` plus `schemas/round-result.schema.json` for scripted round workers.
-- Codex automations or SDK/app-server only for long-running unattended v2 workflows.
+- `run-plan` for v2.0 local runner orchestration over multiple bounded rounds.
+- Codex automations or SDK/app-server only when the runner must be scheduled, resumed, or embedded outside the current Codex turn.
 
 Do not rebuild Codex's model/tool loop, subagent pool, approval system, sandbox, or scheduler inside this skill.
 
@@ -87,9 +88,11 @@ Read only what is needed:
 - `references/official-codex-mechanisms.md`: when to use Codex skills, subagents, `codex exec`, automations, SDK, and MCP.
 - `references/codex-exec-round-workers.md`: how to run schema-backed non-interactive branch workers.
 - `references/automation-and-sdk-runner.md`: v2 guidance for recurring or programmatic runs.
+- `references/runner-layer.md`: v2.0 runner plan, retry, and handoff contract.
 - `prompts/lead-controller.prompt.md`: reusable lead-agent prompt skeleton.
 - `prompts/round-worker.prompt.md`: reusable branch-worker prompt skeleton.
 - `schemas/round-result.schema.json`: output schema for round records.
+- `schemas/runner-plan.schema.json`: optional schema for runner plans.
 - `scripts/explore_ledger.py`: deterministic run-dir, ledger, frontier, and digest helper.
 
 ## Minimal Commands
@@ -140,6 +143,26 @@ python <skill-dir>\scripts\explore_ledger.py finish-worker `
 ```
 
 Use `--portable` for public or shared experiment artifacts; it copies the schema beside the worker files and avoids local absolute paths in the worker manifest.
+
+Run a v2.0 plan:
+
+```powershell
+python <skill-dir>\scripts\explore_ledger.py write-plan --run-dir <run-dir>
+
+python <skill-dir>\scripts\explore_ledger.py run-plan `
+  --run-dir <run-dir> `
+  --plan <run-dir>\runner-plan.json `
+  --max-rounds 3 `
+  --digest
+```
+
+Runner modes:
+
+- `mock`: deterministic schema-valid smoke, no model call.
+- `replay`: import a pre-existing worker output.
+- `external`: execute the generated `codex-exec.ps1` worker and import its result.
+
+Use `mock` or `replay` for CI-like verification. Use `external` only when live Codex execution is acceptable and the workspace is isolated.
 
 ## Output
 

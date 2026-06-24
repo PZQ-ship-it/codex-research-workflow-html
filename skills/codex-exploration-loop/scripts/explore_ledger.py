@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""State helper for codex-exploration-loop.
+"""State and runner helper for codex-exploration-loop.
 
-This script does not call Codex or any LLM. It creates run directories, validates
-basic round records, appends JSONL, updates frontier state, and writes digests.
+This script keeps deterministic state. It can also orchestrate external worker
+commands such as codex exec, but it does not implement its own model/tool loop.
 """
 
 from __future__ import annotations
@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -23,6 +24,7 @@ DEFAULT_ALLOWED_ACTIONS = (
     "read/search, local shell probes, scratch edits, tests, local skills, "
     "and public network when useful"
 )
+RUNNER_STOP_DECISIONS = {"promote", "stop"}
 
 
 def now_iso() -> str:
@@ -95,6 +97,13 @@ def load_json_arg(value: str) -> Dict[str, Any]:
     return parse_json_text(value)
 
 
+def load_json_file(path: Path, default: Any = None) -> Any:
+    if not path.exists():
+        return default
+    with path.open("r", encoding="utf-8-sig") as f:
+        return json.load(f)
+
+
 def iter_ledger(run_dir: Path) -> Iterable[Dict[str, Any]]:
     ledger = run_dir / "ledger.jsonl"
     if not ledger.exists():
@@ -160,6 +169,10 @@ def ensure_run_dir(run_dir: Path) -> None:
         raise SystemExit(f"run dir is missing frontier.json: {run_dir}")
 
 
+def active_pending_round(run_dir: Path) -> Dict[str, Any]:
+    return read_json(run_dir / "pending_round.json", {})
+
+
 def write_pending_round(run_dir: Path, round_number: int, branch_id: str, timebox_minutes: float) -> Dict[str, Any]:
     pending = {
         "round": round_number,
@@ -170,6 +183,43 @@ def write_pending_round(run_dir: Path, round_number: int, branch_id: str, timebo
     }
     write_json(run_dir / "pending_round.json", pending)
     return pending
+
+
+def append_attempt(run_dir: Path, attempt: Dict[str, Any]) -> None:
+    attempt.setdefault("timestamp", now_iso())
+    append_jsonl(run_dir / "runner-attempts.jsonl", attempt)
+
+
+def read_runner_state(run_dir: Path) -> Dict[str, Any]:
+    return read_json(run_dir / "runner-state.json", {"status": "new", "rounds_attempted": 0, "rounds_completed": 0})
+
+
+def write_runner_state(run_dir: Path, state: Dict[str, Any]) -> None:
+    state["updated_at"] = now_iso()
+    write_json(run_dir / "runner-state.json", state)
+
+
+def next_round_number(run_dir: Path) -> int:
+    records = list(iter_ledger(run_dir))
+    if not records:
+        pending = active_pending_round(run_dir)
+        if pending.get("round"):
+            return int(pending["round"])
+        return 1
+    return max(int(record.get("round", 0)) for record in records) + 1
+
+
+def has_stop_decision(run_dir: Path) -> bool:
+    records = list(iter_ledger(run_dir))
+    return any(record.get("decision") in RUNNER_STOP_DECISIONS for record in records)
+
+
+def choose_runner_branch(frontier: Dict[str, Any], branch_id: str) -> str:
+    return choose_branch(frontier, branch_id or None)
+
+
+def normalize_public_path(value: str) -> str:
+    return value.replace("\\", "/")
 
 
 def initial_frontier(question: str) -> Dict[str, Any]:
@@ -425,22 +475,35 @@ def write_codex_exec_script(
     write_text(script_path, content)
 
 
-def cmd_prepare_worker(args: argparse.Namespace) -> int:
-    run_dir = Path(args.run_dir).resolve()
+def prepare_worker(
+    run_dir: Path,
+    round_number: int,
+    branch_id_arg: Optional[str],
+    timebox_minutes_arg: Optional[float],
+    workspace_arg: str,
+    probe_arg: str,
+    hypothesis_arg: str,
+    allowed_actions: str,
+    sandbox: str,
+    profile: str,
+    skill_dir_arg: str,
+    schema_path_arg: str,
+    portable: bool,
+    no_start: bool,
+) -> Dict[str, Any]:
     ensure_run_dir(run_dir)
     run_meta = read_json(run_dir / "run.json", {})
     frontier = read_json(run_dir / "frontier.json", {})
-    branch_id = choose_branch(frontier, args.branch_id)
+    branch_id = choose_branch(frontier, branch_id_arg)
     branch = frontier.get("branches", {}).get(branch_id)
     if not branch:
         raise ValueError(f"unknown branch_id: {branch_id}")
-    round_number = args.round
-    timebox_minutes = args.timebox_minutes or float(run_meta.get("round_timebox_minutes", 10))
-    workspace = args.workspace or run_meta.get("scratch_worktree") or run_meta.get("root") or str(Path.cwd())
-    probe = args.probe or branch.get("next_probe") or "Run the next smallest useful probe."
-    hypothesis = args.hypothesis or branch.get("hypothesis") or run_meta.get("question", "")
-    skill_dir = Path(args.skill_dir).resolve() if args.skill_dir else SKILL_DIR
-    schema_path = Path(args.schema_path).resolve() if args.schema_path else skill_dir / "schemas" / "round-result.schema.json"
+    timebox_minutes = timebox_minutes_arg or float(run_meta.get("round_timebox_minutes", 10))
+    workspace = workspace_arg or run_meta.get("scratch_worktree") or run_meta.get("root") or str(Path.cwd())
+    probe = probe_arg or branch.get("next_probe") or "Run the next smallest useful probe."
+    hypothesis = hypothesis_arg or branch.get("hypothesis") or run_meta.get("question", "")
+    skill_dir = Path(skill_dir_arg).resolve() if skill_dir_arg else SKILL_DIR
+    schema_path = Path(schema_path_arg).resolve() if schema_path_arg else skill_dir / "schemas" / "round-result.schema.json"
     template_path = skill_dir / "prompts" / "round-worker.prompt.md"
     template = read_text(template_path)
     prefix = f"{branch_id}-round-{round_number:03d}"
@@ -450,7 +513,7 @@ def cmd_prepare_worker(args: argparse.Namespace) -> int:
     events_path = artifacts_dir / f"{prefix}.events.jsonl"
     script_path = artifacts_dir / f"{prefix}.codex-exec.ps1"
     manifest_path = artifacts_dir / f"{prefix}.worker.json"
-    if args.portable:
+    if portable:
         bundled_schema_path = artifacts_dir / f"{prefix}.schema.json"
         write_text(bundled_schema_path, read_text(schema_path))
         worker_schema_path = bundled_schema_path
@@ -465,39 +528,66 @@ def cmd_prepare_worker(args: argparse.Namespace) -> int:
         probe,
         workspace,
         timebox_minutes,
-        args.allowed_actions,
+        allowed_actions,
     )
     write_text(prompt_path, prompt)
     write_codex_exec_script(
         script_path,
         prompt_path,
         workspace,
-        args.sandbox,
-        args.profile,
+        sandbox,
+        profile,
         worker_schema_path,
         result_path,
         events_path,
-        args.portable,
+        portable,
     )
     pending = None
-    if not args.no_start:
+    if not no_start:
         pending = write_pending_round(run_dir, round_number, branch_id, timebox_minutes)
     manifest = {
         "round": round_number,
         "branch_id": branch_id,
         "workspace": workspace,
-        "sandbox": args.sandbox,
-        "profile": args.profile,
-        "schema_path": worker_schema_path.name if args.portable else str(worker_schema_path),
-        "prompt_path": prompt_path.name if args.portable else str(prompt_path),
-        "result_path": result_path.name if args.portable else str(result_path),
-        "events_path": events_path.name if args.portable else str(events_path),
-        "script_path": script_path.name if args.portable else str(script_path),
-        "portable": bool(args.portable),
+        "sandbox": sandbox,
+        "profile": profile,
+        "schema_path": worker_schema_path.name if portable else str(worker_schema_path),
+        "prompt_path": prompt_path.name if portable else str(prompt_path),
+        "result_path": result_path.name if portable else str(result_path),
+        "events_path": events_path.name if portable else str(events_path),
+        "script_path": script_path.name if portable else str(script_path),
+        "portable": bool(portable),
         "pending_started": bool(pending),
     }
     write_json(manifest_path, manifest)
-    print(json.dumps(manifest, ensure_ascii=False, indent=2))
+    manifest["_absolute_prompt_path"] = str(prompt_path)
+    manifest["_absolute_result_path"] = str(result_path)
+    manifest["_absolute_events_path"] = str(events_path)
+    manifest["_absolute_script_path"] = str(script_path)
+    manifest["_absolute_manifest_path"] = str(manifest_path)
+    return manifest
+
+
+def cmd_prepare_worker(args: argparse.Namespace) -> int:
+    run_dir = Path(args.run_dir).resolve()
+    manifest = prepare_worker(
+        run_dir,
+        args.round,
+        args.branch_id,
+        args.timebox_minutes,
+        args.workspace,
+        args.probe,
+        args.hypothesis,
+        args.allowed_actions,
+        args.sandbox,
+        args.profile,
+        args.skill_dir,
+        args.schema_path,
+        args.portable,
+        args.no_start,
+    )
+    printable = {key: value for key, value in manifest.items() if not key.startswith("_absolute_")}
+    print(json.dumps(printable, ensure_ascii=False, indent=2))
     return 0
 
 
@@ -506,6 +596,270 @@ def cmd_finish_worker(args: argparse.Namespace) -> int:
     record = load_json_arg(args.worker_output)
     record = finish_record(run_dir, record)
     print(json.dumps({"imported": True, "total": record["scores"]["total"]}, ensure_ascii=False))
+    return 0
+
+
+def default_runner_plan(run_dir: Path) -> Dict[str, Any]:
+    run_meta = read_json(run_dir / "run.json", {})
+    return {
+        "version": "2.0",
+        "mode": "mock",
+        "max_rounds": int(run_meta.get("max_rounds", 1)),
+        "round_timebox_minutes": float(run_meta.get("round_timebox_minutes", 5)),
+        "workspace": run_meta.get("root", ""),
+        "sandbox": "workspace-write",
+        "profile": "",
+        "portable": True,
+        "stop_on_decisions": sorted(RUNNER_STOP_DECISIONS),
+        "max_failures": 2,
+        "rounds": [],
+    }
+
+
+def load_runner_plan(run_dir: Path, plan_path: str) -> Dict[str, Any]:
+    if plan_path:
+        plan = load_json_file(Path(plan_path), {})
+    else:
+        plan = load_json_file(run_dir / "runner-plan.json", None)
+    if not plan:
+        plan = default_runner_plan(run_dir)
+    if not isinstance(plan, dict):
+        raise ValueError("runner plan must be a JSON object")
+    merged = default_runner_plan(run_dir)
+    merged.update(plan)
+    return merged
+
+
+def write_plan_template(run_dir: Path, output_path: Path) -> Dict[str, Any]:
+    ensure_run_dir(run_dir)
+    frontier = read_json(run_dir / "frontier.json", {})
+    active = frontier.get("active", ["b001"])
+    branch_id = active[0] if active else "b001"
+    branch = frontier.get("branches", {}).get(branch_id, {})
+    plan = default_runner_plan(run_dir)
+    plan["rounds"] = [
+        {
+            "round": next_round_number(run_dir),
+            "branch_id": branch_id,
+            "probe": branch.get("next_probe", "Run the next smallest useful probe."),
+            "mode": "mock",
+            "mock_decision": "continue",
+        }
+    ]
+    write_json(output_path, plan)
+    return plan
+
+
+def round_spec_for(plan: Dict[str, Any], index: int) -> Dict[str, Any]:
+    rounds = plan.get("rounds") or []
+    if index < len(rounds):
+        spec = dict(rounds[index])
+    else:
+        spec = {}
+    return spec
+
+
+def mock_record(run_dir: Path, round_number: int, branch_id: str, probe: str, decision: str, manifest: Dict[str, Any]) -> Dict[str, Any]:
+    run_meta = read_json(run_dir / "run.json", {})
+    frontier = read_json(run_dir / "frontier.json", {})
+    branch = frontier.get("branches", {}).get(branch_id, {})
+    return {
+        "round": round_number,
+        "branch_id": branch_id,
+        "hypothesis": branch.get("hypothesis") or run_meta.get("question", "Mock runner branch."),
+        "probe": probe or branch.get("next_probe") or "Mock runner probe.",
+        "actions": [
+            {
+                "kind": "other",
+                "summary": "v2.0 runner mock",
+                "result": "Prepared a worker artifact and imported a deterministic schema-valid result.",
+            }
+        ],
+        "network_used": False,
+        "skills_used": ["codex-exploration-loop"],
+        "subagents_used": [],
+        "files_touched": [
+            normalize_public_path(manifest.get("prompt_path", "")),
+            normalize_public_path(manifest.get("script_path", "")),
+            normalize_public_path(manifest.get("result_path", "")),
+        ],
+        "evidence": [
+            {
+                "path_or_url": normalize_public_path(manifest.get("script_path", "")),
+                "supports": "The runner prepared a codex exec worker artifact for this round.",
+                "confidence": "high",
+            }
+        ],
+        "scores": {"novelty": 3, "promise": 4, "evidence": 4, "risk": 1, "cost": 1},
+        "reflection": "The v2.0 runner can orchestrate a bounded round without replacing Codex worker execution.",
+        "decision": decision,
+        "next_probe": "Run the next planned branch or switch to external mode for a live codex exec worker.",
+    }
+
+
+def execute_external_script(script_path: Path, timeout_seconds: Optional[float]) -> int:
+    command = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script_path)]
+    completed = subprocess.run(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=timeout_seconds,
+    )
+    return completed.returncode
+
+
+def run_one_planned_round(run_dir: Path, plan: Dict[str, Any], spec: Dict[str, Any], default_round: int, dry_run: bool) -> Dict[str, Any]:
+    frontier = read_json(run_dir / "frontier.json", {})
+    branch_id = choose_runner_branch(frontier, str(spec.get("branch_id") or plan.get("branch_id") or ""))
+    round_number = int(spec.get("round") or default_round)
+    timebox_minutes = float(spec.get("timebox_minutes") or plan.get("round_timebox_minutes") or 5)
+    mode = str(spec.get("mode") or plan.get("mode") or "mock")
+    probe = str(spec.get("probe") or "")
+    portable = bool(spec.get("portable", plan.get("portable", True)))
+    sandbox = str(spec.get("sandbox") or plan.get("sandbox") or "workspace-write")
+    profile = str(spec.get("profile") or plan.get("profile") or "")
+    workspace = str(spec.get("workspace") or plan.get("workspace") or "")
+    manifest = prepare_worker(
+        run_dir,
+        round_number,
+        branch_id,
+        timebox_minutes,
+        workspace,
+        probe,
+        str(spec.get("hypothesis") or ""),
+        str(spec.get("allowed_actions") or plan.get("allowed_actions") or DEFAULT_ALLOWED_ACTIONS),
+        sandbox,
+        profile,
+        str(plan.get("skill_dir") or ""),
+        str(plan.get("schema_path") or ""),
+        portable,
+        False,
+    )
+    printable_manifest = {key: value for key, value in manifest.items() if not key.startswith("_absolute_")}
+    attempt = {
+        "round": round_number,
+        "branch_id": branch_id,
+        "mode": mode,
+        "status": "prepared" if dry_run else "running",
+        "manifest": printable_manifest,
+    }
+    append_attempt(run_dir, attempt)
+    if dry_run:
+        return {"status": "prepared", "round": round_number, "branch_id": branch_id}
+
+    if mode == "mock":
+        decision = str(spec.get("mock_decision") or "continue")
+        record = mock_record(run_dir, round_number, branch_id, probe, decision, printable_manifest)
+        result_path = Path(manifest["_absolute_result_path"])
+        write_json(result_path, record)
+        record = finish_record(run_dir, record)
+        append_attempt(run_dir, {"round": round_number, "branch_id": branch_id, "mode": mode, "status": "completed", "total": record["scores"]["total"], "decision": record["decision"]})
+        return {"status": "completed", "round": round_number, "branch_id": branch_id, "decision": record["decision"]}
+
+    if mode == "replay":
+        replay_output = spec.get("worker_output")
+        if not replay_output:
+            raise ValueError("replay mode requires worker_output")
+        record = load_json_arg(str(replay_output))
+        record = finish_record(run_dir, record)
+        append_attempt(run_dir, {"round": round_number, "branch_id": branch_id, "mode": mode, "status": "completed", "total": record["scores"]["total"], "decision": record["decision"]})
+        return {"status": "completed", "round": round_number, "branch_id": branch_id, "decision": record["decision"]}
+
+    if mode == "external":
+        timeout_seconds = spec.get("timeout_seconds", plan.get("timeout_seconds"))
+        timeout = float(timeout_seconds) if timeout_seconds else None
+        try:
+            code = execute_external_script(Path(manifest["_absolute_script_path"]), timeout)
+        except subprocess.TimeoutExpired:
+            append_attempt(run_dir, {"round": round_number, "branch_id": branch_id, "mode": mode, "status": "timeout"})
+            raise TimeoutError(f"external worker timed out after {timeout} seconds")
+        if code != 0:
+            append_attempt(run_dir, {"round": round_number, "branch_id": branch_id, "mode": mode, "status": "failed", "exit_code": code})
+            raise RuntimeError(f"external worker failed with exit code {code}")
+        record = load_json_arg(manifest["_absolute_result_path"])
+        record = finish_record(run_dir, record)
+        append_attempt(run_dir, {"round": round_number, "branch_id": branch_id, "mode": mode, "status": "completed", "total": record["scores"]["total"], "decision": record["decision"]})
+        return {"status": "completed", "round": round_number, "branch_id": branch_id, "decision": record["decision"]}
+
+    raise ValueError(f"unknown runner round mode: {mode}")
+
+
+def cmd_write_plan(args: argparse.Namespace) -> int:
+    run_dir = Path(args.run_dir).resolve()
+    output_path = Path(args.output).resolve() if args.output else run_dir / "runner-plan.json"
+    plan = write_plan_template(run_dir, output_path)
+    print(json.dumps({"written": str(output_path), "rounds": len(plan.get("rounds", []))}, ensure_ascii=False))
+    return 0
+
+
+def cmd_run_plan(args: argparse.Namespace) -> int:
+    run_dir_display = args.run_dir
+    run_dir = Path(args.run_dir).resolve()
+    ensure_run_dir(run_dir)
+    plan = load_runner_plan(run_dir, args.plan)
+    max_rounds = int(args.max_rounds or plan.get("max_rounds") or 1)
+    max_failures = int(args.max_failures if args.max_failures is not None else plan.get("max_failures", 2))
+    stop_decisions = set(plan.get("stop_on_decisions") or sorted(RUNNER_STOP_DECISIONS))
+    state = read_runner_state(run_dir)
+    state.update({"status": "running", "started_at": state.get("started_at") or now_iso(), "plan_version": plan.get("version", "2.0")})
+    write_runner_state(run_dir, state)
+    failures = int(state.get("failures", 0))
+    completed = 0
+    results: List[Dict[str, Any]] = []
+    for index in range(max_rounds):
+        if has_stop_decision(run_dir):
+            state["status"] = "stopped"
+            state["reason"] = "stop decision already present"
+            break
+        frontier = read_json(run_dir / "frontier.json", {})
+        if not frontier.get("active"):
+            state["status"] = "stopped"
+            state["reason"] = "no active branch"
+            break
+        spec = round_spec_for(plan, index)
+        round_number = int(spec.get("round") or next_round_number(run_dir))
+        try:
+            result = run_one_planned_round(run_dir, plan, spec, round_number, args.dry_run)
+            results.append(result)
+            if result.get("status") == "completed":
+                completed += 1
+                state["rounds_completed"] = int(state.get("rounds_completed", 0)) + 1
+            state["rounds_attempted"] = int(state.get("rounds_attempted", 0)) + 1
+            if result.get("decision") in stop_decisions:
+                state["status"] = "stopped"
+                state["reason"] = f"decision={result.get('decision')}"
+                break
+        except Exception as exc:
+            failures += 1
+            state["rounds_attempted"] = int(state.get("rounds_attempted", 0)) + 1
+            append_attempt(run_dir, {"round": round_number, "mode": spec.get("mode") or plan.get("mode"), "status": "error", "error": str(exc)})
+            if active_pending_round(run_dir):
+                abort_reason = f"runner error: {exc}"
+                class AbortArgs:
+                    pass
+                abort_args = AbortArgs()
+                abort_args.run_dir = str(run_dir)
+                abort_args.reason = abort_reason
+                abort_args.round = round_number
+                abort_args.branch_id = spec.get("branch_id") or None
+                cmd_abort_round(abort_args)
+            if failures >= max_failures:
+                state["status"] = "failed"
+                state["reason"] = f"max failures reached: {failures}"
+                break
+    if args.dry_run:
+        state["status"] = "prepared"
+    elif state.get("status") == "running":
+        state["status"] = "completed" if completed else "stopped"
+    state["failures"] = failures
+    state["finished_at"] = now_iso()
+    write_runner_state(run_dir, state)
+    if args.digest:
+        cmd_digest(argparse.Namespace(run_dir=run_dir_display))
+    print(json.dumps({"state": state, "results": results}, ensure_ascii=False, indent=2))
     return 0
 
 
@@ -656,6 +1010,20 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--run-dir", required=True)
     p.add_argument("--worker-output", required=True)
     p.set_defaults(func=cmd_finish_worker)
+
+    p = sub.add_parser("write-plan")
+    p.add_argument("--run-dir", required=True)
+    p.add_argument("--output", default="")
+    p.set_defaults(func=cmd_write_plan)
+
+    p = sub.add_parser("run-plan")
+    p.add_argument("--run-dir", required=True)
+    p.add_argument("--plan", default="")
+    p.add_argument("--max-rounds", type=int)
+    p.add_argument("--max-failures", type=int)
+    p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--digest", action="store_true")
+    p.set_defaults(func=cmd_run_plan)
 
     p = sub.add_parser("abort-round")
     p.add_argument("--run-dir", required=True)
