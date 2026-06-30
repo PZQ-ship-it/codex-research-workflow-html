@@ -1,0 +1,4 @@
+interface:
+  display_name: "Official Career Page Watcher"
+  short_description: "Monitor official recruiting page signals"
+  default_prompt: "Use $official-career-page-watcher to monitor official recruiting pages for AI, PhD, postdoc, and research-role signals."
