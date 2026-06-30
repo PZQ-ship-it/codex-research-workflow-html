@@ -1,0 +1,4 @@
+interface:
+  display_name: "Nowcoder Public Intel"
+  short_description: "Collect public Nowcoder job and offer signals"
+  default_prompt: "Use $nowcoder-public-intel to collect public Nowcoder posts for AI PhD job and offer-signal research."
