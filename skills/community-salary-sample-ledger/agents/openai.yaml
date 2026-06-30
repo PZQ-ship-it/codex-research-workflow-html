@@ -1,0 +1,4 @@
+interface:
+  display_name: "Community Salary Sample Ledger"
+  short_description: "Normalize salary and offer evidence"
+  default_prompt: "Use $community-salary-sample-ledger to create or update an anonymized salary evidence ledger."
