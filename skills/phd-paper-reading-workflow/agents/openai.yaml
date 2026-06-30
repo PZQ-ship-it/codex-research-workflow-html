@@ -1,0 +1,6 @@
+interface:
+  display_name: "PhD Paper Reading Workflow"
+  short_description: "Deep paper reading into one HTML guide"
+  default_prompt: "Use $phd-paper-reading-workflow to read this paper with a confirmed reading mode and generate a single deep HTML study guide."
+policy:
+  allow_implicit_invocation: true

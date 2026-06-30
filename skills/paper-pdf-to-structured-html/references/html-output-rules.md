@@ -56,6 +56,18 @@ Use relationship labels such as `foundation`, `capability`, `task`, `evaluation`
 
 Anti-pattern: a `Taxonomy GPS` section that contains only an overview image plus a caption. That does not satisfy the standalone reading contract.
 
+
+## Figure/Table Coverage Ledger
+
+Before writing the final HTML, check `manifest.json.figure_coverage`:
+
+- Every important `Figure`, `Fig.`, or `Table` caption should have a status and action.
+- `embedded_image_or_mixed`: inspect extracted images and choose the matching one, or crop if extraction produced fragments/logos.
+- `vector_crop_needed`: render the page and crop the figure/table; this usually means the visual is PDF vector drawing/text rather than a JPEG/PNG object.
+- `page_crop_needed`: render and crop because the visual appears as a page/image block without an extractable xref.
+- `manual_check`: inspect whether the item is a text table, algorithm block, equation, or low-priority visual.
+- Do not increase token use by describing every crop. Include and explain only figures/tables that materially support the paper reading.
+
 ## Visual Asset Handling
 
 For each included figure or table image:
@@ -68,7 +80,7 @@ For each included figure or table image:
 - include why the visual is important.
 - explain the main takeaway in prose near the figure. For tables, summarize the key comparison dimensions and any non-obvious pattern the table supports.
 
-Do not include decorative images. Do not crop so tightly that labels become unreadable.
+Do not include decorative images. Do not crop so tightly that labels become unreadable. Do not treat missing embedded images as evidence that no figure exists when captions or drawing objects are present.
 
 Prefer precise crops for important single-page figures and compact tables when dependencies, bounding boxes, or visually checked coordinates are available. If PDF libraries are missing, first recover the environment as described in `SKILL.md` instead of immediately switching to full-page renders. Use full-page renders only when crops are unsafe or incomplete, such as multi-page tables, tightly attached captions/context, or uncertain coordinates after visual inspection. Record the reason in the manifest.
 
@@ -109,3 +121,5 @@ Before final delivery:
 - spot-check content coverage against the paper outline or coverage ledger;
 - ensure no navigation section is only a pointer to the PDF.
 - ensure any taxonomy/overview figure is accompanied by a detailed logic interpretation, not only a caption.
+
+

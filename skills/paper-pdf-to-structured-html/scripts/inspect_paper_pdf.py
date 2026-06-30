@@ -2,7 +2,7 @@
 """Inspect a research PDF and write extraction artifacts for an HTML digest.
 
 Optional dependencies:
-  - pymupdf (`fitz`) for metadata, outlines, text, and image extraction
+  - pymupdf (`fitz`) for metadata, outlines, text, image extraction, and figure coverage audit
   - pdfplumber for alternate text extraction
 
 The script is intentionally conservative. It gathers evidence for Codex to use;
@@ -16,6 +16,7 @@ import hashlib
 import json
 import re
 import sys
+from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -37,10 +38,35 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
+def normalize_label(label: str) -> str:
+    label = re.sub(r"\s+", " ", label.strip().lower())
+    label = label.replace("figure", "fig")
+    label = re.sub(r"\s*\.\s*", " ", label)
+    return label
+
+
+
+def is_likely_caption_text(text: str) -> bool:
+    lowered = text.strip().lower()
+    body_reference_starts = (
+        "illustrates",
+        "shows",
+        "reveals",
+        "explains",
+        "compares",
+        "presents",
+        "reports",
+        "summarizes",
+        "lists",
+        "describes",
+        "gives",
+        "contains",
+    )
+    return not any(lowered == word or lowered.startswith(word + " ") or lowered.startswith(word + ",") for word in body_reference_starts)
+
 def import_fitz():
     try:
         import fitz  # type: ignore
-
         return fitz
     except Exception:
         return None
@@ -49,10 +75,46 @@ def import_fitz():
 def import_pdfplumber():
     try:
         import pdfplumber  # type: ignore
-
         return pdfplumber
     except Exception:
         return None
+
+
+def collect_page_visual_audit(page: Any, page_number: int) -> dict[str, Any]:
+    text = page.get_text("text") or ""
+    text_dict = page.get_text("dict") or {"blocks": []}
+    embedded_images = page.get_images(full=True)
+    drawings = page.get_drawings()
+    image_blocks = [block for block in text_dict.get("blocks", []) if block.get("type") == 1]
+    caption_blocks = []
+    for block in text_dict.get("blocks", []):
+        if block.get("type") != 0:
+            continue
+        lines = []
+        for line in block.get("lines", []):
+            line_text = "".join(span.get("text", "") for span in line.get("spans", [])).strip()
+            if line_text:
+                lines.append(line_text)
+        block_text = " ".join(lines).strip()
+        match = CAPTION_RE.match(block_text)
+        if match and is_likely_caption_text(match.group(3)):
+            caption_blocks.append(
+                {
+                    "label": match.group(1),
+                    "label_key": normalize_label(match.group(1)),
+                    "kind": match.group(2).lower(),
+                    "text": match.group(3).strip(),
+                    "bbox": [round(float(x), 2) for x in block.get("bbox", [])],
+                }
+            )
+    return {
+        "page": page_number,
+        "embedded_image_count": len(embedded_images),
+        "drawing_count": len(drawings),
+        "image_block_count": len(image_blocks),
+        "caption_blocks": caption_blocks,
+        "text_caption_count": sum(1 for m in CAPTION_RE.finditer(text) if is_likely_caption_text(m.group(3))),
+    }
 
 
 def extract_with_fitz(pdf_path: Path, out_dir: Path, max_images: int) -> dict[str, Any]:
@@ -65,10 +127,12 @@ def extract_with_fitz(pdf_path: Path, out_dir: Path, max_images: int) -> dict[st
     doc = fitz.open(pdf_path)
     pages: list[dict[str, Any]] = []
     images: list[dict[str, Any]] = []
+    page_visual_audit: list[dict[str, Any]] = []
 
     for page_index in range(len(doc)):
         page = doc[page_index]
         text = page.get_text("text") or ""
+        page_visual_audit.append(collect_page_visual_audit(page, page_index + 1))
         page_record: dict[str, Any] = {
             "page": page_index + 1,
             "text_path": f"pages/page-{page_index + 1:03d}.txt",
@@ -76,6 +140,7 @@ def extract_with_fitz(pdf_path: Path, out_dir: Path, max_images: int) -> dict[st
             "candidate_captions": [
                 {"label": m.group(1), "kind": m.group(2).lower(), "text": m.group(3).strip()}
                 for m in CAPTION_RE.finditer(text)
+                if is_likely_caption_text(m.group(3))
             ],
         }
         pages.append(page_record)
@@ -88,13 +153,7 @@ def extract_with_fitz(pdf_path: Path, out_dir: Path, max_images: int) -> dict[st
                 try:
                     extracted = doc.extract_image(xref)
                 except Exception as exc:
-                    images.append(
-                        {
-                            "page": page_index + 1,
-                            "xref": xref,
-                            "error": str(exc),
-                        }
-                    )
+                    images.append({"page": page_index + 1, "xref": xref, "error": str(exc)})
                     continue
                 ext = extracted.get("ext", "png")
                 filename = f"page-{page_index + 1:03d}-image-{img_index:02d}.{ext}"
@@ -111,12 +170,8 @@ def extract_with_fitz(pdf_path: Path, out_dir: Path, max_images: int) -> dict[st
                     }
                 )
 
-    outline = []
     try:
-        outline = [
-            {"level": item[0], "title": item[1], "page": item[2]}
-            for item in doc.get_toc(simple=True)
-        ]
+        outline = [{"level": item[0], "title": item[1], "page": item[2]} for item in doc.get_toc(simple=True)]
     except Exception:
         outline = []
 
@@ -130,6 +185,7 @@ def extract_with_fitz(pdf_path: Path, out_dir: Path, max_images: int) -> dict[st
         "outline": outline,
         "pages": pages,
         "images": images,
+        "page_visual_audit": page_visual_audit,
     }
 
 
@@ -172,43 +228,105 @@ def collect_text(out_dir: Path, pages: list[dict[str, Any]]) -> str:
     return "\n".join(chunks)
 
 
+def build_figure_coverage(captions: list[dict[str, Any]], page_audit: list[dict[str, Any]], images: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    audit_by_page = {item["page"]: item for item in page_audit}
+    images_by_page: dict[int, list[dict[str, Any]]] = defaultdict(list)
+    for image in images:
+        if "page" in image:
+            images_by_page[int(image["page"])].append(image)
+
+    seen: set[tuple[int, str]] = set()
+    coverage = []
+    for caption in captions:
+        page_no = int(caption["page"])
+        label_key = normalize_label(caption["label"])
+        key = (page_no, label_key)
+        if key in seen:
+            continue
+        seen.add(key)
+        audit = audit_by_page.get(page_no, {})
+        embedded_count = int(audit.get("embedded_image_count", 0))
+        drawing_count = int(audit.get("drawing_count", 0))
+        image_block_count = int(audit.get("image_block_count", 0))
+        page_images = images_by_page.get(page_no, [])
+        if page_images:
+            detected_type = "embedded_image_or_mixed"
+            action = "select_extracted_image_or_crop_if_fragmented"
+            status = "candidate"
+        elif drawing_count > 0:
+            detected_type = "vector_drawing_or_pdf_graphics"
+            action = "render_page_and_crop_figure"
+            status = "vector_crop_needed"
+        elif image_block_count > 0:
+            detected_type = "image_block_without_extractable_xref"
+            action = "render_page_and_crop_figure"
+            status = "page_crop_needed"
+        else:
+            detected_type = "text_table_algorithm_or_unknown"
+            action = "inspect_text_or_render_page_if_important"
+            status = "manual_check"
+        coverage.append(
+            {
+                "label": caption["label"],
+                "label_key": label_key,
+                "kind": caption["kind"],
+                "page": page_no,
+                "caption": caption["text"],
+                "embedded_images_on_page": embedded_count,
+                "extracted_images_on_page": len(page_images),
+                "image_blocks_on_page": image_block_count,
+                "drawings_on_page": drawing_count,
+                "detected_type": detected_type,
+                "action": action,
+                "status": status,
+            }
+        )
+    return coverage
+
+
+def render_audit_pages(pdf_path: Path, out_dir: Path, figure_coverage: list[dict[str, Any]], max_renders: int) -> list[dict[str, Any]]:
+    fitz = import_fitz()
+    if fitz is None or max_renders <= 0:
+        return []
+    pages_to_render = []
+    for item in figure_coverage:
+        if item["status"] in {"vector_crop_needed", "page_crop_needed"} and item["page"] not in pages_to_render:
+            pages_to_render.append(item["page"])
+        if len(pages_to_render) >= max_renders:
+            break
+    if not pages_to_render:
+        return []
+
+    asset_dir = out_dir / "assets"
+    asset_dir.mkdir(parents=True, exist_ok=True)
+    doc = fitz.open(pdf_path)
+    rendered = []
+    for page_no in pages_to_render:
+        page = doc[page_no - 1]
+        filename = f"page-{page_no:03d}-render.png"
+        target = asset_dir / filename
+        pix = page.get_pixmap(matrix=fitz.Matrix(2, 2), alpha=False)
+        pix.save(target)
+        rendered.append(
+            {
+                "page": page_no,
+                "file": f"assets/{filename}",
+                "width": pix.width,
+                "height": pix.height,
+                "reason": "caption exists but no embedded image was extracted",
+            }
+        )
+    doc.close()
+    return rendered
+
+
 def guess_paper_type(text: str) -> dict[str, Any]:
     lowered = text[:30000].lower()
     signals = {
-        "survey": [
-            "survey",
-            "review",
-            "taxonomy",
-            "comprehensive overview",
-            "future directions",
-            "challenges and opportunities",
-        ],
-        "algorithm_method": [
-            "we propose",
-            "our method",
-            "algorithm",
-            "architecture",
-            "loss function",
-            "training objective",
-            "ablation",
-        ],
-        "empirical_benchmark": [
-            "benchmark",
-            "evaluation protocol",
-            "datasets",
-            "baselines",
-            "leaderboard",
-            "empirical study",
-        ],
-        "system_dataset": [
-            "system",
-            "toolkit",
-            "dataset",
-            "corpus",
-            "annotation",
-            "implementation",
-            "deployment",
-        ],
+        "survey": ["survey", "review", "taxonomy", "comprehensive overview", "future directions", "challenges and opportunities"],
+        "algorithm_method": ["we propose", "our method", "algorithm", "architecture", "loss function", "training objective", "ablation"],
+        "empirical_benchmark": ["benchmark", "evaluation protocol", "datasets", "baselines", "leaderboard", "empirical study"],
+        "system_dataset": ["system", "toolkit", "dataset", "corpus", "annotation", "implementation", "deployment"],
     }
     scores = {kind: sum(1 for signal in words if signal in lowered) for kind, words in signals.items()}
     best = max(scores, key=scores.get)
@@ -238,6 +356,8 @@ def main() -> int:
     parser.add_argument("--out", type=Path, required=True, help="Output directory for manifest, text, and images")
     parser.add_argument("--max-images", type=int, default=80, help="Maximum embedded images to extract")
     parser.add_argument("--max-references", type=int, default=80, help="Maximum reference strings to keep in manifest")
+    parser.add_argument("--render-figure-pages", action="store_true", help="Render pages whose captions indicate missing embedded/vector figures")
+    parser.add_argument("--max-page-renders", type=int, default=20, help="Maximum figure pages to render when --render-figure-pages is set")
     args = parser.parse_args()
 
     pdf_path = args.pdf.resolve()
@@ -255,25 +375,28 @@ def main() -> int:
         {"page": page["page"], "label": m.group(1), "kind": m.group(2).lower(), "text": m.group(3).strip()}
         for page in pages
         for m in CAPTION_RE.finditer((out_dir / page["text_path"]).read_text(encoding="utf-8", errors="replace"))
+        if is_likely_caption_text(m.group(3))
     ]
+    figure_coverage = build_figure_coverage(captions, fitz_result.get("page_visual_audit", []), fitz_result.get("images", []))
+    rendered_pages = render_audit_pages(pdf_path, out_dir, figure_coverage, args.max_page_renders if args.render_figure_pages else 0)
 
     manifest = {
         "source_pdf": str(pdf_path),
         "source_sha256": sha256_file(pdf_path),
         "suggested_slug": slugify(pdf_path.stem),
-        "dependencies": {
-            "pymupdf": bool(import_fitz()),
-            "pdfplumber": bool(import_pdfplumber()),
-        },
+        "dependencies": {"pymupdf": bool(import_fitz()), "pdfplumber": bool(import_pdfplumber())},
         "fitz": {k: v for k, v in fitz_result.items() if k not in {"pages"}},
         "pages": pages,
         "candidate_captions": captions,
+        "figure_coverage": figure_coverage,
+        "rendered_figure_pages": rendered_pages,
         "paper_type_guess": guess_paper_type(full_text),
         "references": extract_references(full_text, args.max_references),
         "manual_check": [
             "Confirm paper type and section boundaries.",
             "Confirm table values against rendered PDF pages.",
             "Select only figures that help reading; embedded images may include logos or fragments.",
+            "If figure_coverage marks vector_crop_needed or page_crop_needed for an important figure, render and crop the page before finalizing visual assets.",
         ],
     }
 
@@ -283,9 +406,12 @@ def main() -> int:
     print(f"Pages: {len(pages)}")
     print(f"Candidate captions: {len(captions)}")
     print(f"Extracted images: {len(manifest['fitz'].get('images', [])) if isinstance(manifest.get('fitz'), dict) else 0}")
+    print(f"Figure coverage items: {len(figure_coverage)}")
+    print(f"Rendered figure pages: {len(rendered_pages)}")
     print(f"Paper type guess: {manifest['paper_type_guess']['type']} ({manifest['paper_type_guess']['confidence']})")
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
