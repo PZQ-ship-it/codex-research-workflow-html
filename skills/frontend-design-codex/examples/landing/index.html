@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Morrow Type Foundry | Variable Fonts for Independent Publishers</title>
+  <meta name="description" content="Morrow Type Foundry sells variable font families built for independent publishers, journals, small presses, and long-form editorial teams.">
+  <style>
+    :root {
+      --paper: #f4f0e7;
+      --paper-deep: #e4dccd;
+      --ink: #171411;
+      --ink-soft: #514a40;
+      --muted: #7a7164;
+      --rule: rgba(23, 20, 17, .19);
+      --rust: #a83f22;
+      --red: #c74a28;
+      --olive: #566036;
+      --blue: #264d63;
+      --gold: #d0a24f;
+      --shadow: 0 28px 70px rgba(23, 20, 17, .17);
+      --sans: "Avenir Next", "Neue Haas Grotesk Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --serif: Iowan Old Style, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      --mono: "SFMono-Regular", "Cascadia Mono", "Liberation Mono", Menlo, monospace;
+      --gutter: clamp(18px, 4vw, 72px);
+      --radius: 6px;
+      --ease: cubic-bezier(.2, .8, .2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 20% 10%, rgba(208, 162, 79, .18), transparent 26rem),
+        linear-gradient(90deg, rgba(23, 20, 17, .035) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(23, 20, 17, .03) 1px, transparent 1px),
+        var(--paper);
+      background-size: auto, 36px 36px, 36px 36px, auto;
+      font-family: var(--sans);
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .36;
+      background-image:
+        repeating-linear-gradient(100deg, rgba(23, 20, 17, .025), rgba(23, 20, 17, .025) 1px, transparent 1px, transparent 9px);
+      mix-blend-mode: multiply;
+      z-index: 2;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .site-shell {
+      min-height: 100vh;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 24px;
+      padding: 24px var(--gutter) 18px;
+      border-bottom: 1px solid var(--rule);
+      position: relative;
+      z-index: 5;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--serif);
+      font-size: 1.45rem;
+      line-height: 1;
+      letter-spacing: -.01em;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border: 1.5px solid var(--ink);
+      color: var(--paper);
+      background: var(--ink);
+      font-family: var(--serif);
+      font-size: 1.42rem;
+      line-height: 1;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: clamp(14px, 3vw, 36px);
+      color: var(--ink-soft);
+      font-size: .76rem;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+    }
+
+    .nav a {
+      position: relative;
+      padding: 8px 0;
+    }
+
+    .nav a::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 2px;
+      height: 1px;
+      transform: scaleX(0);
+      transform-origin: left;
+      background: currentColor;
+      transition: transform .22s var(--ease);
+    }
+
+    .nav a:hover::after,
+    .nav a:focus-visible::after {
+      transform: scaleX(1);
+    }
+
+    .top-action {
+      justify-self: end;
+    }
+
+    .button {
+      --button-bg: var(--ink);
+      --button-fg: var(--paper);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 13px 18px 12px;
+      border: 1.5px solid var(--button-bg);
+      border-radius: 999px;
+      background: var(--button-bg);
+      color: var(--button-fg);
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .095em;
+      line-height: 1;
+      text-transform: uppercase;
+      transition: transform .22s var(--ease), box-shadow .22s var(--ease), background .22s var(--ease), color .22s var(--ease);
+      cursor: pointer;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 24px rgba(23, 20, 17, .18);
+    }
+
+    .button:focus-visible,
+    .axis input:focus-visible,
+    .family-button:focus-visible {
+      outline: 3px solid rgba(199, 74, 40, .32);
+      outline-offset: 4px;
+    }
+
+    .button.secondary {
+      --button-bg: transparent;
+      --button-fg: var(--ink);
+      background: transparent;
+    }
+
+    .button.secondary:hover {
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    .hero {
+      min-height: calc(92vh - 82px);
+      display: grid;
+      grid-template-columns: minmax(0, 1.02fr) minmax(320px, .78fr);
+      align-items: stretch;
+      position: relative;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .hero-copy {
+      padding: clamp(54px, 8vw, 118px) var(--gutter) clamp(42px, 8vw, 90px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 48px;
+      min-height: 620px;
+      position: relative;
+      z-index: 3;
+    }
+
+    .hero-title {
+      max-width: 880px;
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 11.4rem;
+      font-weight: 400;
+      line-height: .78;
+      letter-spacing: -.075em;
+      text-wrap: balance;
+    }
+
+    .hero-title span {
+      display: block;
+      font-style: italic;
+      color: var(--rust);
+      letter-spacing: -.08em;
+    }
+
+    .hero-deck {
+      max-width: 760px;
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) minmax(210px, .7fr);
+      gap: clamp(22px, 4vw, 48px);
+      align-items: end;
+    }
+
+    .hero-deck p {
+      margin: 0;
+      color: var(--ink-soft);
+      font-family: var(--serif);
+      font-size: 1.8rem;
+      line-height: 1.12;
+      letter-spacing: -.025em;
+    }
+
+    .hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .specimen-wall {
+      position: relative;
+      overflow: hidden;
+      min-height: 620px;
+      border-left: 1px solid var(--rule);
+      background:
+        linear-gradient(180deg, rgba(23, 20, 17, .03), rgba(23, 20, 17, 0) 32%),
+        var(--paper-deep);
+    }
+
+    .specimen-wall::before {
+      content: "Mm Aa Ww 27";
+      position: absolute;
+      inset: 2vw -8vw auto auto;
+      width: min-content;
+      color: rgba(23, 20, 17, .11);
+      font-family: var(--serif);
+      font-size: 16rem;
+      font-style: italic;
+      font-weight: 400;
+      line-height: .68;
+      letter-spacing: -.12em;
+      transform: rotate(-4deg);
+      white-space: pre-line;
+    }
+
+    .poster {
+      position: absolute;
+      left: clamp(22px, 4vw, 62px);
+      right: clamp(22px, 4vw, 62px);
+      bottom: clamp(28px, 5vw, 74px);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 26px;
+      min-height: 68%;
+      padding: clamp(22px, 4vw, 38px);
+      background: #f9f6ee;
+      border: 1.5px solid rgba(23, 20, 17, .72);
+      box-shadow: var(--shadow);
+      transform: rotate(.8deg);
+    }
+
+    .poster-top,
+    .poster-bottom,
+    .detail-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: .72rem;
+      letter-spacing: .055em;
+      line-height: 1.35;
+      text-transform: uppercase;
+    }
+
+    .poster-word {
+      align-self: center;
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 10.5rem;
+      font-weight: 400;
+      line-height: .72;
+      letter-spacing: -.09em;
+    }
+
+    .poster-word .wide {
+      display: block;
+      color: var(--red);
+      font-style: italic;
+      transform: scaleX(1.12);
+      transform-origin: left center;
+    }
+
+    .ticker {
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      border-bottom: 1px solid var(--rule);
+      background: var(--ink);
+      color: var(--paper);
+      font-family: var(--mono);
+      font-size: .78rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .ticker span {
+      display: inline-flex;
+      gap: 18px;
+      padding: 12px 18px;
+      animation: ticker 26s linear infinite;
+    }
+
+    @keyframes ticker {
+      to { transform: translateX(-50%); }
+    }
+
+    main {
+      position: relative;
+      z-index: 3;
+    }
+
+    .section {
+      padding: clamp(68px, 10vw, 138px) var(--gutter);
+    }
+
+    .detail {
+      display: grid;
+      grid-template-columns: minmax(0, .82fr) minmax(380px, 1fr);
+      gap: clamp(36px, 8vw, 104px);
+      align-items: start;
+      border-bottom: 1px solid var(--rule);
+      background:
+        linear-gradient(90deg, transparent calc(50% - .5px), rgba(23, 20, 17, .11) calc(50% - .5px), rgba(23, 20, 17, .11) calc(50% + .5px), transparent calc(50% + .5px));
+    }
+
+    .section-kicker {
+      margin: 0 0 18px;
+      color: var(--rust);
+      font-family: var(--mono);
+      font-size: .76rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 6.4rem;
+      font-weight: 400;
+      line-height: .86;
+      letter-spacing: -.06em;
+    }
+
+    .detail-copy {
+      max-width: 650px;
+    }
+
+    .detail-copy p {
+      color: var(--ink-soft);
+      font-size: 1.13rem;
+      line-height: 1.6;
+      margin: 26px 0 0;
+    }
+
+    .features {
+      display: grid;
+      gap: 0;
+      margin-top: 42px;
+      border-top: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .feature-row {
+      display: grid;
+      grid-template-columns: minmax(80px, .35fr) 1fr;
+      gap: 22px;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .feature-row:last-child {
+      border-bottom: 0;
+    }
+
+    .feature-row dt {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: .78rem;
+      letter-spacing: .07em;
+      margin: 0;
+      text-transform: uppercase;
+    }
+
+    .feature-row dd {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 1.22rem;
+      line-height: 1.25;
+    }
+
+    .tester {
+      position: sticky;
+      top: 24px;
+      background: #fbf7ef;
+      border: 1.5px solid rgba(23, 20, 17, .7);
+      box-shadow: var(--shadow);
+    }
+
+    .tester-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--mono);
+      font-size: .72rem;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .specimen-stage {
+      min-height: 330px;
+      display: grid;
+      place-items: center;
+      padding: clamp(24px, 5vw, 48px);
+      overflow: hidden;
+    }
+
+    .live-word {
+      --sample-weight: 470;
+      --sample-width: 1;
+      --sample-track: -0.075em;
+      max-width: 100%;
+      margin: 0;
+      color: var(--ink);
+      font-family: var(--serif);
+      font-size: 7.8rem;
+      font-weight: var(--sample-weight);
+      line-height: .78;
+      letter-spacing: var(--sample-track);
+      text-align: center;
+      transform: scaleX(var(--sample-width));
+      transition: font-weight .18s var(--ease), letter-spacing .18s var(--ease), transform .18s var(--ease), color .18s var(--ease);
+      transform-origin: center;
+      word-break: keep-all;
+    }
+
+    .tester-panel {
+      display: grid;
+      grid-template-columns: .78fr 1fr;
+      border-top: 1px solid var(--rule);
+    }
+
+    .families {
+      display: grid;
+      border-right: 1px solid var(--rule);
+    }
+
+    .family-button {
+      min-height: 52px;
+      padding: 14px 18px;
+      border: 0;
+      border-bottom: 1px solid var(--rule);
+      background: transparent;
+      color: var(--ink);
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .075em;
+      line-height: 1.1;
+      text-align: left;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background .2s var(--ease), color .2s var(--ease), padding-left .2s var(--ease);
+    }
+
+    .family-button:last-child {
+      border-bottom: 0;
+    }
+
+    .family-button:hover {
+      padding-left: 24px;
+      background: rgba(168, 63, 34, .08);
+    }
+
+    .family-button.is-active {
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    .axes {
+      padding: 18px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .axis {
+      display: grid;
+      gap: 9px;
+    }
+
+    .axis label {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      color: var(--ink-soft);
+      font-family: var(--mono);
+      font-size: .72rem;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 22px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 3px;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--rust), var(--ink));
+    }
+
+    input[type="range"]::-moz-range-track {
+      height: 3px;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--rust), var(--ink));
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      width: 18px;
+      height: 18px;
+      margin-top: -7.5px;
+      appearance: none;
+      -webkit-appearance: none;
+      border: 1.5px solid var(--ink);
+      border-radius: 50%;
+      background: var(--paper);
+      box-shadow: 0 4px 10px rgba(23, 20, 17, .22);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border: 1.5px solid var(--ink);
+      border-radius: 50%;
+      background: var(--paper);
+      box-shadow: 0 4px 10px rgba(23, 20, 17, .22);
+    }
+
+    .catalogue {
+      display: grid;
+      grid-template-columns: .7fr 1fr;
+      gap: clamp(36px, 7vw, 96px);
+      border-bottom: 1px solid var(--rule);
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    .catalogue .section-kicker,
+    .catalogue .detail-copy p,
+    .catalogue .feature-row dt {
+      color: rgba(244, 240, 231, .68);
+    }
+
+    .catalogue .feature-row,
+    .catalogue .features {
+      border-color: rgba(244, 240, 231, .22);
+    }
+
+    .type-list {
+      display: grid;
+      gap: 0;
+      border-top: 1px solid rgba(244, 240, 231, .24);
+    }
+
+    .type-row {
+      display: grid;
+      grid-template-columns: minmax(120px, .36fr) 1fr auto;
+      align-items: baseline;
+      gap: 22px;
+      padding: 24px 0;
+      border-bottom: 1px solid rgba(244, 240, 231, .24);
+    }
+
+    .type-row strong {
+      font-family: var(--serif);
+      font-size: 3.4rem;
+      font-weight: 400;
+      line-height: .9;
+      letter-spacing: -.055em;
+    }
+
+    .type-row p,
+    .type-row span {
+      margin: 0;
+      color: rgba(244, 240, 231, .7);
+      font-size: .93rem;
+      line-height: 1.45;
+    }
+
+    .type-row span {
+      font-family: var(--mono);
+      font-size: .72rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .closing {
+      min-height: 68vh;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: clamp(26px, 5vw, 86px);
+      align-items: end;
+      background:
+        linear-gradient(135deg, rgba(168, 63, 34, .13), transparent 44%),
+        var(--paper);
+    }
+
+    .closing h2 {
+      max-width: 980px;
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 9.2rem;
+      font-weight: 400;
+      line-height: .78;
+      letter-spacing: -.07em;
+    }
+
+    .closing h2 em {
+      color: var(--rust);
+      font-style: italic;
+    }
+
+    .closing-panel {
+      width: min(100%, 360px);
+      display: grid;
+      gap: 22px;
+      padding: 24px;
+      border-top: 1.5px solid var(--ink);
+      border-bottom: 1.5px solid var(--ink);
+    }
+
+    .closing-panel p {
+      margin: 0;
+      color: var(--ink-soft);
+      font-size: 1rem;
+      line-height: 1.55;
+    }
+
+    .foot {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 22px var(--gutter);
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: .72rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
+
+    @media (max-width: 1200px) {
+      .hero-title {
+        font-size: 8.6rem;
+      }
+
+      .specimen-wall::before {
+        font-size: 12rem;
+      }
+
+      .poster-word {
+        font-size: 8rem;
+      }
+
+      .section-title {
+        font-size: 5rem;
+      }
+
+      .live-word {
+        font-size: 6.4rem;
+      }
+
+      .type-row strong {
+        font-size: 2.8rem;
+      }
+
+      .closing h2 {
+        font-size: 7rem;
+      }
+    }
+
+    @media (max-width: 980px) {
+      .topbar {
+        grid-template-columns: 1fr auto;
+      }
+
+      .nav {
+        display: none;
+      }
+
+      .hero,
+      .detail,
+      .catalogue,
+      .closing {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-copy,
+      .specimen-wall {
+        min-height: auto;
+      }
+
+      .hero-copy {
+        padding-top: clamp(42px, 10vw, 82px);
+      }
+
+      .hero-deck {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-title {
+        font-size: 6.8rem;
+      }
+
+      .hero-deck p {
+        font-size: 1.45rem;
+      }
+
+      .specimen-wall {
+        border-left: 0;
+        border-top: 1px solid var(--rule);
+        min-height: 520px;
+      }
+
+      .specimen-wall::before {
+        font-size: 9rem;
+      }
+
+      .poster {
+        min-height: auto;
+        top: 44px;
+        bottom: 44px;
+      }
+
+      .poster-word {
+        font-size: 7rem;
+      }
+
+      .tester {
+        position: static;
+      }
+
+      .section-title {
+        font-size: 4.2rem;
+      }
+
+      .live-word {
+        font-size: 5.7rem;
+      }
+
+      .type-row strong {
+        font-size: 2.55rem;
+      }
+
+      .closing {
+        align-items: start;
+      }
+
+      .closing h2 {
+        font-size: 5.9rem;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        background-size: auto, 28px 28px, 28px 28px, auto;
+      }
+
+      .topbar {
+        padding-top: 18px;
+        gap: 12px;
+      }
+
+      .brand {
+        gap: 9px;
+        font-size: 1.07rem;
+      }
+
+      .brand-mark {
+        width: 32px;
+        height: 32px;
+        font-size: 1.12rem;
+      }
+
+      .top-action .button {
+        min-height: 38px;
+        padding: 11px 13px 10px;
+        font-size: .66rem;
+      }
+
+      .hero-title {
+        font-size: 3.8rem;
+      }
+
+      .hero-copy {
+        gap: 22px;
+        padding-top: 30px;
+        padding-bottom: 24px;
+      }
+
+      .hero-deck {
+        gap: 16px;
+      }
+
+      .hero-deck p {
+        font-size: 1.12rem;
+      }
+
+      .hero-ctas {
+        align-items: stretch;
+      }
+
+      .closing-panel .button {
+        width: 100%;
+      }
+
+      .specimen-wall {
+        min-height: 210px;
+      }
+
+      .specimen-wall::before {
+        font-size: 6rem;
+      }
+
+      .poster {
+        left: 18px;
+        right: 18px;
+        top: 18px;
+        bottom: 18px;
+        padding: 16px;
+        gap: 12px;
+        transform: rotate(.35deg);
+      }
+
+      .poster-top,
+      .poster-bottom,
+      .detail-meta {
+        font-size: .61rem;
+      }
+
+      .poster-word {
+        font-size: 3.75rem;
+      }
+
+      .section {
+        padding-top: 64px;
+        padding-bottom: 64px;
+      }
+
+      .section-title,
+      .closing h2 {
+        font-size: 3.35rem;
+        letter-spacing: -.055em;
+      }
+
+      .feature-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .tester-head,
+      .detail-meta {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .specimen-stage {
+        min-height: 260px;
+      }
+
+      .live-word {
+        font-size: 3.8rem;
+      }
+
+      .tester-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .families {
+        grid-template-columns: repeat(3, 1fr);
+        border-right: 0;
+        border-bottom: 1px solid var(--rule);
+      }
+
+      .family-button {
+        min-height: 48px;
+        padding: 12px 10px;
+        border-bottom: 0;
+        border-right: 1px solid var(--rule);
+        text-align: center;
+        font-size: .66rem;
+      }
+
+      .family-button:last-child {
+        border-right: 0;
+      }
+
+      .family-button:hover {
+        padding-left: 10px;
+      }
+
+      .type-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .type-row span {
+        white-space: normal;
+      }
+
+      .closing-panel {
+        width: 100%;
+      }
+
+      .foot {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="topbar" aria-label="Primary navigation">
+      <a class="brand" href="#top" aria-label="Morrow Type Foundry home">
+        <span class="brand-mark" aria-hidden="true">M</span>
+        <span>Morrow Type Foundry</span>
+      </a>
+      <nav class="nav" aria-label="Page sections">
+        <a href="#specimen">Specimen</a>
+        <a href="#catalogue">Catalogue</a>
+        <a href="#licensing">Licensing</a>
+      </nav>
+      <div class="top-action">
+        <a class="button" href="#licensing">Request Pack</a>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <h1 class="hero-title" id="hero-title">Morrow <span>Type</span> Foundry</h1>
+          <div class="hero-deck">
+            <p>Variable fonts with a publisher's sense of pacing: serious text faces, expressive display cuts, and licensing that does not punish small circulation.</p>
+            <div class="hero-ctas" aria-label="Primary calls to action">
+              <a class="button" href="#specimen">Test the family</a>
+              <a class="button secondary" href="#catalogue">View catalogue</a>
+            </div>
+          </div>
+        </div>
+        <aside class="specimen-wall" aria-label="Printed type specimen preview">
+          <div class="poster">
+            <div class="poster-top">
+              <span>MF-27 Variable</span>
+              <span>Optical / Weight / Width</span>
+            </div>
+            <p class="poster-word" aria-hidden="true">Morrow <span class="wide">Index</span></p>
+            <div class="poster-bottom">
+              <span>For journals, essays, catalogues</span>
+              <span>Trial cuts available</span>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <div class="ticker" aria-hidden="true">
+        <span>Small press licenses · Editorial alternates · Webfont kits · Print proofing · Variable axes · Trial families · Small press licenses · Editorial alternates · Webfont kits · Print proofing · Variable axes · Trial families ·</span>
+        <span>Small press licenses · Editorial alternates · Webfont kits · Print proofing · Variable axes · Trial families · Small press licenses · Editorial alternates · Webfont kits · Print proofing · Variable axes · Trial families ·</span>
+      </div>
+
+      <section class="section detail" id="specimen" aria-labelledby="specimen-title">
+        <div class="detail-copy">
+          <p class="section-kicker">Current Release</p>
+          <h2 class="section-title" id="specimen-title">A text face that still has a pulse.</h2>
+          <p>Morrow Index Variable is drawn for publishers who move between long essays, narrow captions, oversized openings, and urgent newsletters. One family covers quiet reading text and high-friction display settings without asking the art director to change voice.</p>
+          <dl class="features">
+            <div class="feature-row">
+              <dt>Axes</dt>
+              <dd>Weight 280-840, width 78-116, optical grades for text and display.</dd>
+            </div>
+            <div class="feature-row">
+              <dt>Files</dt>
+              <dd>Variable TTF, static OTF cuts, WOFF2 subsets, PDF specimen proofs.</dd>
+            </div>
+            <div class="feature-row">
+              <dt>Use</dt>
+              <dd>Editorial sites, art books, exhibition guides, essays, small journals.</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="tester" aria-label="Interactive type specimen">
+          <div class="tester-head">
+            <span>Live Specimen Desk</span>
+            <span id="axis-readout">470 / 100 / -4</span>
+          </div>
+          <div class="specimen-stage">
+            <p class="live-word" id="liveWord">Morrow</p>
+          </div>
+          <div class="tester-panel">
+            <div class="families" aria-label="Sample words">
+              <button class="family-button is-active" type="button" data-word="Morrow" data-color="#171411">Serif</button>
+              <button class="family-button" type="button" data-word="Index" data-color="#a83f22">Index</button>
+              <button class="family-button" type="button" data-word="Signal" data-color="#264d63">Signal</button>
+            </div>
+            <div class="axes">
+              <div class="axis">
+                <label for="weightAxis">Weight <span id="weightValue">470</span></label>
+                <input id="weightAxis" type="range" min="280" max="840" value="470" step="10">
+              </div>
+              <div class="axis">
+                <label for="widthAxis">Width <span id="widthValue">100</span></label>
+                <input id="widthAxis" type="range" min="78" max="116" value="100" step="1">
+              </div>
+              <div class="axis">
+                <label for="trackingAxis">Tracking <span id="trackingValue">-4</span></label>
+                <input id="trackingAxis" type="range" min="-9" max="4" value="-4" step="1">
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section catalogue" id="catalogue" aria-labelledby="catalogue-title">
+        <div class="detail-copy">
+          <p class="section-kicker">Three families, one editorial system</p>
+          <h2 class="section-title" id="catalogue-title">Built for pages that keep changing.</h2>
+          <p>Every Morrow family ships with publication-first defaults: numerals that behave in tables, italics that can carry footnotes, and web builds tuned for fast serial publishing.</p>
+        </div>
+        <div class="type-list" aria-label="Morrow catalogue">
+          <article class="type-row">
+            <strong>Index</strong>
+            <p>Warm serif for long-form essays, reader-supported journals, catalogues, and print runs with rough paper.</p>
+            <span>12 styles + variable</span>
+          </article>
+          <article class="type-row">
+            <strong>Signal</strong>
+            <p>Compressed display family for issue covers, section markers, urgent newsletters, and event posters.</p>
+            <span>8 styles + variable</span>
+          </article>
+          <article class="type-row">
+            <strong>Ledger</strong>
+            <p>Practical sans for captions, navigation, contributors, archive pages, indexes, tables, and licensing notes.</p>
+            <span>10 styles + variable</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="section closing" id="licensing" aria-labelledby="licensing-title">
+        <h2 id="licensing-title">Set your next issue in <em>Morrow.</em></h2>
+        <div class="closing-panel">
+          <p>Send a note about your publication, circulation, and format. We will return trial files, print proofs, and a license scaled for independent publishers.</p>
+          <a class="button" href="mailto:studio@morrowtype.example?subject=Morrow%20specimen%20pack">Request specimen pack</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <span>© 2026 Morrow Type Foundry</span>
+      <span>Variable type for independent publishing</span>
+    </footer>
+  </div>
+
+  <script>
+    const liveWord = document.querySelector("#liveWord");
+    const readout = document.querySelector("#axis-readout");
+    const weight = document.querySelector("#weightAxis");
+    const width = document.querySelector("#widthAxis");
+    const tracking = document.querySelector("#trackingAxis");
+    const weightValue = document.querySelector("#weightValue");
+    const widthValue = document.querySelector("#widthValue");
+    const trackingValue = document.querySelector("#trackingValue");
+    const familyButtons = document.querySelectorAll(".family-button");
+
+    function updateSpecimen() {
+      const widthScale = Number(width.value) / 100;
+      const trackingEm = Number(tracking.value) / 100;
+      liveWord.style.setProperty("--sample-weight", weight.value);
+      liveWord.style.setProperty("--sample-width", widthScale.toFixed(2));
+      liveWord.style.setProperty("--sample-track", `${trackingEm}em`);
+      weightValue.textContent = weight.value;
+      widthValue.textContent = width.value;
+      trackingValue.textContent = tracking.value;
+      readout.textContent = `${weight.value} / ${width.value} / ${tracking.value}`;
+    }
+
+    [weight, width, tracking].forEach((input) => {
+      input.addEventListener("input", updateSpecimen);
+    });
+
+    familyButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        familyButtons.forEach((item) => item.classList.remove("is-active"));
+        button.classList.add("is-active");
+        liveWord.textContent = button.dataset.word;
+        liveWord.style.color = button.dataset.color;
+      });
+    });
+
+    updateSpecimen();
+  </script>
+</body>
+</html>

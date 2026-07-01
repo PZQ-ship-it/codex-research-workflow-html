@@ -1,0 +1,4 @@
+interface:
+  display_name: "Researcher Field Scout"
+  short_description: "Public-source researcher and field scouting"
+  default_prompt: "Use $researcher-field-scout to map this public researcher or builder into a source-backed field, trajectory, and watch plan."

@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Relay Yard Dispatch</title>
+  <style>
+    :root {
+      --bg: #101412;
+      --panel: #171d1a;
+      --panel-2: #1d2420;
+      --rail: #29312c;
+      --rail-strong: #465249;
+      --text: #eef2ec;
+      --muted: #aab3aa;
+      --dim: #707b72;
+      --line: #303a34;
+      --amber: #dca84b;
+      --green: #5fbf7a;
+      --red: #e06b5f;
+      --blue: #6ea5bf;
+      --white: #ffffff;
+      --shadow: 0 18px 50px rgba(0, 0, 0, .28);
+      --radius: 6px;
+      --mono: "SFMono-Regular", "Cascadia Mono", "Liberation Mono", Menlo, Consolas, monospace;
+      --sans: "Aptos", "Segoe UI", "Helvetica Neue", Helvetica, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px) 0 0 / 48px 48px,
+        linear-gradient(180deg, #121713 0%, #0d1110 100%);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    button, input, select {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 210px 1fr auto;
+      gap: 18px;
+      align-items: center;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(16, 20, 18, .94);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(14px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--rail-strong);
+      border-radius: 4px;
+      display: grid;
+      place-items: center;
+      background: #202821;
+      box-shadow: inset 0 -3px 0 rgba(0,0,0,.2);
+    }
+
+    .mark svg { width: 21px; height: 21px; }
+
+    .brand strong {
+      display: block;
+      font-size: 17px;
+      letter-spacing: 0;
+      line-height: 1.1;
+    }
+
+    .brand span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-top: 2px;
+    }
+
+    .yard-strip {
+      display: grid;
+      grid-template-columns: repeat(9, minmax(32px, 1fr));
+      gap: 4px;
+      align-items: end;
+      max-width: 720px;
+    }
+
+    .track {
+      height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 3px;
+      background: repeating-linear-gradient(90deg, #1b221e 0 10px, #222b25 10px 12px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .track::before {
+      content: attr(data-track);
+      position: absolute;
+      top: 4px;
+      left: 6px;
+      color: var(--dim);
+      font: 10px/1 var(--mono);
+    }
+
+    .track i {
+      position: absolute;
+      height: 8px;
+      left: 6px;
+      right: var(--load);
+      bottom: 6px;
+      border-radius: 2px;
+      background: var(--tone);
+    }
+
+    .clock {
+      display: grid;
+      gap: 2px;
+      justify-items: end;
+      font-family: var(--mono);
+      white-space: nowrap;
+    }
+
+    .clock strong { font-size: 17px; }
+    .clock span { color: var(--muted); font-size: 11px; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 232px minmax(420px, 1fr) 340px;
+      min-height: 0;
+    }
+
+    .sidebar,
+    .detail {
+      background: rgba(23, 29, 26, .96);
+      min-width: 0;
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--line);
+      padding: 14px;
+    }
+
+    .detail {
+      border-left: 1px solid var(--line);
+      padding: 14px;
+    }
+
+    .section-label {
+      color: var(--dim);
+      font: 700 11px/1 var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin: 2px 0 10px;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+
+    .segmented button,
+    .tool-btn,
+    .ack-btn {
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #121714;
+      color: var(--muted);
+      transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+    }
+
+    .segmented button:hover,
+    .tool-btn:hover,
+    .ack-btn:hover {
+      border-color: var(--rail-strong);
+      color: var(--white);
+    }
+
+    .segmented button.active {
+      background: #263128;
+      border-color: #74806e;
+      color: var(--white);
+      box-shadow: inset 0 -2px 0 var(--green);
+    }
+
+    .field {
+      margin-top: 18px;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #0f1412;
+      color: var(--text);
+      padding: 0 10px;
+      outline: none;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    button:focus-visible,
+    tr:focus-visible {
+      outline: 2px solid rgba(110, 165, 191, .65);
+      outline-offset: 2px;
+    }
+
+    .queue-meter {
+      margin-top: 18px;
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .meter-row {
+      display: grid;
+      grid-template-columns: 54px 1fr 34px;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .bar {
+      height: 8px;
+      background: #0d1110;
+      border: 1px solid #222b25;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .bar i {
+      display: block;
+      width: var(--w);
+      height: 100%;
+      background: var(--tone);
+    }
+
+    .main {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      background: rgba(13, 17, 16, .92);
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(18, 23, 20, .72);
+    }
+
+    .toolbar h1 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .toolbar p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .tool-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 0 11px;
+      white-space: nowrap;
+    }
+
+    .tool-btn svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      scrollbar-color: var(--rail-strong) transparent;
+    }
+
+    table {
+      width: 100%;
+      min-width: 820px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 9px 10px;
+      text-align: left;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #151b18;
+      color: var(--dim);
+      font: 700 11px/1 var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    tbody tr {
+      background: rgba(18, 23, 20, .56);
+      transition: background .14s ease, box-shadow .14s ease;
+    }
+
+    tbody tr:hover {
+      background: #1a211d;
+    }
+
+    tbody tr.selected {
+      background: #263028;
+      box-shadow: inset 3px 0 0 var(--green);
+    }
+
+    tbody tr.acked {
+      opacity: .58;
+    }
+
+    .mono {
+      font-family: var(--mono);
+      letter-spacing: 0;
+    }
+
+    .train-id {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+    }
+
+    .signal {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--tone);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--tone) 18%, transparent);
+      flex: 0 0 auto;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 7px;
+      border: 1px solid color-mix(in srgb, var(--tone) 48%, #1b221e);
+      border-radius: 4px;
+      color: var(--text);
+      background: color-mix(in srgb, var(--tone) 16%, transparent);
+      font: 700 11px/1 var(--mono);
+      text-transform: uppercase;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .detail-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 13px;
+    }
+
+    .detail-head h2 {
+      margin: 0;
+      font: 700 24px/1.05 var(--mono);
+      letter-spacing: 0;
+    }
+
+    .detail-head p {
+      margin: 5px 0 0;
+      color: var(--muted);
+    }
+
+    .ack-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 12px;
+      background: #223024;
+      color: var(--white);
+      border-color: #47664d;
+      white-space: nowrap;
+    }
+
+    .ack-btn[disabled] {
+      cursor: default;
+      color: var(--dim);
+      background: #121714;
+      border-color: var(--line);
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;
+      margin-top: 14px;
+      background: var(--line);
+      border: 1px solid var(--line);
+    }
+
+    .fact {
+      background: #131916;
+      padding: 10px;
+      min-width: 0;
+    }
+
+    .fact span {
+      display: block;
+      color: var(--dim);
+      font: 700 10px/1 var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      margin-bottom: 6px;
+    }
+
+    .fact strong {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .timeline {
+      margin-top: 18px;
+      display: grid;
+      gap: 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .event {
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      gap: 10px;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .event time {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .event strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .event span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .mobile-detail-title {
+      display: none;
+    }
+
+    @media (max-width: 1100px) {
+      .workspace {
+        grid-template-columns: 198px minmax(360px, 1fr);
+      }
+
+      .detail {
+        grid-column: 1 / -1;
+        border-left: 0;
+        border-top: 1px solid var(--line);
+      }
+    }
+
+    @media (max-width: 760px) {
+      body { font-size: 13px; }
+
+      .topbar {
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        padding: 12px;
+      }
+
+      .yard-strip {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        max-width: none;
+        grid-template-columns: repeat(9, minmax(26px, 1fr));
+      }
+
+      .clock strong { font-size: 14px; }
+
+      .workspace {
+        display: block;
+      }
+
+      .sidebar,
+      .detail {
+        border: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .segmented {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .field {
+        margin-top: 12px;
+      }
+
+      .queue-meter {
+        display: none;
+      }
+
+      .toolbar {
+        align-items: stretch;
+        flex-direction: column;
+        padding: 12px;
+      }
+
+      .toolbar-actions {
+        justify-content: stretch;
+      }
+
+      .tool-btn {
+        flex: 1;
+      }
+
+      .table-wrap {
+        max-height: 46vh;
+      }
+
+      .detail {
+        padding: 12px;
+      }
+
+      .detail-head h2 {
+        font-size: 20px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .brand strong { font-size: 15px; }
+      .brand span { font-size: 10px; }
+      .mark { width: 30px; height: 30px; }
+      .clock span { display: none; }
+      .track { height: 28px; }
+      .segmented { grid-template-columns: repeat(2, 1fr); }
+      .detail-grid { grid-template-columns: 1fr; }
+      .detail-head { display: grid; }
+      .ack-btn { justify-content: center; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .001ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand" aria-label="Relay Yard">
+        <div class="mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M5 19 12 4l7 15M8 14h8M9.8 10h4.4" stroke="#dca84b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <strong>Relay Yard</strong>
+          <span>Dispatcher board</span>
+        </div>
+      </div>
+
+      <div class="yard-strip" aria-label="Track occupancy overview">
+        <div class="track" data-track="A1" style="--load: 28%; --tone: var(--green)"><i></i></div>
+        <div class="track" data-track="A2" style="--load: 12%; --tone: var(--amber)"><i></i></div>
+        <div class="track" data-track="B1" style="--load: 44%; --tone: var(--green)"><i></i></div>
+        <div class="track" data-track="B2" style="--load: 70%; --tone: var(--red)"><i></i></div>
+        <div class="track" data-track="C1" style="--load: 36%; --tone: var(--blue)"><i></i></div>
+        <div class="track" data-track="C2" style="--load: 18%; --tone: var(--green)"><i></i></div>
+        <div class="track" data-track="D1" style="--load: 58%; --tone: var(--amber)"><i></i></div>
+        <div class="track" data-track="D2" style="--load: 46%; --tone: var(--green)"><i></i></div>
+        <div class="track" data-track="E1" style="--load: 24%; --tone: var(--blue)"><i></i></div>
+      </div>
+
+      <div class="clock" aria-label="Current shift clock">
+        <strong id="clock">16:42</strong>
+        <span>SHIFT B · LOCAL</span>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="sidebar" aria-label="Filters">
+        <div class="section-label">Territory</div>
+        <div class="segmented" role="group" aria-label="Territory filter">
+          <button class="active" data-filter="all">All</button>
+          <button data-filter="east">East</button>
+          <button data-filter="west">West</button>
+          <button data-filter="hold">Holds</button>
+        </div>
+
+        <label class="field">
+          <div class="section-label">Find train</div>
+          <input id="search" type="search" placeholder="ID, track, consignee" autocomplete="off">
+        </label>
+
+        <label class="field">
+          <div class="section-label">Sort queue</div>
+          <select id="sort">
+            <option value="priority">Priority first</option>
+            <option value="eta">ETA ascending</option>
+            <option value="track">Track order</option>
+          </select>
+        </label>
+
+        <div class="queue-meter" aria-label="Yard pressure">
+          <div class="section-label">Yard pressure</div>
+          <div class="meter-row"><span>Inbound</span><span class="bar"><i style="--w: 74%; --tone: var(--amber)"></i></span><b>74</b></div>
+          <div class="meter-row"><span>Depart</span><span class="bar"><i style="--w: 48%; --tone: var(--green)"></i></span><b>48</b></div>
+          <div class="meter-row"><span>Holds</span><span class="bar"><i style="--w: 32%; --tone: var(--red)"></i></span><b>32</b></div>
+        </div>
+      </aside>
+
+      <section class="main" aria-label="Dispatch queue">
+        <div class="toolbar">
+          <div>
+            <h1>Movement Queue</h1>
+            <p><span id="resultCount">0</span> active consists · select a row for switch plan and crew notes</p>
+          </div>
+          <div class="toolbar-actions">
+            <button class="tool-btn" id="onlyUnacked" aria-pressed="false" title="Show unacknowledged rows">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 12h16M7 6h10M9 18h6" stroke-width="1.8" stroke-linecap="round"/></svg>
+              Unacked
+            </button>
+            <button class="tool-btn" id="resetView" title="Reset filters">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M5 15a7 7 0 1 0 2-7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Reset
+            </button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Train</th>
+                <th>Status</th>
+                <th>Track</th>
+                <th>ETA</th>
+                <th>Block</th>
+                <th>Consignee</th>
+                <th>Crew</th>
+                <th>Cars</th>
+              </tr>
+            </thead>
+            <tbody id="queueBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside class="detail" aria-label="Selected train detail">
+        <div class="detail-head">
+          <div>
+            <h2 id="detailId">-</h2>
+            <p id="detailSubtitle">Select a movement</p>
+          </div>
+          <button class="ack-btn" id="ackButton">
+            <span aria-hidden="true">✓</span>
+            Acknowledge
+          </button>
+        </div>
+
+        <div class="detail-grid">
+          <div class="fact"><span>Route</span><strong id="route">-</strong></div>
+          <div class="fact"><span>Priority</span><strong id="priority">-</strong></div>
+          <div class="fact"><span>Switch lead</span><strong id="lead">-</strong></div>
+          <div class="fact"><span>Exception</span><strong id="exception">-</strong></div>
+        </div>
+
+        <div class="timeline" id="timeline" aria-label="Movement timeline"></div>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    const trains = [
+      { id: "RY-204", status: "hold", territory: "east", track: "B2", eta: "16:54", block: "Grain", consignee: "Marlow Feed", crew: "Diaz", cars: 38, priority: 1, route: "East ladder to mill spur", lead: "L-3", exception: "Air test pending", acked: false, tone: "var(--red)", notes: ["Brake desk requested retest", "Mill spur clear at 17:10", "Hold release requires dispatcher call"] },
+      { id: "CN-781", status: "ready", territory: "west", track: "A1", eta: "17:02", block: "Intermodal", consignee: "North Ramp", crew: "Singh", cars: 52, priority: 2, route: "West arrival to ramp 4", lead: "W-1", exception: "None", acked: false, tone: "var(--green)", notes: ["Ramp 4 crane window open", "Crew has outbound paperwork", "No hazmat in block"] },
+      { id: "UP-119", status: "arriving", territory: "east", track: "C1", eta: "17:08", block: "Autos", consignee: "East Auto Pool", crew: "Nolan", cars: 44, priority: 3, route: "Main 2 to C ladder", lead: "E-2", exception: "Crossing gate slow order", acked: false, tone: "var(--blue)", notes: ["Reduce through Gate 7", "Spot first 12 cars at pool", "Yardmaster wants C1 split"] },
+      { id: "BNSF-63", status: "depart", territory: "west", track: "D2", eta: "17:16", block: "Manifest", consignee: "Outbound West", crew: "Okafor", cars: 61, priority: 4, route: "D2 to outbound west", lead: "W-3", exception: "Fuel slip attached", acked: true, tone: "var(--green)", notes: ["Blue flag removed", "Departure slot confirmed", "Crew call complete"] },
+      { id: "RY-332", status: "ready", territory: "east", track: "A2", eta: "17:21", block: "Chem", consignee: "Kline Terminal", crew: "Ramos", cars: 19, priority: 2, route: "A2 to protected lead", lead: "L-2", exception: "Hazmat spacing", acked: false, tone: "var(--amber)", notes: ["Keep buffer cars intact", "Terminal operator standing by", "Spot after RY-204 release"] },
+      { id: "NS-450", status: "hold", territory: "west", track: "D1", eta: "17:32", block: "Coal", consignee: "River Plant", crew: "Chen", cars: 72, priority: 5, route: "D1 to river branch", lead: "W-2", exception: "Crew hours limit", acked: false, tone: "var(--red)", notes: ["Relief crew due 18:05", "Keep clear of scale track", "Plant requested full block"] },
+      { id: "CPKC-9", status: "arriving", territory: "east", track: "E1", eta: "17:40", block: "Reefer", consignee: "Cold Dock", crew: "Ivers", cars: 27, priority: 2, route: "Main 1 to E1", lead: "E-1", exception: "Temperature record pull", acked: true, tone: "var(--blue)", notes: ["Dock has two doors open", "Inspect reefer 18 before spot", "No customs hold"] },
+      { id: "RY-018", status: "ready", territory: "west", track: "B1", eta: "17:47", block: "Local", consignee: "Team Track", crew: "Moore", cars: 14, priority: 6, route: "B1 to team track", lead: "L-1", exception: "None", acked: false, tone: "var(--green)", notes: ["Short move after commuter window", "Team track gate open", "Return empties to B1"] }
+    ];
+
+    const state = {
+      filter: "all",
+      query: "",
+      sort: "priority",
+      onlyUnacked: false,
+      selectedId: trains[0].id
+    };
+
+    const body = document.querySelector("#queueBody");
+    const count = document.querySelector("#resultCount");
+    const buttons = document.querySelectorAll("[data-filter]");
+    const search = document.querySelector("#search");
+    const sort = document.querySelector("#sort");
+    const onlyUnacked = document.querySelector("#onlyUnacked");
+    const resetView = document.querySelector("#resetView");
+    const ackButton = document.querySelector("#ackButton");
+
+    function priorityLabel(value) {
+      if (value <= 1) return "Hot";
+      if (value <= 3) return "High";
+      if (value <= 5) return "Normal";
+      return "Low";
+    }
+
+    function visibleRows() {
+      const query = state.query.trim().toLowerCase();
+      return trains
+        .filter((train) => state.filter === "all" || train.territory === state.filter || train.status === state.filter)
+        .filter((train) => !state.onlyUnacked || !train.acked)
+        .filter((train) => {
+          if (!query) return true;
+          return [train.id, train.track, train.block, train.consignee, train.crew, train.status].some((value) =>
+            String(value).toLowerCase().includes(query)
+          );
+        })
+        .sort((a, b) => {
+          if (state.sort === "eta") return a.eta.localeCompare(b.eta);
+          if (state.sort === "track") return a.track.localeCompare(b.track);
+          return a.priority - b.priority || a.eta.localeCompare(b.eta);
+        });
+    }
+
+    function renderRows() {
+      const rows = visibleRows();
+      count.textContent = rows.length;
+      body.innerHTML = rows.map((train) => `
+        <tr tabindex="0" data-id="${train.id}" class="${train.id === state.selectedId ? "selected" : ""} ${train.acked ? "acked" : ""}">
+          <td><span class="train-id"><i class="signal" style="--tone: ${train.tone}"></i><span class="mono">${train.id}</span></span></td>
+          <td><span class="status" style="--tone: ${train.tone}">${train.status}</span></td>
+          <td class="mono">${train.track}</td>
+          <td class="mono">${train.eta}</td>
+          <td>${train.block}</td>
+          <td>${train.consignee}</td>
+          <td>${train.crew}</td>
+          <td class="mono">${train.cars}</td>
+        </tr>
+      `).join("");
+
+      if (!rows.some((train) => train.id === state.selectedId) && rows[0]) {
+        state.selectedId = rows[0].id;
+        renderRows();
+        return;
+      }
+
+      renderDetail();
+    }
+
+    function renderDetail() {
+      const train = trains.find((item) => item.id === state.selectedId) || visibleRows()[0];
+      if (!train) {
+        document.querySelector("#detailId").textContent = "-";
+        document.querySelector("#detailSubtitle").textContent = "No movements match filters";
+        ackButton.disabled = true;
+        document.querySelector("#timeline").innerHTML = "";
+        return;
+      }
+
+      document.querySelector("#detailId").textContent = train.id;
+      document.querySelector("#detailSubtitle").textContent = `${train.status.toUpperCase()} · ${train.track} · ${train.cars} cars`;
+      document.querySelector("#route").textContent = train.route;
+      document.querySelector("#priority").textContent = priorityLabel(train.priority);
+      document.querySelector("#lead").textContent = train.lead;
+      document.querySelector("#exception").textContent = train.exception;
+      ackButton.disabled = train.acked;
+      ackButton.innerHTML = train.acked ? "<span aria-hidden=\"true\">✓</span>Acknowledged" : "<span aria-hidden=\"true\">✓</span>Acknowledge";
+      document.querySelector("#timeline").innerHTML = train.notes.map((note, index) => `
+        <div class="event">
+          <time>${["Now", "+12", "+25"][index]}</time>
+          <div><strong>${note}</strong><span>${index === 0 ? "Dispatcher action" : "Planned movement"}</span></div>
+        </div>
+      `).join("");
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        state.filter = button.dataset.filter;
+        buttons.forEach((item) => item.classList.toggle("active", item === button));
+        renderRows();
+      });
+    });
+
+    search.addEventListener("input", (event) => {
+      state.query = event.target.value;
+      renderRows();
+    });
+
+    sort.addEventListener("change", (event) => {
+      state.sort = event.target.value;
+      renderRows();
+    });
+
+    onlyUnacked.addEventListener("click", () => {
+      state.onlyUnacked = !state.onlyUnacked;
+      onlyUnacked.setAttribute("aria-pressed", String(state.onlyUnacked));
+      onlyUnacked.style.borderColor = state.onlyUnacked ? "#74806e" : "";
+      onlyUnacked.style.color = state.onlyUnacked ? "var(--white)" : "";
+      renderRows();
+    });
+
+    resetView.addEventListener("click", () => {
+      state.filter = "all";
+      state.query = "";
+      state.sort = "priority";
+      state.onlyUnacked = false;
+      search.value = "";
+      sort.value = "priority";
+      onlyUnacked.setAttribute("aria-pressed", "false");
+      onlyUnacked.style.borderColor = "";
+      onlyUnacked.style.color = "";
+      buttons.forEach((button) => button.classList.toggle("active", button.dataset.filter === "all"));
+      renderRows();
+    });
+
+    body.addEventListener("click", (event) => {
+      const row = event.target.closest("tr[data-id]");
+      if (!row) return;
+      state.selectedId = row.dataset.id;
+      renderRows();
+    });
+
+    body.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      const row = event.target.closest("tr[data-id]");
+      if (!row) return;
+      event.preventDefault();
+      state.selectedId = row.dataset.id;
+      renderRows();
+    });
+
+    ackButton.addEventListener("click", () => {
+      const train = trains.find((item) => item.id === state.selectedId);
+      if (!train) return;
+      train.acked = true;
+      renderRows();
+    });
+
+    function updateClock() {
+      const now = new Date();
+      document.querySelector("#clock").textContent = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
+    updateClock();
+    setInterval(updateClock, 30000);
+    renderRows();
+  </script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Settings</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f1ea;
+        --panel: #fffdf8;
+        --panel-soft: #faf7ef;
+        --text: #191713;
+        --muted: #6f6a60;
+        --line: #d9d2c3;
+        --line-strong: #bfb4a1;
+        --accent: #0f6b5c;
+        --accent-dark: #0a5146;
+        --accent-soft: #d8ebe5;
+        --focus: #8f6423;
+        --shadow: 0 18px 45px rgba(49, 43, 31, 0.12);
+        --radius: 8px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0) 32rem),
+          var(--bg);
+        color: var(--text);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+
+      main {
+        width: min(100% - 32px, 760px);
+        margin: clamp(24px, 7vw, 72px) auto;
+      }
+
+      .settings-panel {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--panel);
+        box-shadow: var(--shadow);
+      }
+
+      .header {
+        padding: clamp(24px, 4vw, 36px) clamp(20px, 4vw, 40px) 22px;
+        border-bottom: 1px solid var(--line);
+        background: linear-gradient(180deg, #fffdf8 0%, #f8f3e8 100%);
+      }
+
+      h1 {
+        margin: 0;
+        color: var(--text);
+        font-size: clamp(2rem, 5vw, 3.25rem);
+        font-weight: 760;
+        letter-spacing: 0;
+        line-height: 1;
+      }
+
+      form {
+        padding: clamp(18px, 4vw, 32px) clamp(20px, 4vw, 40px) clamp(22px, 4vw, 36px);
+      }
+
+      .setting-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 18px;
+        min-height: 70px;
+        padding: 16px 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--panel-soft);
+        transition:
+          border-color 160ms ease,
+          background-color 160ms ease,
+          box-shadow 160ms ease;
+      }
+
+      .row:focus-within {
+        border-color: var(--focus);
+        background: #fffaf0;
+        box-shadow: 0 0 0 3px rgba(143, 100, 35, 0.18);
+      }
+
+      .label-text {
+        display: block;
+        color: var(--text);
+        font-size: 0.98rem;
+        font-weight: 680;
+        letter-spacing: 0;
+      }
+
+      .control-label {
+        display: contents;
+      }
+
+      input[type="checkbox"] {
+        width: 1.2rem;
+        height: 1.2rem;
+        margin: 0;
+        accent-color: var(--accent);
+        cursor: pointer;
+      }
+
+      input[type="checkbox"]:focus-visible,
+      select:focus-visible,
+      button:focus-visible {
+        outline: 3px solid var(--focus);
+        outline-offset: 3px;
+      }
+
+      select {
+        min-width: 190px;
+        min-height: 44px;
+        padding: 0 42px 0 14px;
+        border: 1px solid var(--line-strong);
+        border-radius: 6px;
+        background:
+          linear-gradient(45deg, transparent 50%, var(--muted) 50%) calc(100% - 20px) 19px / 6px 6px no-repeat,
+          linear-gradient(135deg, var(--muted) 50%, transparent 50%) calc(100% - 14px) 19px / 6px 6px no-repeat,
+          #fff;
+        color: var(--text);
+        font: 650 0.95rem/1.2 inherit;
+        appearance: none;
+        cursor: pointer;
+      }
+
+      select:hover {
+        border-color: var(--accent);
+      }
+
+      .actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 22px;
+      }
+
+      button {
+        min-height: 46px;
+        padding: 0 20px;
+        border: 1px solid var(--accent-dark);
+        border-radius: 6px;
+        background: var(--accent);
+        color: #fff;
+        font: 760 0.95rem/1 inherit;
+        letter-spacing: 0;
+        cursor: pointer;
+        box-shadow: 0 8px 18px rgba(15, 107, 92, 0.22);
+        transition:
+          background-color 160ms ease,
+          box-shadow 160ms ease,
+          transform 160ms ease;
+      }
+
+      button:hover {
+        background: var(--accent-dark);
+        box-shadow: 0 10px 22px rgba(15, 107, 92, 0.28);
+      }
+
+      button:active {
+        transform: translateY(1px);
+        box-shadow: 0 5px 12px rgba(15, 107, 92, 0.2);
+      }
+
+      @media (max-width: 560px) {
+        main {
+          width: min(100% - 24px, 760px);
+          margin-block: 18px;
+        }
+
+        .row {
+          grid-template-columns: 1fr;
+          align-items: start;
+          gap: 12px;
+          min-height: 0;
+        }
+
+        .control-label {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          align-items: center;
+          gap: 12px;
+          width: 100%;
+        }
+
+        select,
+        button {
+          width: 100%;
+        }
+
+        .actions {
+          justify-content: stretch;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main aria-labelledby="settings-title">
+      <section class="settings-panel" aria-label="Settings form">
+        <header class="header">
+          <h1 id="settings-title">Settings</h1>
+        </header>
+
+        <form>
+          <div class="setting-list">
+            <div class="row">
+              <label class="control-label">
+                <span class="label-text">Email alerts</span>
+                <input type="checkbox" checked />
+              </label>
+            </div>
+
+            <div class="row">
+              <label class="control-label">
+                <span class="label-text">Weekly digest</span>
+                <input type="checkbox" />
+              </label>
+            </div>
+
+            <div class="row">
+              <label class="label-text" for="timezone">Timezone</label>
+              <select id="timezone" name="timezone">
+                <option>Pacific Time</option>
+                <option>Eastern Time</option>
+                <option>UTC</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="submit">Save settings</button>
+          </div>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>

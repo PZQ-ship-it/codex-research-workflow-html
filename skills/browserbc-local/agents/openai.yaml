@@ -1,0 +1,4 @@
+interface:
+  display_name: "BrowserBC Local"
+  short_description: "Use the local BrowserBC recording harness"
+  default_prompt: "Use $browserbc-local to record a browser workflow and prepare the resulting skill for Codex."

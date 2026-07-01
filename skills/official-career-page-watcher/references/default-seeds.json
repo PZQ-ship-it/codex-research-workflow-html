@@ -1,0 +1,424 @@
+{
+  "name": "Official career page watcher seeds for AI / PhD / RA career-value research",
+  "updated": "2026-06-30",
+  "storage_policy": "metadata/hash/keyword counts only; no raw HTML or full page text",
+  "global_keywords": [
+    "博士",
+    "博士后",
+    "应届",
+    "校招",
+    "社招",
+    "研究员",
+    "算法",
+    "大模型",
+    "基础模型",
+    "语言模型",
+    "多模态",
+    "智能体",
+    "Agent",
+    "RAG",
+    "推理",
+    "训练",
+    "推理系统",
+    "训练框架",
+    "Infra",
+    "医疗",
+    "机器人",
+    "深圳",
+    "广州",
+    "香港",
+    "北京",
+    "上海",
+    "杭州",
+    "薪酬",
+    "年薪",
+    "总包",
+    "补贴",
+    "PhD",
+    "Postdoctoral",
+    "Research Scientist",
+    "Large Language Model",
+    "Foundation Model",
+    "Generative AI"
+  ],
+  "seeds": [
+    {
+      "id": "tencent-careers-home",
+      "company": "Tencent",
+      "url": "https://careers.tencent.com/jobopportunity.html",
+      "page_type": "official_social_home",
+      "priority": "shenzhen_gba",
+      "tags": ["bigtech", "shenzhen", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 工作机会 | 腾讯招聘"
+    },
+    {
+      "id": "tencent-hunyuan-search",
+      "company": "Tencent",
+      "url": "https://careers.tencent.com/search.html?keyword=%E6%B7%B7%E5%85%83&query=at_1",
+      "page_type": "official_search",
+      "priority": "shenzhen_gba",
+      "tags": ["bigtech", "shenzhen", "llm", "hunyuan", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 腾讯招聘 search page for 混元"
+    },
+    {
+      "id": "tencent-campus",
+      "company": "Tencent",
+      "url": "https://join.qq.com/index.html",
+      "page_type": "official_campus_home",
+      "priority": "shenzhen_gba",
+      "tags": ["bigtech", "campus", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 腾讯校招"
+    },
+    {
+      "id": "huawei-career-cn",
+      "company": "Huawei",
+      "url": "https://career.huawei.com/cn",
+      "page_type": "official_home",
+      "priority": "shenzhen_gba",
+      "tags": ["bigtech", "shenzhen", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 华为招聘官网首页"
+    },
+    {
+      "id": "huawei-social",
+      "company": "Huawei",
+      "url": "https://career.huawei.com/reccampportal/portal5/social-recruitment.html",
+      "page_type": "official_social_search",
+      "priority": "shenzhen_gba",
+      "tags": ["bigtech", "shenzhen", "llm", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 华为社会招聘 snippet with 大模型深圳 roles"
+    },
+    {
+      "id": "huawei-campus",
+      "company": "Huawei",
+      "url": "https://career.huawei.com/reccampportal/portal5/campus-recruitment.html",
+      "page_type": "official_campus_home",
+      "priority": "shenzhen_gba",
+      "tags": ["bigtech", "campus", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 华为校园招聘"
+    },
+    {
+      "id": "huawei-postdoc",
+      "company": "Huawei",
+      "url": "https://career.huawei.com/reccampportal/portal5/postdoc.html",
+      "page_type": "official_postdoc",
+      "priority": "shenzhen_gba",
+      "tags": ["bigtech", "postdoc", "shenzhen", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 华为博士后科研工作站"
+    },
+    {
+      "id": "huaweicloud-algorithm-postdoc",
+      "company": "Huawei Cloud",
+      "url": "https://www.huaweicloud.com/lab/algorithm/postdoctoral_recruitment.html",
+      "page_type": "official_postdoc_lab",
+      "priority": "shenzhen_gba",
+      "tags": ["bigtech", "postdoc", "llm_infra", "shenzhen", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 华为云算法创新Lab 博士后招聘"
+    },
+    {
+      "id": "bytedance-jobs-home",
+      "company": "ByteDance",
+      "url": "https://jobs.bytedance.com/",
+      "page_type": "official_home",
+      "priority": "reference_city",
+      "tags": ["bigtech", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 字节跳动招聘官网"
+    },
+    {
+      "id": "bytedance-campus",
+      "company": "ByteDance",
+      "url": "https://jobs.bytedance.com/campus",
+      "page_type": "official_campus_home",
+      "priority": "reference_city",
+      "tags": ["bigtech", "campus", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 字节跳动校园招聘"
+    },
+    {
+      "id": "bytedance-topseed",
+      "company": "ByteDance Seed",
+      "url": "https://jobs.bytedance.com/campus/topseed",
+      "page_type": "official_phd_talent_program",
+      "priority": "reference_city",
+      "tags": ["bigtech", "phd", "llm", "seed", "official"],
+      "source_note": "AnySearch 2026-06-30 result: Top Seed 人才计划"
+    },
+    {
+      "id": "bytedance-seed-career",
+      "company": "ByteDance Seed",
+      "url": "https://seed.bytedance.com/zh/career",
+      "page_type": "official_seed_roles",
+      "priority": "reference_city",
+      "tags": ["bigtech", "llm", "agent", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 加入我们 - 字节跳动 Seed"
+    },
+    {
+      "id": "bytedance-seed-earlycareer",
+      "company": "ByteDance Seed",
+      "url": "https://seed.bytedance.com/zh/seedearlycareer",
+      "page_type": "official_llm_earlycareer",
+      "priority": "reference_city",
+      "tags": ["bigtech", "campus", "llm", "official"],
+      "source_note": "AnySearch 2026-06-30 result: Seed 大模型人才校招"
+    },
+    {
+      "id": "alibaba-talent-home",
+      "company": "Alibaba",
+      "url": "https://talent.alibaba.com/",
+      "page_type": "official_home",
+      "priority": "reference_city",
+      "tags": ["bigtech", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 阿里巴巴集团招聘官网"
+    },
+    {
+      "id": "alibaba-tongyi-careers",
+      "company": "Alibaba Tongyi",
+      "url": "https://careers-tongyi.alibaba.com/",
+      "page_type": "official_llm_lab_home",
+      "priority": "reference_city",
+      "tags": ["bigtech", "llm", "qwen", "official"],
+      "source_note": "AnySearch 2026-06-30 result: Token Foundry / 通义实验室招聘官网"
+    },
+    {
+      "id": "alibaba-damo-careers",
+      "company": "Alibaba DAMO",
+      "url": "https://joindamo.alibaba.com/",
+      "page_type": "official_lab_home",
+      "priority": "reference_city",
+      "tags": ["bigtech", "research_lab", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 达摩院招聘官网"
+    },
+    {
+      "id": "aliyun-agent-role",
+      "company": "Alibaba Cloud",
+      "url": "https://careers.aliyun.com/off-campus/position-detail?lang=zh&positionId=2008763002",
+      "page_type": "official_role_detail",
+      "priority": "reference_city",
+      "tags": ["bigtech", "agent", "llm", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 阿里云智能-大模型/Agent算法专家-杭州"
+    },
+    {
+      "id": "baidu-talent-home",
+      "company": "Baidu",
+      "url": "https://talent.baidu.com/",
+      "page_type": "official_home",
+      "priority": "shenzhen_reference",
+      "tags": ["bigtech", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 百度招聘平台"
+    },
+    {
+      "id": "baidu-jobs-list",
+      "company": "Baidu",
+      "url": "https://talent.baidu.com/jobs/list",
+      "page_type": "official_search",
+      "priority": "shenzhen_reference",
+      "tags": ["bigtech", "llm", "shenzhen", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 百度 jobs list snippet with 2027AIDU 大模型北京/深圳"
+    },
+    {
+      "id": "baidu-campus",
+      "company": "Baidu",
+      "url": "https://talent.baidu.com/jobs/campus",
+      "page_type": "official_campus_home",
+      "priority": "shenzhen_reference",
+      "tags": ["bigtech", "campus", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 百度校园招聘"
+    },
+    {
+      "id": "meituan-campus",
+      "company": "Meituan",
+      "url": "https://campus.meituan.com/",
+      "page_type": "official_campus_home",
+      "priority": "reference_city",
+      "tags": ["bigtech", "campus", "longcat", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 美团校园招聘 / LongCat 大模型人才校招"
+    },
+    {
+      "id": "meituan-social-ai-list",
+      "company": "Meituan",
+      "url": "https://zhaopin.meituan.com/web/position?bg=BG041&hiringType=1_3",
+      "page_type": "official_social_search",
+      "priority": "reference_city",
+      "tags": ["bigtech", "llm", "agent", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 美团职位列表 with Agent / 多模态大模型"
+    },
+    {
+      "id": "meituan-campus-agent-list",
+      "company": "Meituan",
+      "url": "https://zhaopin.meituan.com/web/position?hiringType=1_1&cityList=001009&jfJgList=11001_-1&pageNo=1",
+      "page_type": "official_campus_search",
+      "priority": "reference_city",
+      "tags": ["bigtech", "campus", "agent", "rag", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 美团应届 Agent RL/RAG/多模态技术"
+    },
+    {
+      "id": "kuaishou-careers-home",
+      "company": "Kuaishou",
+      "url": "https://zhaopin.kuaishou.cn/",
+      "page_type": "official_home",
+      "priority": "shenzhen_reference",
+      "tags": ["bigtech", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 快手招聘官方平台"
+    },
+    {
+      "id": "kuaishou-recruit",
+      "company": "Kuaishou",
+      "url": "https://zhaopin.kuaishou.cn/recruit/",
+      "page_type": "official_recruit_app",
+      "priority": "shenzhen_reference",
+      "tags": ["bigtech", "campus", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 快手招聘 recruit page"
+    },
+    {
+      "id": "xiaomi-careers-home",
+      "company": "Xiaomi",
+      "url": "https://hr.xiaomi.com/",
+      "page_type": "official_home",
+      "priority": "reference_city",
+      "tags": ["bigtech", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 小米招聘"
+    },
+    {
+      "id": "xiaomi-social",
+      "company": "Xiaomi",
+      "url": "https://hr.xiaomi.com/job",
+      "page_type": "official_social_search",
+      "priority": "reference_city",
+      "tags": ["bigtech", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 小米社会招聘"
+    },
+    {
+      "id": "xiaomi-top-talent",
+      "company": "Xiaomi",
+      "url": "https://hr.xiaomi.com/toptalent",
+      "page_type": "official_talent_program",
+      "priority": "reference_city",
+      "tags": ["bigtech", "phd", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 小米 toptalent"
+    },
+    {
+      "id": "xiaomi-campus",
+      "company": "Xiaomi",
+      "url": "https://campus.hr.xiaomi.com/",
+      "page_type": "official_campus_home",
+      "priority": "reference_city",
+      "tags": ["bigtech", "campus", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 小米校园招聘"
+    },
+    {
+      "id": "xiaomi-mimo-knowledge-engineer",
+      "company": "Xiaomi MiMo",
+      "url": "https://mimo.xiaomi.com/zh/joinUs/knowledge-engineer",
+      "page_type": "official_llm_lab_role",
+      "priority": "reference_city",
+      "tags": ["bigtech", "llm_reasoning", "official"],
+      "source_note": "AnySearch 2026-06-30 result: Xiaomi MiMo 数据百晓生"
+    },
+    {
+      "id": "sensetime-join-us",
+      "company": "SenseTime",
+      "url": "https://www.sensetime.com/cn/join-us",
+      "page_type": "official_join_us",
+      "priority": "gba_reference",
+      "tags": ["ai_company", "llm", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 商汤简历投递 / 日日新大模型体系"
+    },
+    {
+      "id": "sensetime-hr-home",
+      "company": "SenseTime",
+      "url": "https://hr.sensetime.com/",
+      "page_type": "official_recruit_app",
+      "priority": "gba_reference",
+      "tags": ["ai_company", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 商汤 hr.sensetime.com"
+    },
+    {
+      "id": "sensetime-hr-index",
+      "company": "SenseTime",
+      "url": "https://hr.sensetime.com/SU60fa3bdabef57c1023fc1cbc/pb/index.html",
+      "page_type": "official_recruit_app",
+      "priority": "gba_reference",
+      "tags": ["ai_company", "campus", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 商汤科技招聘微官网"
+    },
+    {
+      "id": "pcl-hr-home",
+      "company": "Peng Cheng Laboratory",
+      "url": "https://hr.pcl.ac.cn/",
+      "page_type": "official_lab_recruit_home",
+      "priority": "shenzhen_gba",
+      "tags": ["research_lab", "shenzhen", "postdoc", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 鹏城实验室招聘官网"
+    },
+    {
+      "id": "pcl-social",
+      "company": "Peng Cheng Laboratory",
+      "url": "https://hr.pcl.ac.cn/SU62b979a5bef57c0f6fb046d7/pb/social.html",
+      "page_type": "official_lab_social",
+      "priority": "shenzhen_gba",
+      "tags": ["research_lab", "shenzhen", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 鹏城实验室在招职位"
+    },
+    {
+      "id": "idea-home",
+      "company": "IDEA",
+      "url": "https://www.idea.edu.cn/",
+      "page_type": "official_lab_home",
+      "priority": "shenzhen_gba",
+      "tags": ["research_lab", "shenzhen", "llm", "official"],
+      "source_note": "AnySearch 2026-06-30 result: IDEA研究院官网 with recruiting email"
+    },
+    {
+      "id": "idea-zhiye",
+      "company": "IDEA",
+      "url": "https://idea.zhiye.com/",
+      "page_type": "official_recruit_system",
+      "priority": "shenzhen_gba",
+      "tags": ["research_lab", "shenzhen", "official"],
+      "source_note": "AnySearch 2026-06-30 result: IDEA数字经济研究院 zhiye recruitment system"
+    },
+    {
+      "id": "gml-home",
+      "company": "Guangming Laboratory",
+      "url": "https://www.gml.ac.cn/",
+      "page_type": "official_lab_home",
+      "priority": "shenzhen_gba",
+      "tags": ["research_lab", "shenzhen", "postdoc", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 光明实验室 official site with recruiting sections"
+    },
+    {
+      "id": "hkgai-careers",
+      "company": "HKGAI",
+      "url": "https://www.hkgai.info/en/contact",
+      "page_type": "official_lab_careers",
+      "priority": "hong_kong_gba",
+      "tags": ["research_lab", "hong_kong", "generative_ai", "official"],
+      "source_note": "AnySearch 2026-06-30 result: HKGAI careers"
+    },
+    {
+      "id": "hkgai-hkust-postdoc",
+      "company": "HKGAI / HKUST",
+      "url": "https://hkustcareers.hkust.edu.hk/hong-kong-generative-ai-research-and-development-center-limited/hkgai0003",
+      "page_type": "official_postdoc_detail",
+      "priority": "hong_kong_gba",
+      "tags": ["research_lab", "hong_kong", "postdoc", "official"],
+      "source_note": "AnySearch 2026-06-30 result: HKGAI0003 Post-doctoral Fellow - Careers at HKUST"
+    },
+    {
+      "id": "airs-cuhk-recruitment",
+      "company": "AIRS / CUHK-Shenzhen",
+      "url": "https://www.cuhk.edu.cn/zh-hans/recruitment/14638",
+      "page_type": "official_university_recruitment",
+      "priority": "shenzhen_gba",
+      "tags": ["research_lab", "shenzhen", "robotics", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 深圳市人工智能与机器人研究院 recruitment via CUHK-Shenzhen"
+    },
+    {
+      "id": "suat-llm-research-center",
+      "company": "Shenzhen University of Advanced Technology",
+      "url": "https://rczpw.suat-sz.edu.cn/info/1011/1151.htm",
+      "page_type": "official_university_recruitment",
+      "priority": "shenzhen_gba",
+      "tags": ["research_lab", "shenzhen", "llm", "official"],
+      "source_note": "AnySearch 2026-06-30 result: 深圳理工大学大模型研究中心招聘公告"
+    }
+  ]
+}

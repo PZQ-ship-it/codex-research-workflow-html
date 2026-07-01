@@ -1,0 +1,4 @@
+interface:
+  display_name: "OfferShow Manual Export Helper"
+  short_description: "Capture redacted OfferShow salary samples"
+  default_prompt: "Use $offershow-manual-export-helper to open OfferShow in a visible browser, inspect the current page safely, and export selected visible salary samples into an anonymized ledger."

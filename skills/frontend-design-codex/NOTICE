@@ -1,0 +1,15 @@
+Frontend Design Codex Skill
+
+This project is a Codex-native rewrite adapted from Anthropic's public
+`frontend-design` Claude Code plugin workflow.
+
+Original local source used during migration:
+- Claude plugin name: frontend-design
+- Author metadata: Anthropic <support@anthropic.com>
+- License discovered with source: Apache License 2.0
+- Upstream learning reference from the original README:
+  https://github.com/anthropics/claude-cookbooks/blob/main/coding/prompting_for_frontend_aesthetics.ipynb
+
+This repository does not include Claude marketplace configuration and does not
+claim compatibility with Claude Code plugin installation. It provides a Codex
+local skill with equivalent design intent adapted to Codex skill semantics.

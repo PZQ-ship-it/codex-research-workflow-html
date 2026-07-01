@@ -29,8 +29,9 @@ The generated HTML must be a paper-replacement digest for normal study:
    - `<paper-slug>.html` for the final artifact.
 2. Inspect the PDF with `scripts/inspect_paper_pdf.py` when possible:
    - if the active Python cannot import the needed PDF libraries, first try to find or create a usable environment; do not silently downgrade to page-only rendering because the default interpreter is missing packages;
-   - extract title-like metadata, outline, per-page text, candidate captions, references, and embedded images;
-   - render figure-heavy pages if embedded image extraction is incomplete.
+   - extract title-like metadata, outline, per-page text, candidate captions, references, embedded images, and the lightweight `figure_coverage` audit;
+   - use the default audit to compare captions with embedded images and drawing objects before deciding that a paper has no figures;
+   - when important captions are marked `vector_crop_needed` or `page_crop_needed`, render the relevant page and crop the figure/table before finalizing visual assets.
 3. Classify the paper type:
    - survey/review;
    - algorithm/method;
@@ -53,6 +54,8 @@ The generated HTML must be a paper-replacement digest for normal study:
 7. Select important visual assets:
    - include taxonomy diagrams, architecture/method overview figures, algorithm flow diagrams, comparison tables, main result plots, dataset/metric tables, and challenge/future-direction diagrams;
    - prefer extracted embedded images when sharp;
+   - treat `figure_coverage` as the required figure/table ledger: every important caption should map to `embedded_image_or_mixed`, `vector_crop_needed`, `page_crop_needed`, `manual_check`, or an explicit omission reason;
+   - for pages with captions but zero extracted images and nonzero drawing objects, assume vector/PDF graphics until disproven and use page render + crop rather than declaring no image;
    - prefer precise figure/table crops when bounding boxes or visually checked coordinates are available;
    - fall back to full-page renders only after dependency recovery and crop attempts are unsafe, incomplete, or likely to lose caption/table context;
    - always include the source page and caption/provenance near the image.
@@ -82,6 +85,17 @@ Precise crops are preferred for single-page figures, overview diagrams, architec
 - the user explicitly prioritizes provenance over visual polish.
 
 When using full-page renders, explain in the manifest why crops were not used and identify which pages contain the relevant figure or table.
+
+
+## Figure Coverage Audit
+
+Use an `always audit, selectively analyze` policy so figure coverage does not multiply token cost:
+
+- Always run the lightweight audit that records per-page caption labels, embedded image counts, image block counts, and drawing counts.
+- Treat `caption_count > extracted_image_count` as a coverage gap until `figure_coverage` explains it.
+- Interpret pages with captions, `embedded_image_count == 0`, and `drawing_count > 0` as likely vector/PDF graphics requiring page render and crop.
+- Do not ask the model to analyze every crop. Analyze only method overview figures, architecture diagrams, algorithm flow diagrams, main result tables/plots, ablations, comparison tables, or user-specified figures.
+- Record unselected figures as omitted or low-priority in `manifest.json`; do not silently ignore them.
 
 ## Type-Specific Output
 
@@ -133,7 +147,7 @@ The initial HTML should already include a useful first-pass explanation of every
 
 ## Resources
 
-- `scripts/inspect_paper_pdf.py`: extract text, candidate captions, references, outlines, and embedded images into a manifest.
+- `scripts/inspect_paper_pdf.py`: extract text, candidate captions, references, outlines, embedded images, page drawing counts, and figure coverage status into a manifest.
 - `assets/paper-digest-template.html`: standalone HTML skeleton for the final digest.
 - `references/survey-reading-workflow.md`: four-stage survey reading workflow and branch deepening pattern.
 - `references/algorithm-method-workflow.md`: method/algorithm/benchmark paper structure.
@@ -143,6 +157,9 @@ The initial HTML should already include a useful first-pass explanation of every
 
 ```bash
 python skills/paper-pdf-to-structured-html/scripts/inspect_paper_pdf.py paper.pdf --out output/paper-html/paper-slug
+python skills/paper-pdf-to-structured-html/scripts/inspect_paper_pdf.py paper.pdf --out output/paper-html/paper-slug --render-figure-pages
 ```
 
 Install missing PDF dependencies before falling back to coarse extraction: `pymupdf`, `pdfplumber`, `pypdf`, and Poppler utilities for page rendering.
+
+
