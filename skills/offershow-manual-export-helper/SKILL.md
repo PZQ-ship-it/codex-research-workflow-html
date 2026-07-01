@@ -5,11 +5,11 @@ description: Open OfferShow in a user-controlled visible browser, inspect or exp
 
 # OfferShow Manual Export Helper
 
-Use this skill as a thin bridge between the private visible-browser OfferShow helper and `community-salary-sample-ledger`. It is for manual/user-reviewed collection, not automated scraping.
+Use this skill as a thin bridge between the visible-browser OfferShow helper and `community-salary-sample-ledger`. It is for manual/user-reviewed collection, not automated scraping. The JS helper is packaged in `scripts/`, but its browser profile and outputs default to the private runtime directory `C:\Users\Administrator\.codex\runtime\offershow-browser`.
 
 ## Safety Defaults
 
-- Use the visible browser helper in `C:\Users\Administrator\.codex\runtime\offershow-browser`.
+- Use the packaged visible browser helper `scripts\offershow_helper.js`; keep browser profile, `out/`, and `reviews/` in `C:\Users\Administrator\.codex\runtime\offershow-browser`.
 - Let the user complete login, CAPTCHA, MFA, filtering, and paid/member actions in the browser.
 - Do not print or store cookies, tokens, `localStorage`, auth headers, browser profile data, usernames, contact details, raw private posts, or private screenshots.
 - Do not call private API endpoints directly, bypass CAPTCHA/paywalls, page through bulk results, or run old crawler code.
@@ -21,21 +21,25 @@ Use this skill as a thin bridge between the private visible-browser OfferShow he
 Open/login manually:
 
 ```powershell
-node C:\Users\Administrator\.codex\runtime\offershow-browser\offershow_helper.js login --url offerList --wait-ms 240000
+$skill = "C:\Users\Administrator\.codex\skills\offershow-manual-export-helper"
+node "$skill\scripts\offershow_helper.js" login --url home --wait-ms 240000
 ```
 
-Inspect current page without private state:
+Inspect the homepage salary tab without private state:
 
 ```powershell
-node C:\Users\Administrator\.codex\runtime\offershow-browser\offershow_helper.js inspect --url offerList --wait-ms 60000 --max-rows 80
+$skill = "C:\Users\Administrator\.codex\skills\offershow-manual-export-helper"
+node "$skill\scripts\offershow_helper.js" inspect --url home --tab salary --query "腾讯" --wait-ms 60000 --max-rows 80
 ```
 
 Export redacted visible candidates after manual filtering:
 
 ```powershell
-node C:\Users\Administrator\.codex\runtime\offershow-browser\offershow_helper.js export-visible `
-  --url offerList `
-  --query "腾讯 大模型 博士 深圳" `
+$skill = "C:\Users\Administrator\.codex\skills\offershow-manual-export-helper"
+node "$skill\scripts\offershow_helper.js" export-visible `
+  --url home `
+  --tab salary `
+  --query "腾讯" `
   --wait-ms 60000 `
   --max-rows 80
 ```
@@ -74,8 +78,8 @@ Remove `--dry-run` only after the review passes.
 
 1. Check whether OfferShow is already routed in `D:\todo\codex\tool-registry.md` and `codex\project-map.md`.
 2. Run `login` if the persistent browser profile needs fresh user login.
-3. Run `inspect` to see non-secret resource hints and visible candidate counts.
-4. Let the user filter/navigate in the visible browser, then run `export-visible`.
+3. Run `inspect --url home --tab salary` to see non-secret resource hints and visible candidate counts from the homepage salary tab.
+4. Let the user filter/navigate in the visible browser, then run `export-visible --url home --tab salary`.
 5. Run `new-review` to create a CSV in the private runtime `reviews/` directory.
 6. Have a human mark `selected=true` only for rows they personally verified and write `human_summary`.
 7. Run `validate-review`.
@@ -83,7 +87,7 @@ Remove `--dry-run` only after the review passes.
 
 ## Script Roles
 
-- `offershow_helper.js` in the private runtime opens Chrome, polls visible page text, records redacted visible candidate hints, and saves JSON snapshots under runtime `out/`.
+- `scripts/offershow_helper.js` opens Chrome, polls visible page text, records redacted visible candidate hints, and saves JSON snapshots under private runtime `out/`.
 - `scripts/offershow_manual_export_helper.py` inventories snapshots, creates review CSVs, validates selected rows, and appends selected rows to the community salary ledger.
 
 Read `references/review-schema.md` before editing review CSVs. Read `references/safety-boundary.md` before changing the helper or adding commands.

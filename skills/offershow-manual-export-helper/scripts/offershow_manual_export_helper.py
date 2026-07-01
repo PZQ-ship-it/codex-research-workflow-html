@@ -390,7 +390,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_append = sub.add_parser("append-ledger", help="Append selected, human-reviewed rows to a community salary ledger.")
     p_append.add_argument("--review", required=True)
     p_append.add_argument("--ledger", required=True)
-    p_append.add_argument("--source-url", default="https://www.offershow.cn/jobs/offerlist")
+    p_append.add_argument("--source-url", default="https://www.offershow.cn/")
     p_append.add_argument("--dry-run", action="store_true")
     p_append.add_argument("--force", action="store_true")
     p_append.set_defaults(func=cmd_append_ledger)
