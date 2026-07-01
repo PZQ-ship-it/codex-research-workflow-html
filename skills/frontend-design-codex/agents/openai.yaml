@@ -1,0 +1,4 @@
+interface:
+  display_name: "Frontend Design Codex"
+  short_description: "Create distinctive production-grade frontend UI in Codex."
+  default_prompt: "Use frontend-design-codex to design and implement a polished non-generic frontend interface, then verify it in a browser."
