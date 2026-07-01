@@ -39,6 +39,24 @@ This file records third-party skill snapshots vendored into this repository.
 - Commit: `71e9c42c60636602e87985f4306d134a3b63809e`
 - Install note: moved the upstream `compatibility` frontmatter field under `metadata.compatibility` to satisfy the local Codex skill validator while preserving the compatibility note.
 
+## Clone Website
+
+- Skill directory: `skills/clone-website/`
+- Upstream: `https://github.com/JCodesMore/ai-website-cloner-template`
+- Upstream path: `.codex/skills/clone-website`
+- Commit: `8dd9cb47dde0d49fec06ee1d69bedd04840f3c95`
+- License: MIT
+- Install note: moved the upstream `argument-hint` and `user-invocable` frontmatter fields under `metadata` to satisfy the local Codex skill validator while preserving the trigger metadata.
+
+## Frontend Design Codex
+
+- Skill directory: `skills/frontend-design-codex/`
+- Upstream: `https://github.com/KilimiaoSix/frontend-design-codex-skill`
+- Upstream path: repository root
+- Commit: `d5cfacddf8ddd4ce82c8a0f9ce11a3135b78e7aa`
+- License: Apache-2.0
+- Install note: installed globally as `C:\Users\Administrator\.codex\skills\frontend-design-codex` and mirrored as a full runnable bundle.
+
 ## External Crawler Adapters
 
 These sources are not vendored into this repository. Repo-local skills only store wrappers, setup helpers, and output contracts.
