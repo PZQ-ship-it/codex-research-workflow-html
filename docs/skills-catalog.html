@@ -29,9 +29,16 @@
       <div class="meta">
         <div><b>canonical source</b><span><code>skills/</code></span></div>
         <div><b>安装目标</b><span><code>$CODEX_HOME/skills</code></span></div>
-        <div><b>格式</b><span><code>SKILL.md</code> + <code>agents/openai.yaml</code></span></div>
+        <div><b>格式</b><span><code>SKILL.md</code> + 可选 <code>references/</code> / <code>scripts/</code> / <code>assets/</code></span></div>
         <div><b>状态</b><span class="status ok">validated locally</span></div>
       </div>
+    </section>
+
+    <section class="section">
+      <h2>安装方式</h2>
+      <p>将需要的 skill 目录整体复制到 <code>$CODEX_HOME/skills</code>，例如：</p>
+      <pre><code>Copy-Item -Recurse -Force .\skills\knowledge-tree-builder $HOME\.codex\skills\knowledge-tree-builder</code></pre>
+      <p>复制后重启 Codex / VS Code，使新的 skill 被重新发现。</p>
     </section>
 
     <nav class="toc" data-toc><h2>目录</h2></nav>
@@ -48,6 +55,7 @@
           <tr><td><code>thesis-figure-pipeline</code></td><td>从实验 CSV 生成论文级图表，并同步到 LaTeX 图目录与引用。</td></tr>
           <tr><td><code>latex-pdf-final-review</code></td><td>LaTeX 论文提交前做 PDF 级终稿审阅。</td></tr>
           <tr><td><code>html-research-notes</code></td><td>用 HTML 而不是 Markdown 创建结构化科研笔记或模板。</td></tr>
+          <tr><td><code>knowledge-tree-builder</code></td><td>构建、扩展、验证和长期运营 source-grounded 研究知识树，默认 learning-first，可按确认门槛扩展到 research-incubation、frontier-tracking 和 project-execution。</td></tr>
           <tr><td><code>reporting-trace-maintainer</code></td><td>执行任务、研究、仓库修改或实验时维护可汇报的工作留痕，为后续 advisor update、stakeholder briefing 或 weekly review 保留计划、证据、判断和下一步。</td></tr>
           <tr><td><code>paper-pdf-to-structured-html</code></td><td>把论文 PDF 转成结构化高可读 HTML，按综述、算法、benchmark 或系统论文区别处理，并筛入关键图表。</td></tr>
           <tr><td><code>google-scholar-profile-intel</code></td><td>按具体需求路由 Google Scholar 学者主页抓取、OpenAlex 补全、Apify 输入和深度引用爬取，不使用 SerpApi。</td></tr>
