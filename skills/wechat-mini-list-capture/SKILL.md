@@ -1,11 +1,11 @@
 ---
 name: wechat-mini-list-capture
-description: Cooperative visible-UI workflow for collecting simple WeChat mini-program list/detail pages with Codex-generated screenshot annotations. Use when the user wants Codex to mark app/list/item boxes on WeChat mini-program screenshots, apply those annotations to config, guide tab switching, run sample captures, or export review files without private API replay.
+description: Cooperative visible-UI workflow for collecting simple WeChat mini-program list/detail pages with Codex-generated screenshot annotations and optional Android ADB no-mouse execution. Use when the user wants Codex to mark app/list/item boxes, apply annotations to config, run captures without taking over the Windows mouse, guide tab switching, or export review files without private API replay.
 ---
 
 # WeChat Mini List Capture
 
-Use this skill as a human-Codex operating loop, not as a blind crawler. The user keeps the mini program visible and performs login/tab switching when needed; Codex directly annotates screenshots, applies those annotations to config, runs small samples, and exports review artifacts.
+Use this skill as a human-Codex operating loop, not as a blind crawler. Prefer Android ADB mode when the user does not want Windows mouse takeover. The user keeps the mini program visible in the chosen environment and performs login/tab switching when needed; Codex directly annotates screenshots, applies those annotations to config, runs small samples, and exports review artifacts.
 
 ## Boundaries
 
@@ -31,15 +31,22 @@ D:\agent-workflow-lab\runtime\wechat-mini-list-capture
 
 Before running commands, read `references/harness-workflow.md` for exact command usage and screenshot-review criteria.
 
+## Driver Choice
+
+- Prefer `android_adb` when the user wants no mouse takeover. It controls a real Android device or emulator through ADB screenshots, taps, swipes, and back key events.
+- Use `desktop` only when the user accepts Windows mouse/focus takeover or Android is unavailable.
+- If `doctor-android.ps1` reports `adb is not installed or not on PATH`, stop and ask the user to install Android SDK Platform Tools or provide `-AdbPath`.
+
 ## Operating Loop
 
-1. Inspect the raw current screenshot, usually `runtime\wechat-mini-list-capture\calibration-<list-id>-screen.png`.
-2. Create a Codex annotation JSON with `app_region`, `list_region`, and full-card `items[]` boxes.
-3. Apply the annotation with `apply-annotation.ps1`; this renders a review image and writes `config.local.json`.
-4. Inspect the rendered review image. If boxes are good, run a small sample first, usually `-MaxItems 3`.
-5. If boxes are bad, revise the annotation JSON and reapply it. Do not ask the user to manually mark row slots.
-6. After sample capture, export a review CSV and ask the user to confirm field quality before full capture.
-7. Write back durable status in `D:\todo` when the workflow meaningfully progresses.
+1. Run the relevant doctor command. Prefer `doctor-android.ps1 -Screenshot` for no-mouse mode.
+2. Inspect the raw current screenshot, usually `runtime\wechat-mini-list-capture\calibration-<list-id>-screen.png`.
+3. Create a Codex annotation JSON with `app_region`, `list_region`, and full-card `items[]` boxes.
+4. Apply the annotation with `apply-annotation.ps1`; this renders a review image and writes `config.local.json`.
+5. Inspect the rendered review image. If boxes are good, run a small sample first, usually `-MaxItems 3`.
+6. If boxes are bad, revise the annotation JSON and reapply it. Do not ask the user to manually mark row slots.
+7. After sample capture, export a review CSV and ask the user to confirm field quality before full capture.
+8. Write back durable status in `D:\todo` when the workflow meaningfully progresses.
 
 ## Codex Annotation Format
 

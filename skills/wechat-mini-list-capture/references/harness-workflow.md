@@ -12,6 +12,7 @@ Health check:
 
 ```powershell
 .\scripts\doctor.ps1
+.\scripts\doctor-android.ps1 -Screenshot
 ```
 
 Visual calibration only:
@@ -25,6 +26,7 @@ Calibrate current visible list directly:
 ```powershell
 .\scripts\calibrate-visible-list.ps1 -ListId list_a
 .\scripts\calibrate-visible-list.ps1 -ListId list_b
+.\scripts\calibrate-android.ps1 -ListId list_a
 ```
 
 Apply Codex-generated annotation:
@@ -43,6 +45,7 @@ Small sample run:
 
 ```powershell
 .\scripts\run-desktop.ps1 -ListId list_a -MaxItems 3
+.\scripts\run-android.ps1 -ListId list_a -MaxItems 3
 ```
 
 Export review:
@@ -64,6 +67,24 @@ Export review:
 4. Apply it with `apply-annotation.ps1`.
 5. Inspect `codex-annotation-<list-id>-review.png`.
 6. Revise JSON and reapply until the review image is acceptable.
+
+## No-Mouse Android Mode
+
+Use this path when the user wants to keep using the Windows desktop:
+
+```powershell
+.\scripts\doctor-android.ps1 -Screenshot
+.\scripts\calibrate-android.ps1 -ListId list_a
+.\scripts\run-android.ps1 -ListId list_a -MaxItems 3
+```
+
+If multiple ADB devices are connected, pass `-Serial <adb-device-id>`.
+If `adb` is not on PATH, pass `-AdbPath "C:\path\to\adb.exe"`.
+If Google Platform Tools was installed through WinGet, the Android scripts try
+to discover that `adb.exe` automatically.
+
+ADB mode controls only the Android device/emulator through screenshots, taps,
+swipes, and back key events. It should not move the Windows mouse.
 
 ## Review Criteria
 
