@@ -1,4 +1,4 @@
 interface:
   display_name: "WeChat Mini List Capture"
-  short_description: "Codex协作校准并采集小程序列表"
-  default_prompt: "Use $wechat-mini-list-capture to inspect the current WeChat mini-program calibration screenshot and guide the next capture step."
+  short_description: "Codex标注小程序列表框并采集"
+  default_prompt: "Use $wechat-mini-list-capture to annotate the current WeChat mini-program screenshot, apply the boxes, and guide the next capture step."

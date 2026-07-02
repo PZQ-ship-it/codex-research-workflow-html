@@ -27,7 +27,13 @@ Calibrate current visible list directly:
 .\scripts\calibrate-visible-list.ps1 -ListId list_b
 ```
 
-Codex-reviewed manual row-slot config:
+Apply Codex-generated annotation:
+
+```powershell
+.\scripts\apply-annotation.ps1 -Annotation D:\agent-workflow-lab\runtime\wechat-mini-list-capture\codex-annotation-list_a.json
+```
+
+Manual row-slot config, fallback only:
 
 ```powershell
 .\scripts\configure-list.ps1 -ListId list_a -AppRegion "765,96,1392,1274" -ListRegion "765,690,1392,1274" -CandidateMode row_slots -RowSlot "790,690,1368,962","790,965,1368,1238"
@@ -45,7 +51,21 @@ Export review:
 .\scripts\export-review.ps1 -RunDir <run-dir>
 ```
 
-## Calibration Review Criteria
+## Codex Annotation Procedure
+
+1. Open the raw screenshot with visual inspection.
+2. Create `codex-annotation-<list-id>.json` in the private runtime.
+3. Include:
+   - `list_id`
+   - `source_image`
+   - `app_region`
+   - `list_region`
+   - `items[]` with `id`, `label`, `box`, `confidence`, and optional `note`
+4. Apply it with `apply-annotation.ps1`.
+5. Inspect `codex-annotation-<list-id>-review.png`.
+6. Revise JSON and reapply until the review image is acceptable.
+
+## Review Criteria
 
 Good calibration:
 
@@ -57,10 +77,10 @@ Good calibration:
 
 Bad calibration routes:
 
-- `app` wrong: rerun with the mini program centered/visible, or pass `-AppRegion`.
-- `list` starts too high: use `configure-list.ps1` with a lower `-ListRegion`.
-- item cards split: use `candidate_mode=row_slots`.
-- item candidates include announcements: set `list_region` below announcement and use row slots.
+- `app` wrong: revise `app_region` in the Codex annotation JSON.
+- `list` starts too high: revise `list_region` below announcement boxes.
+- item cards split: replace split boxes with one full-card `items[].box`.
+- item candidates include announcements: move `list_region` below announcement and exclude announcement from `items[]`.
 - OCR text noisy but boxes good: run a small sample and inspect `review.csv`; do not over-tune before seeing detail capture.
 
 ## Runtime Files
@@ -69,6 +89,8 @@ Expected private files:
 
 ```text
 D:\agent-workflow-lab\runtime\wechat-mini-list-capture\config.local.json
+D:\agent-workflow-lab\runtime\wechat-mini-list-capture\codex-annotation-<list-id>.json
+D:\agent-workflow-lab\runtime\wechat-mini-list-capture\codex-annotation-<list-id>-review.png
 D:\agent-workflow-lab\runtime\wechat-mini-list-capture\calibration-<list-id>-annotated.png
 D:\agent-workflow-lab\runtime\wechat-mini-list-capture\calibration-<list-id>-candidates.json
 D:\agent-workflow-lab\runtime\wechat-mini-list-capture\runs\<run-id>\
