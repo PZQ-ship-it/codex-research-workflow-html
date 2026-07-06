@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Readonly Analyze"
+  short_description: "Read-only repo analysis with confidence"
+  default_prompt: "Use $codex-readonly-analyze to analyze this repo question without editing files."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Code Review"
+  short_description: "Review code with independent severity gates"
+  default_prompt: "Use $codex-code-review to review these code changes and report findings."

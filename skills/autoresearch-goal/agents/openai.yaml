@@ -1,0 +1,4 @@
+interface:
+  display_name: "OMX Autoresearch Goal"
+  short_description: "Original OMX professor-critic research goal"
+  default_prompt: "Use $autoresearch-goal to try the upstream OMX autoresearch-goal workflow."

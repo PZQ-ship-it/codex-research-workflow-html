@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Best Practice Research"
+  short_description: "Research current best practices from sources"
+  default_prompt: "Use $codex-best-practice-research to gather source-backed best-practice guidance."

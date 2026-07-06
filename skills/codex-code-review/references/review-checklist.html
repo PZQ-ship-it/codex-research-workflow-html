@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Code Review Checklist</title>
+<body>
+<h1>Code Review Checklist</h1>
+<h2>Categories</h2>
+<ul>
+  <li>Correctness: wrong behavior, regressions, edge cases, error paths.</li>
+  <li>Security: secrets, injection, authz/authn, unsafe parsing, XSS/CSRF.</li>
+  <li>Performance: N+1, avoidable O(n^2), excessive rerenders, caching mistakes.</li>
+  <li>Maintainability: duplication, coupling, unclear boundaries, weak naming.</li>
+  <li>Tests: missing critical-path coverage, brittle tests, untested migrations.</li>
+</ul>
+<h2>Verdict</h2>
+<ul>
+  <li>REQUEST CHANGES: critical/high issue, architect block, or missing required review evidence.</li>
+  <li>COMMENT: non-blocking medium/low issues or architect watchlist.</li>
+  <li>APPROVE: no blocking findings and residual risks are acceptable.</li>
+</ul>
+</body>
+</html>

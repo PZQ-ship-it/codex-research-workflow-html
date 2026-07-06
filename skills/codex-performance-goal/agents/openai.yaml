@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Performance Goal"
+  short_description: "Optimize performance against evaluators"
+  default_prompt: "Use $codex-performance-goal to optimize this performance objective against an evaluator."

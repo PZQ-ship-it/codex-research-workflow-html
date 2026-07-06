@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex AI Slop Cleaner"
+  short_description: "Clean AI-generated slop with tests"
+  default_prompt: "Use $codex-ai-slop-cleaner to clean up this AI-generated or bloated code safely."
