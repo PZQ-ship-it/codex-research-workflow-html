@@ -23,6 +23,7 @@ Run a bounded exploration loop for fuzzy work. The goal is leads, evidence, and 
 5. Choose the next frontier action; do not pre-plan all remaining rounds as fanout:
    - continue one active branch for one concrete probe;
    - fan out one selected branch when breadth is needed;
+   - resume a strong parked branch when the newest fanout layer is low-yield;
    - prune, pivot, promote, or stop.
 6. For a single-branch round:
    - select a branch from `frontier.json`;
@@ -37,7 +38,7 @@ Run a bounded exploration loop for fuzzy work. The goal is leads, evidence, and 
    - count each sibling probe as one round record;
    - import each branch result;
    - run `beam-select` to keep the best branches plus optional diversity.
-8. After beam selection, deepen or split only the retained branches. Do not restart every remaining round as another same-layer fanout.
+8. After beam selection, deepen or split only the retained branches. If all new children are weak, run `next-frontier --include-parked` and resume the best earlier parked branch instead of forcing another probe into weak children. Do not restart every remaining round as another same-layer fanout.
 9. Stop when the round budget is used, a lead is promoted, all branches are blocked/pruned/parked, or the user redirects.
 10. End with best leads, dead ends, parked branches, artifacts, and the recommended next lane.
 
@@ -83,12 +84,14 @@ Layer cycle:
 3. `evaluate`: import each branch result as a normal round record.
 4. `beam select`: keep top-scoring branches and optionally one high-novelty diversity branch.
 5. `iterate`: continue a retained branch, split a retained branch, compare retained branches, promote a lead, or stop.
+6. `fallback`: if the latest sibling layer is low-yield, resume the best earlier parked branch from the global frontier.
 
 Avoid this anti-pattern:
 
 - Do not say "I will set 8 rounds and keep every round as same-layer parallel probing."
 - Do not create fresh unrelated sibling sets after every round.
 - Do not fan out again before the previous sibling layer has been collected and selected.
+- Do not spend extra rounds on a weak newest layer just because it is newest; use the global frontier.
 
 Use native subagents only when the user explicitly authorized subagents, parallel agents, delegation, or this skill's ToT fanout. The lead agent still owns context reading, branch prompts, scoring integration, and final recommendations.
 
@@ -182,6 +185,7 @@ python <skill-dir>\scripts\explore_ledger.py beam-select `
 Summarize:
 
 ```powershell
+python <skill-dir>\scripts\explore_ledger.py next-frontier --run-dir <run-dir> --include-parked
 python <skill-dir>\scripts\explore_ledger.py frontier --run-dir <run-dir>
 python <skill-dir>\scripts\explore_ledger.py digest --run-dir <run-dir>
 ```

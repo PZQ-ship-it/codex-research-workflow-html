@@ -44,6 +44,9 @@ When the target repo is public-sensitive, prefer a public-safe lab repo or an ig
       "status": "active",
       "hypothesis": "Initial broad exploration branch.",
       "last_score": 0,
+      "visits": 0,
+      "last_probe_round": 0,
+      "rung": "seed",
       "parent_branch_id": "",
       "layer_id": "",
       "rounds": [],
@@ -63,6 +66,17 @@ Statuses:
 - `merged`: folded into another branch.
 - `branched`: split into child branches.
 - `parked`: outside the current beam; can be resumed later.
+
+Branch scheduling fields:
+
+- `visits`: completed probes for this branch.
+- `last_probe_round`: most recent round number that touched this branch.
+- `last_score` / `last_scores`: latest total and dimension scores.
+- `rung`: rough probe depth; common values are `seed` and `fanout`.
+- `parked_reason`: why the branch left the active beam.
+- `resume_reason`: why a parked branch was reactivated.
+
+Use `scripts/explore_ledger.py next-frontier --run-dir <run-dir> --include-parked` to recommend the next branch across active and parked branches. Add `--activate` to mark a parked branch active when a low-yield fanout should fall back to a stronger earlier branch.
 
 ## Round Record
 
@@ -141,6 +155,12 @@ Interpretation:
 - `evidence`: how grounded the branch is in observed facts.
 - `risk`: chance of wasting budget, damaging state, or overclaiming.
 - `cost`: expected time, money, complexity, or dependency cost.
+
+Low-yield fanout fallback:
+
+- Treat a recent fanout as low-yield when every probed child is below the useful score threshold or all children remain low-evidence.
+- Default helper thresholds are `total < 2.5` or `evidence < 2`.
+- On low-yield fanout, resume the best parked branch outside the latest layer when it has stronger score/evidence/cost/risk.
 
 ## Recovery
 

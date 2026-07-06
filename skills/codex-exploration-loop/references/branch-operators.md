@@ -29,6 +29,8 @@ Default frontier policy:
 
 - Keep top 2 active branches by total score.
 - Keep 1 diversity branch when it has high novelty and low cost.
+- Keep parked branches in the global frontier; they are deferred options, not deleted failures.
+- When a new fanout layer is low-yield, compare it against all parked branches and resume the best earlier branch if it is stronger.
 - Prune branches with two stale rounds and no new evidence.
 - Pivot when the top branch is blocked or low-evidence after repeated probes.
 
@@ -39,7 +41,16 @@ Tree-of-Thoughts fanout policy:
 - Collect all sibling results before selection.
 - Use `beam-select` to keep top total-score branches plus optional diversity.
 - Park unselected branches so they can be resumed later.
+- Use `next-frontier --include-parked` after weak fanout results to recommend the next global frontier branch.
+- Use `next-frontier --include-parked --activate` to mark a parked branch active again.
 - Let workers propose `proposed_branches`, but only the lead/controller updates `frontier.json`.
+
+Branch metadata:
+
+- `visits`: number of completed probes on the branch.
+- `last_probe_round`: latest round number that touched the branch.
+- `rung`: rough probe depth such as `seed` or `fanout`; use it as a human-readable hint, not a strict algorithm.
+- `parked_reason` / `resume_reason`: why the branch left or re-entered the active frontier.
 
 ## Promotion
 

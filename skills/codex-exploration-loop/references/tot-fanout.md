@@ -38,6 +38,7 @@ Do not equate `max_rounds` with fanout layers. `max_rounds = 8` means eight tota
 5. Continue, pivot, promote, or run another fanout layer.
    - Continue means deepen one retained branch.
    - Run another fanout only from a retained branch that needs sub-hypotheses.
+   - If all retained or newly created children are weak, resume the best earlier parked branch from the global frontier.
    - Do not fan out every round by default.
 
 Example with `max_rounds = 8`:
@@ -53,8 +54,23 @@ Example with `max_rounds = 8`:
 - Fan out when the current branch question is still broad and has independent plausible hypotheses.
 - Deepen when one branch has concrete evidence but needs another probe.
 - Compare when two retained branches are close in score or imply different next actions.
+- Resume a parked branch when the latest fanout layer is low-yield and an earlier branch has higher score, stronger evidence, or lower cost.
 - Promote when the next step has become implementation, review, write-up, or human decision.
 - Stop when the remaining budget cannot improve the decision.
+
+## Low-Yield Fanout Fallback
+
+Treat a fanout layer as low-yield when every probed child is below the useful score threshold or all children remain low-evidence. The default helper threshold is `total < 2.5` or `evidence < 2`, but controller judgment wins when the score is obviously miscalibrated.
+
+When a layer is low-yield:
+
+- Do not keep probing its children merely because they are recent.
+- Run `next-frontier --include-parked` to inspect the global frontier.
+- Prefer the best parked branch outside the latest layer when it has better score, evidence, risk, or cost.
+- Activate the branch with `next-frontier --include-parked --activate` when the run ledger should reflect the fallback.
+- Record the reason in the next round reflection: latest fanout was low-yield, so the controller resumed an earlier parked branch.
+
+This is a best-first / beam-search control move, not a new round decision enum. The next round still records `continue`, `pivot`, `branch`, `prune`, `promote`, or `stop`.
 
 ## Subagent Prompt Shape
 
@@ -103,6 +119,7 @@ Selection rule:
 - diversity slot: highest `novelty - 0.5 * cost` outside the primary beam;
 - ties: prefer higher evidence, then lower risk, then lower cost;
 - low-evidence branches should not be promoted even when novelty is high.
+- after a low-yield layer, compare selected children against parked branches from earlier layers before spending another round.
 
 ## Safety
 
@@ -116,4 +133,4 @@ Selection rule:
 
 - If a worker fails, record an abort round for that branch and continue collecting other siblings.
 - If only one sibling succeeds, do not pretend beam selection was comparative; state that the layer collapsed.
-- Parked branches can be manually reactivated by editing `frontier.json` if the lead later needs them.
+- Parked branches can be reactivated with `next-frontier --include-parked --activate`, or manually by editing `frontier.json` if needed.

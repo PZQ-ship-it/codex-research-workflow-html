@@ -31,7 +31,8 @@ Loop:
 3. Fan out only at an expansion point with independent hypotheses; otherwise run a single-branch probe.
 4. For a single branch: select one branch, start the round, execute one concrete probe, and finish the round.
 5. For fanout: create sibling branches, dispatch independent branch workers or subagents, collect all sibling results, then run beam selection.
-6. Do not select a beam before the sibling layer has been collected or explicitly marked failed/aborted.
-7. Stop or continue based on budget and frontier state.
+6. If the latest fanout layer is low-yield, inspect the global frontier and resume the best earlier parked branch instead of forcing more probes into weak children.
+7. Do not select a beam before the sibling layer has been collected or explicitly marked failed/aborted.
+8. Stop or continue based on budget and frontier state.
 
 Final output must list best leads, dead ends, artifacts, and recommended next lane.

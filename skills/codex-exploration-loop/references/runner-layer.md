@@ -24,6 +24,7 @@ The lead/controller owns:
 - deciding whether the next frontier action is deepen, compare, fanout, promote, prune, or stop;
 - ensuring a fanout layer is collected before beam selection;
 - continuing from retained beam branches rather than repeatedly restarting top-level parallel exploration.
+- resuming the best earlier parked branch when the newest fanout layer is low-yield.
 
 The runner does not own:
 
@@ -65,6 +66,8 @@ Stop when:
 - `max_rounds` is reached;
 - `max_failures` is reached;
 - the user redirects.
+
+Before stopping for "no useful active branch", inspect parked branches with `next-frontier --include-parked`. A weak newest layer is not enough reason to stop if an earlier parked branch remains stronger.
 
 ## Handoff
 

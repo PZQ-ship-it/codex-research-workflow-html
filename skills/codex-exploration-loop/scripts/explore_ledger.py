@@ -314,6 +314,9 @@ def initial_frontier(question: str) -> Dict[str, Any]:
                 "status": "active",
                 "hypothesis": question,
                 "last_score": 0,
+                "visits": 0,
+                "last_probe_round": 0,
+                "rung": "seed",
                 "rounds": [],
                 "recent_reflections": [],
                 "next_probe": "Inspect available context and choose the first concrete probe.",
@@ -362,6 +365,9 @@ def update_frontier(run_dir: Path, record: Dict[str, Any]) -> Dict[str, Any]:
     branch["last_score"] = scores["total"]
     branch["last_scores"] = dict(scores)
     branch.setdefault("rounds", []).append(record["round"])
+    branch["visits"] = int(branch.get("visits", 0) or 0) + 1
+    branch["last_probe_round"] = int(record["round"])
+    branch["last_evidence_score"] = int(scores.get("evidence", 0))
     recent = branch.setdefault("recent_reflections", [])
     recent.append(record["reflection"])
     branch["recent_reflections"] = recent[-3:]
@@ -482,6 +488,9 @@ def create_child_branches(
             "status": "active",
             "hypothesis": hypothesis,
             "last_score": 0,
+            "visits": 0,
+            "last_probe_round": 0,
+            "rung": "fanout",
             "rounds": [],
             "recent_reflections": [],
             "next_probe": str(raw.get("next_probe") or raw.get("probe") or "Run the smallest useful probe for this branch.").strip(),
@@ -517,6 +526,9 @@ def cmd_fanout(args: argparse.Namespace) -> int:
             "status": "active",
             "hypothesis": candidate["hypothesis"],
             "last_score": 0,
+            "visits": 0,
+            "last_probe_round": 0,
+            "rung": "fanout",
             "rounds": [],
             "recent_reflections": [],
             "next_probe": candidate.get("next_probe") or "Run the smallest useful probe for this branch.",
@@ -600,6 +612,8 @@ def cmd_beam_select(args: argparse.Namespace) -> int:
     if not args.keep_unselected_active:
         for branch_id in parked:
             branches[branch_id]["status"] = "parked"
+            branches[branch_id]["parked_reason"] = "outside selected beam"
+            branches[branch_id]["status_changed_at"] = now_iso()
     frontier["beam_width"] = int(args.beam_width)
     frontier["max_active"] = max(int(args.beam_width) + int(args.diversity_count), 1)
     frontier["active"] = active_branch_ids(frontier)
@@ -623,6 +637,91 @@ def cmd_beam_select(args: argparse.Namespace) -> int:
         },
     )
     print(json.dumps({"selected": selected, "parked": parked if not args.keep_unselected_active else []}, ensure_ascii=False, indent=2))
+    return 0
+
+
+def branch_candidate_key(branch: Dict[str, Any]) -> tuple:
+    scores = branch.get("last_scores") or {}
+    total = float(branch.get("last_score", 0) or 0)
+    evidence = float(scores.get("evidence", 0) or 0)
+    novelty = float(scores.get("novelty", 0) or 0)
+    risk = float(scores.get("risk", 0) or 0)
+    cost = float(scores.get("cost", 0) or 0)
+    visits = int(branch.get("visits", 0) or len(branch.get("rounds", [])) or 0)
+    return (total, evidence, novelty, -risk, -cost, -visits)
+
+
+def low_yield_recent_fanout(frontier: Dict[str, Any], threshold: float, min_evidence: int) -> Dict[str, Any]:
+    branches = frontier.get("branches", {})
+    last_fanout = frontier.get("last_fanout") or {}
+    branch_ids = [bid for bid in last_fanout.get("branch_ids", []) if bid in branches]
+    probed = [bid for bid in branch_ids if int(branches[bid].get("visits", 0) or len(branches[bid].get("rounds", [])) or 0) > 0]
+    if not probed:
+        return {"low_yield": False, "reason": "latest fanout has no probed branches", "branch_ids": branch_ids}
+    low_score = all(float(branches[bid].get("last_score", 0) or 0) < threshold for bid in probed)
+    low_evidence = all(int((branches[bid].get("last_scores") or {}).get("evidence", 0) or 0) < min_evidence for bid in probed)
+    return {
+        "low_yield": bool(low_score or low_evidence),
+        "reason": "low score" if low_score else ("low evidence" if low_evidence else "latest fanout still has viable branches"),
+        "branch_ids": branch_ids,
+        "probed_branch_ids": probed,
+    }
+
+
+def cmd_next_frontier(args: argparse.Namespace) -> int:
+    run_dir = Path(args.run_dir).resolve()
+    ensure_run_dir(run_dir)
+    frontier_path = run_dir / "frontier.json"
+    frontier = read_json(frontier_path, {})
+    branches = frontier.setdefault("branches", {})
+    low_yield = low_yield_recent_fanout(frontier, float(args.low_yield_threshold), int(args.min_evidence))
+    latest_layer = set(low_yield.get("branch_ids", []))
+    allowed_statuses = {"active", "parked"} if args.include_parked else {"active"}
+    candidates = []
+    for branch_id, branch in branches.items():
+        if branch.get("status") not in allowed_statuses:
+            continue
+        if low_yield["low_yield"] and branch_id in latest_layer:
+            continue
+        candidates.append(branch_id)
+    if not candidates and low_yield["low_yield"]:
+        candidates = [bid for bid, branch in branches.items() if branch.get("status") in allowed_statuses]
+    candidates.sort(key=lambda bid: branch_candidate_key(branches[bid]), reverse=True)
+    selected = candidates[0] if candidates else ""
+    if args.activate and selected:
+        branch = branches[selected]
+        if branch.get("status") == "parked":
+            branch["status"] = "active"
+            branch["resumed_from_parked_at"] = now_iso()
+            branch["resume_reason"] = "low-yield fanout fallback" if low_yield["low_yield"] else "manual next-frontier activation"
+        active = [bid for bid in frontier.get("active", []) if branches.get(bid, {}).get("status") == "active"]
+        if selected not in active:
+            active.append(selected)
+        frontier["active"] = active_branch_ids(frontier)
+        frontier["last_next_frontier"] = {
+            "selected": selected,
+            "activated": True,
+            "low_yield": low_yield,
+            "created_at": now_iso(),
+        }
+        write_json(frontier_path, frontier)
+        append_jsonl(
+            run_dir / "fanout.jsonl",
+            {
+                "event": "next-frontier",
+                "selected": selected,
+                "activated": True,
+                "low_yield": low_yield,
+                "timestamp": now_iso(),
+            },
+        )
+    result = {
+        "selected": selected,
+        "activated": bool(args.activate and selected),
+        "low_yield": low_yield,
+        "candidates": candidates[:10],
+    }
+    print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
 
 
@@ -1556,6 +1655,14 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--diversity-count", type=int, default=1)
     p.add_argument("--keep-unselected-active", action="store_true")
     p.set_defaults(func=cmd_beam_select)
+
+    p = sub.add_parser("next-frontier")
+    p.add_argument("--run-dir", required=True)
+    p.add_argument("--include-parked", action="store_true")
+    p.add_argument("--activate", action="store_true")
+    p.add_argument("--low-yield-threshold", type=float, default=2.5)
+    p.add_argument("--min-evidence", type=int, default=2)
+    p.set_defaults(func=cmd_next_frontier)
 
     p = sub.add_parser("prepare-worktree")
     p.add_argument("--run-dir", required=True)
