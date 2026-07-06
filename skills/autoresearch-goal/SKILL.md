@@ -1,39 +1,87 @@
 ---
 name: autoresearch-goal
-description: Durable professor-critic research workflow over Codex goal mode without reviving deprecated omx autoresearch
+description: Use when a research mission should be managed as a Codex goal with professor/critic-style validation, durable repo-local mission/rubric/ledger/completion artifacts, and explicit goal completion audit; native adaptation with no dependency on OMX CLI, .omx goal state, tmux, hooks, or shell handoffs.
 ---
 
 # Autoresearch Goal
 
-Use this workflow when a research mission should be bound to Codex goal-mode focus while OMX remains the durable state owner. This is for research projects that need Codex goal-mode management plus professor/critic-style validation; it is not the default answer for ordinary pre-planning best-practice lookup.
+Bind a research mission to Codex goal-mode focus, then complete it only after professor/critic-style validation passes.
 
-## Boundary
-- Do **not** use or revive the deprecated `omx autoresearch` direct launch surface.
-- Do **not** claim shell commands mutate hidden Codex `/goal` state.
-- Do **not** edit upstream `../../codex` or add dependencies.
-- Use `get_goal`, `create_goal`, and `update_goal({status: "complete"})` only through the active Codex thread when those tools are available.
+This is a native Codex adaptation of OMX `$autoresearch-goal`: keep mission/rubric/ledger/completion discipline and safe goal handoffs; replace OMX CLI, `.omx/goals`, hooks, and shell reconciliation with Codex goal tools plus repo-local artifacts.
 
-## Artifacts
-`omx autoresearch-goal` writes:
-- `.omx/goals/autoresearch/<slug>/mission.json`
-- `.omx/goals/autoresearch/<slug>/rubric.md`
-- `.omx/goals/autoresearch/<slug>/ledger.jsonl`
-- `.omx/goals/autoresearch/<slug>/completion.json`
+## Use When
+
+- The research is substantial enough to deserve goal-mode focus.
+- The user wants iterative research against a rubric, not a one-off answer.
+- A critic, professor persona, evaluator, or review rubric must approve the result.
+- The work may span several passes and needs durable evidence.
+
+Use `$autoresearch` instead when the task needs a validator-gated deliverable but not Codex goal-mode management.
+
+## Required Artifacts
+
+Use the repo's existing convention. If none exists, prefer:
+
+```text
+reports/autoresearch-goals/<slug>/mission.json
+reports/autoresearch-goals/<slug>/rubric.md
+reports/autoresearch-goals/<slug>/ledger.jsonl
+reports/autoresearch-goals/<slug>/completion.json
+```
+
+Artifact meanings:
+
+- `mission.json`: objective, scope, non-goals, source boundaries, deliverable path.
+- `rubric.md`: professor/critic criteria and pass/fail rules.
+- `ledger.jsonl`: append-only attempts, source batches, critic verdicts, blockers, steering decisions.
+- `completion.json`: final status, critic verdict, deliverable path, evidence summary, residual risks, goal snapshot when available.
+
+## Goal Tool Rules
+
+- Call `get_goal` when goal tools are available to understand active objective state.
+- Call `create_goal` only when the user/system explicitly requested goal tracking and no active goal exists.
+- Never create a new goal over a different active goal.
+- Call `update_goal({status:"complete"})` only after critic validation passes and the completion audit proves no required work remains.
+- If goal tools are unavailable, continue with repo-local artifacts and state that goal-tool evidence was unavailable.
 
 ## Flow
-1. Create the mission and professor-critic rubric:
-   `omx autoresearch-goal create --topic "..." --rubric "..." --critic-command "..."`
-2. Emit the model-facing handoff:
-   `omx autoresearch-goal handoff --slug <slug>`
-3. In the active Codex thread, call `get_goal`; call `create_goal` only if no active goal exists and the printed payload is the intended objective.
-4. Research iteratively against the rubric. Record every critic outcome:
-   `omx autoresearch-goal verdict --slug <slug> --verdict <pass|fail|blocked> --evidence "..."`
-5. Completion is blocked until professor-critic validation records `verdict=pass`. After the mission audit passes, call `update_goal({status: "complete"})`, call `get_goal` again, then run:
-   `omx autoresearch-goal complete --slug <slug> --codex-goal-json <get_goal-json-or-path>`
-6. Treat the completion command as read-only reconciliation plus durable OMX state update; hooks and shell commands must not mutate Codex goal state.
-7. After the completion command succeeds, run `/goal clear` in the Codex UI before starting another goal in this same thread/session. OMX prints this terminal cleanup step but does not invoke hidden clear routes.
 
-## Completion gate
-A passing professor-critic artifact and a matching complete Codex `get_goal` snapshot are required. Assistant prose, partial tests, or a failed/blocked verdict are not sufficient.
+1. Confirm mission, rubric, deliverable path, and artifact directory.
+2. Initialize or update mission/rubric/ledger/completion artifacts.
+3. Start or reconcile Codex goal state if appropriate.
+4. Research iteratively against the rubric.
+5. Record every source batch, decision, failure, and critic verdict in the ledger.
+6. When a critic verdict is `fail` or `blocked`, revise or report the blocker.
+7. When verdict is `pass`, run a completion audit:
+   - mission satisfied,
+   - rubric criteria met,
+   - deliverable exists,
+   - evidence ledger sufficient,
+   - residual risk explicit,
+   - goal state updated only if appropriate.
+8. Write `completion.json` and final response with evidence.
 
-Lifecycle: `create_goal` starts the Codex thread goal, `update_goal({status: "complete"})` marks terminal success after the professor-critic and audit pass, and `/goal clear` removes the completed thread goal when another same-thread goal is needed. OMX shell commands and hooks reconcile snapshots and print the cleanup instruction; they must not mutate hidden Codex goal state.
+## Completion Gate
+
+Assistant prose, partial source notes, or a failed/blocked critic verdict are not sufficient. Completion requires:
+
+- `completion.json` with `status:"passed"` or equivalent,
+- critic/professor approval evidence,
+- deliverable path,
+- ledger path,
+- residual-risk statement,
+- Codex goal completion only after the above is true.
+
+## Output Shape
+
+- Mission and goal status
+- Artifact paths
+- Research iterations
+- Critic verdict
+- Completion audit
+- Final deliverable
+- Residual risk / next action
+
+## References
+
+Read `references/native-autoresearch-goal-checklist.html` for the artifact and goal completion checklist.

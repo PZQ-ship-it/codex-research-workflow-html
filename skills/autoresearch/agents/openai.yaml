@@ -1,4 +1,4 @@
 interface:
-  display_name: "OMX Autoresearch"
-  short_description: "Original OMX validator-gated research loop"
-  default_prompt: "Use $autoresearch to try the upstream OMX autoresearch workflow."
+  display_name: "Autoresearch"
+  short_description: "Run validator-gated native research"
+  default_prompt: "Use $autoresearch to run this research task until an explicit validator passes."

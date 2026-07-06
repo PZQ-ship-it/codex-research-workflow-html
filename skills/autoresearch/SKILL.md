@@ -1,72 +1,87 @@
 ---
 name: autoresearch
-description: Stateful validator-gated research loop with native-hook persistence
+description: Use when a research task must produce a bounded deliverable that passes an explicit validator, rubric, script, reviewer, or acceptance artifact; run a native Codex validator-gated research loop with repo-local artifacts, evidence ledgers, and no dependency on OMX CLI, .omx state, tmux, hooks, or automatic wakeups.
 ---
 
 # Autoresearch
 
-Autoresearch is the skill-first replacement for the deprecated `omx autoresearch` command.
-It keeps the useful measured-research loop, but it now runs as a native-hook stateful workflow instead of a direct CLI or tmux launch surface.
+Run bounded research until an explicit validator says the deliverable is good enough.
 
-## Boundary with planning research
+This is a native Codex adaptation of OMX `$autoresearch`: keep the measured research loop, validator-gated completion, and artifact discipline; replace OMX CLI, `.omx/state`, hook persistence, and tmux assumptions with normal Codex tools, repo-local files, optional goal tools, and `D:\todo` / project work traces when durable tracking is needed.
 
-Use `$autoresearch` when the research output itself is a bounded deliverable that must pass an explicit validator. Do not recommend it for ordinary pre-planning docs lookup or general best-practice checks; use `$best-practice-research` for that. If `$autoresearch` is intentionally run before architecture planning, its approved artifact should feed evidence into `$ralplan`; it should not become a final architecture/component unless the user explicitly asks for ongoing research automation.
+## Use When
 
-## Use when
-- You want a Ralph-ish persistent research loop
-- The task should keep nudging until explicit validation evidence exists
-- You want init-time choice between script validation and prompt+architect validation
+- The research output itself is the deliverable.
+- The user wants more than quick best-practice lookup.
+- Completion must be judged by an explicit script, rubric, reviewer, benchmark, or acceptance artifact.
+- The work may require iterative source gathering, synthesis, critique, and revision.
 
-## Do not use when
-- You want the old `omx autoresearch` command surface (hard-deprecated)
-- You want detached tmux or split-pane launch parity
-- You have not decided the validation regime yet
+Do not use this for ordinary implementation, simple repo-local analysis, or casual docs lookup. Use `$codex-best-practice-research` for read-only external guidance and `$codex-consensus-plan` for implementation planning.
 
-## Core contract
-1. **Init chooses validation mode.** Pick exactly one:
-   - `mission-validator-script`
-   - `prompt-architect-artifact`
-2. **Persist mode state** in `.omx/state/.../autoresearch-state.json` including:
-   - `validation_mode`
-   - `completion_artifact_path`
-   - `mission_validator_command` **or** `validator_prompt`
-   - optional `output_artifact_path`
-3. **Completion is artifact-gated.** The loop does not stop because the model says “done”, because a stop hook fired once, or because several turns were no-ops.
-4. **Direct CLI launch is gone.** Use `$deep-interview --autoresearch` for intake and `$autoresearch` for execution.
+## Intake Contract
 
-## Completion artifact contract
+Before research execution, define:
 
-### `mission-validator-script`
-The completion artifact must exist and record a passing validator result, for example:
+- Mission: the research question and deliverable.
+- Scope: sources, domains, timeframe, language, and exclusions.
+- Validator mode:
+  - `script-validator`: a command or deterministic check decides pass/fail.
+  - `rubric-review`: a written rubric and reviewer/critic judgment decide pass/fail.
+  - `acceptance-artifact`: a required output file contains status, evidence, and approval.
+- Completion artifact path: where the final validator result or review record will live.
+- Evidence ledger path: where sources, attempts, failures, and decisions are recorded.
 
-```json
-{
-  "status": "passed",
-  "passed": true,
-  "summary": "metric improved beyond baseline"
-}
+If these are unclear, run a short `$codex-deep-interview` style pass first.
+
+## Artifact Defaults
+
+Use the repo's existing artifact convention. If none exists, prefer:
+
+```text
+reports/autoresearch/<slug>/mission.md
+reports/autoresearch/<slug>/evidence-ledger.md
+reports/autoresearch/<slug>/draft.md
+reports/autoresearch/<slug>/validation.md
 ```
 
-### `prompt-architect-artifact`
-The completion artifact must include both an architect approval verdict and an output artifact path, for example:
+In `D:\todo`-tracked work, also write a task card or work trace when the research is nontrivial or cross-session.
 
-```json
-{
-  "validator_prompt": "Review the research output against the mission.",
-  "architect_review": { "verdict": "approved" },
-  "output_artifact_path": ".omx/specs/autoresearch-demo/report.md"
-}
-```
+## Loop
 
-## Recommended flow
-1. Run `$deep-interview --autoresearch` to clarify mission + evaluator.
-2. Materialize `.omx/specs/autoresearch-{slug}/mission.md`, `sandbox.md`, and `result.json`.
-3. Start `$autoresearch` with the chosen validation mode stored in mode state.
-4. Let stop-hook / auto-nudge continue until the completion artifact satisfies the chosen validation mode.
-5. Finish only after the validator artifact is complete.
+1. Write or confirm mission, scope, validator, and artifact paths.
+2. Gather sources from primary/official/public evidence where possible.
+3. Record source quality, dates, and unresolved gaps in the evidence ledger.
+4. Produce or revise the deliverable.
+5. Run the validator:
+   - execute the script or command,
+   - apply the rubric,
+   - request an independent review lane when available and useful,
+   - or update the acceptance artifact.
+6. If validation fails, record the failure and revise.
+7. Stop only when the completion artifact records pass/approval or when a real blocker remains.
 
-## Migration note
-- `omx autoresearch` is hard-deprecated.
-- No direct CLI launch.
-- No tmux split-pane launch.
-- No noop-count completion gate.
+## Completion Gate
+
+Do not declare success because the prose sounds complete. Completion requires:
+
+- deliverable exists,
+- evidence ledger exists,
+- validator result is recorded,
+- status is `passed` / `approved`,
+- residual risks are named,
+- any active Codex goal is completed only after the evidence audit passes.
+
+## Output Shape
+
+- Mission
+- Validator mode and artifact paths
+- Sources / evidence summary
+- Deliverable path
+- Validation result
+- Iterations and failures
+- Residual risk
+- Next handoff, if any
+
+## References
+
+Read `references/native-autoresearch-checklist.html` for a compact readiness and completion checklist.
