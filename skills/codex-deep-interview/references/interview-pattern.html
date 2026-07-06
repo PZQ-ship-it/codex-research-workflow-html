@@ -5,20 +5,42 @@
 <body>
 <h1>Deep Interview Pattern</h1>
 <p>Use this reference when a request needs clarification before planning or execution.</p>
+<h2>Unknowns Pass</h2>
+<ul>
+  <li>Read obvious local context before asking: AGENTS, README, task cards, design docs, source files.</li>
+  <li>Classify gaps as discoverable facts, human preferences, or dangerous assumptions.</li>
+  <li>Ask for a prompt-safe summary first when the supplied context is too large.</li>
+</ul>
+<h2>Depth Profiles</h2>
+<ul>
+  <li>Quick: low-risk ambiguity, usually no more than 5 rounds.</li>
+  <li>Standard: default requirements interview, usually no more than 12 rounds.</li>
+  <li>Deep: high-risk or branching work, usually no more than 20 rounds.</li>
+</ul>
 <h2>Question Style</h2>
 <ul>
   <li>Ask one question at a time.</li>
   <li>Ask only questions that change scope, risk, design, or acceptance.</li>
   <li>Prefer concrete options with tradeoffs over open-ended prompts.</li>
   <li>Do not ask for facts that can be discovered from the repo or official docs.</li>
+  <li>Use concrete scenarios to expose decision boundaries and hidden assumptions.</li>
+</ul>
+<h2>Readiness Gates</h2>
+<ul>
+  <li>Goal, scope, and acceptance criteria are executable.</li>
+  <li>Non-goals are explicit.</li>
+  <li>Decision boundaries are explicit.</li>
+  <li>Residual risk is named and acceptable for the next lane.</li>
 </ul>
 <h2>Handoff Brief</h2>
 <pre><code>Goal:
 In scope:
 Out of scope:
 Confirmed facts:
-Open decisions:
+Assumptions:
+Decision boundaries:
 Acceptance criteria:
+Residual risk:
 Recommended next step:</code></pre>
 </body>
 </html>

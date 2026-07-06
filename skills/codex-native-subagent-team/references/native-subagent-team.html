@@ -26,12 +26,30 @@
     </tbody>
   </table>
 
+  <h2>Coordination Gate</h2>
+  <p>Use the stronger coordination layer when lanes share files, contracts, dependencies, handoffs, or changed assumptions.</p>
+  <ul>
+    <li>Team leadership: leader states priority, ownership, and integration order.</li>
+    <li>Mutual monitoring: lanes report risks, missing tests, and peer impacts.</li>
+    <li>Backup behavior: blocked lanes are narrowed, reassigned, or absorbed by the leader.</li>
+    <li>Adaptability: update the plan when repo evidence invalidates assumptions.</li>
+    <li>Closed-loop communication: handoffs include ACK-readback of scope, artifact, owner, and next action.</li>
+  </ul>
+
   <h2>Good Prompt</h2>
   <pre><code>Use native subagents for these independent lanes.
 
 Main thread:
 - Owns updating docs/codex-advanced-config-and-usage.md.
+- Continues local non-overlapping work while lanes run.
 - Will not duplicate the delegated repo inventory.
+
+Shared context:
+- Goal: refresh repo documentation from actual skill inventory.
+- Constraints: preserve unrelated dirty work; no broad refactor.
+- Non-goals: do not edit runtime code.
+- Verification target: final rg sanity check and reviewed diff.
+- Coordination gate: normal ACK; escalate if shared docs conflict.
 
 Explorer A:
 - Goal: find all repo-local Codex skills and summarize their trigger scenarios.
@@ -54,6 +72,7 @@ Integration:
   <ul>
     <li>Main-thread changes are listed.</li>
     <li>Each subagent contribution is summarized separately.</li>
+    <li>Integration decisions and conflicts are owned by the leader.</li>
     <li>Verification commands or artifact checks are included.</li>
     <li>Unrun checks and residual risk are explicit.</li>
   </ul>

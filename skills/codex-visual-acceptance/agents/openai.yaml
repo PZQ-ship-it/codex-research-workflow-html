@@ -1,4 +1,4 @@
 interface:
   display_name: "Codex Visual Acceptance"
-  short_description: "Validate visual output with browser or screenshot evidence"
+  short_description: "Validate visual output with references and screenshots"
   default_prompt: "Use $codex-visual-acceptance to visually inspect this UI or figure output."

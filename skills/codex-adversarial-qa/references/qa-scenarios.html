@@ -4,12 +4,15 @@
 <title>Adversarial QA Scenarios</title>
 <body>
 <h1>Adversarial QA Scenarios</h1>
+<p>Each matrix row should include id, actor, setup, expected signal, actual result, evidence, fix, and cleanup status.</p>
 <ul>
-  <li>Code: empty input, duplicate input, stale cache, partial failure, retry path, concurrent run.</li>
+  <li>Code: empty input, duplicate input, stale cache, partial failure, retry path, concurrent run, misleading success output, hung command.</li>
   <li>Paper: inconsistent term, unsupported claim, metric name drift, figure/table mismatch, missing citation.</li>
   <li>Figure: missing category, long label, font fallback, color collision, mobile/export scaling.</li>
   <li>Benchmark: API timeout, malformed response, interrupted shard, model switch, cost boundary.</li>
-  <li>Prompt: ambiguous role, hidden assumption, over-broad scope, no evidence requirement.</li>
+  <li>Prompt: ambiguous role, hidden assumption, over-broad scope, no evidence requirement, prompt injection, instruction conflict.</li>
+  <li>Workflow: dirty worktree, stale state, cancel/resume, missing cleanup, repeated run idempotency.</li>
+  <li>UI: mobile width, broken image, console error, clipped text, inaccessible control, stale screenshot.</li>
 </ul>
 </body>
 </html>
