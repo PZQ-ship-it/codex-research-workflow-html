@@ -26,6 +26,19 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .codex/hooks/codex_stop_popup_reminder.ps1",
+            "command_windows": "powershell -NoProfile -ExecutionPolicy Bypass -File .codex\\hooks\\codex_stop_popup_reminder.ps1",
+            "timeout": 5,
+            "statusMessage": "Notifying that Codex stopped"
+          }
+        ]
+      }
     ]
   }
 }
