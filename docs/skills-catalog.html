@@ -102,6 +102,7 @@
           <tr><td><code>codex-consensus-plan</code></td><td>需要一份可以直接交给实现者执行的 decision-complete plan。</td></tr>
           <tr><td><code>codex-completion-loop</code></td><td>希望 Codex 从实现一路推进到验证证据，而不是只给建议。</td></tr>
           <tr><td><code>codex-visual-acceptance</code></td><td>HTML、UI、图表或 PDF 需要 Playwright、PDF 渲染或截图验收。</td></tr>
+          <tr><td><code>html-understanding-artifacts</code></td><td>结果、过程、计划、代码审查、source ledger、timeline 或概念解释需要比 Markdown 更直观时，生成原子化、单文件、自包含的 HTML 理解 artifact；只规定好 artifact 的判断标准，不锁死内容版式。</td></tr>
           <tr><td><code>codex-adversarial-qa</code></td><td>需要用边界情况、反例、审稿人视角压测代码、论文、图表或跑批流程。</td></tr>
           <tr><td><code>scenario-agent-run-optimizer</code></td><td>分析自研或业务 Agent 的 logs、traces、eval 输出，定位 root cause，并给出 system prompt、tool schema、检索、路由和验证优化方案；配套全局 UserPromptSubmit advisory hook。</td></tr>
           <tr><td><code>skill-eval-optimizer</code></td><td>测试、压测并优化 Codex skills：静态验证、触发样例、<code>codex exec --json</code> trace、rubric 评分和外部 API/MCP 配置闭环。</td></tr>

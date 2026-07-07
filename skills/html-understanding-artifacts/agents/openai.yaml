@@ -1,0 +1,4 @@
+interface:
+  display_name: "HTML Understanding Artifacts"
+  short_description: "Create focused HTML artifacts for understanding work"
+  default_prompt: "Use $html-understanding-artifacts to create a focused HTML artifact that makes this result easier to understand."

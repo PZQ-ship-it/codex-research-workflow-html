@@ -29,7 +29,18 @@ Default private runtime:
 D:\agent-workflow-lab\runtime\wechat-mini-list-capture
 ```
 
-Before running commands, read `references/harness-workflow.md` for exact command usage and screenshot-review criteria.
+Before running commands, read the harness `README.md` for current command usage and screenshot-review criteria. If a referenced `references/harness-workflow.md` exists in a future version, read that as the more specific runbook.
+
+## OfferShow List B Fast Profile
+
+For the OfferShow `list_b` high-salary sample/comment workflow, do not rely on hand-edited `runtime\wechat-mini-list-capture\config.local.json` values. Before any full or resumed `list_b` run, apply the saved profile from the harness repo:
+
+```powershell
+cd D:\agent-workflow-lab\harnesses\wechat-mini-list-capture
+.\scripts\apply-list-b-fast-profile.ps1
+```
+
+This profile is the durable source for the faster desktop strategy: PageDown-style list/comment movement, a 5s detail-page load wait, salary-table-first detail capture, no routine blank/content-area clicks inside detail pages, OCR-recognized reply-expander clicks, re-screenshot/re-OCR after each reply expansion before clicking another expander, dynamic mini-program back (`app-back`), and a strict guard requiring the full app OCR to show `顶尖人才计划` plus salary-card structure before scanning a `list_b` round or opening any next detail. If scrolling appears slow again, first reapply this profile and inspect `scroll-events.jsonl` / per-item `comment_events` before changing ad hoc runtime config.
 
 ## Driver Choice
 
