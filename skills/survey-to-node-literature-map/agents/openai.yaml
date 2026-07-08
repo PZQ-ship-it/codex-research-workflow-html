@@ -1,0 +1,4 @@
+interface:
+  display_name: "Survey To Node Map"
+  short_description: "Map surveys into next paper nodes."
+  default_prompt: "Use $survey-to-node-literature-map to convert this survey and contact-group context into a node-paper graph, reading path, and first 1-3 paper recommendations."
