@@ -8,9 +8,50 @@
 <h2>Unknowns Pass</h2>
 <ul>
   <li>Read obvious local context before asking: AGENTS, README, task cards, design docs, source files.</li>
+  <li>Run a map-vs-territory check: prompt claims, repo proof, absent user context, and unasked constraints.</li>
+  <li>Use the taxonomy: known known, known unknown, unknown known, unknown unknown.</li>
   <li>Classify gaps as discoverable facts, human preferences, or dangerous assumptions.</li>
+  <li>Emit unknown cards with type, why it matters, resolve-by route, and next probe.</li>
+  <li>Pick the highest-risk cheap probe before asking the user when possible.</li>
+  <li>Produce a better next prompt or refined brief that carries the unknowns forward.</li>
   <li>Ask for a prompt-safe summary first when the supplied context is too large.</li>
 </ul>
+<h2>Unknown Cards</h2>
+<pre><code>Unknowns Pass
+- Map vs territory:
+- Known knowns:
+- Known unknowns:
+- Unknown knowns:
+- Unknown unknowns:
+
+| Unknown | Type | Why it matters | Discoverable or user-required | Next probe | Risk if wrong |
+|---|---|---|---|---|---|
+
+Highest-risk probe:
+Local probes:
+One user question:
+Better next prompt / refined brief:
+Carry-forward risk:</code></pre>
+<h2>Example</h2>
+<p>Vague request: "make the project dashboard more useful before coding."</p>
+<pre><code>Unknowns Pass
+- Map vs territory: "more useful" sounds like UX scope, but the repo may already encode task schemas, views, and writeback constraints.
+- Known knowns: target surface is the project dashboard; implementation should not start yet.
+- Known unknowns: which workflow is painful, which users/views matter, which data is authoritative.
+- Unknown knowns: the user may have a private mental model of daily review vs project review that is not in repo docs.
+- Unknown unknowns: changing completion flow may corrupt source-of-truth task state if schema/writeback rules are missed.
+
+| Unknown | Type | Why it matters | Discoverable or user-required | Next probe | Risk if wrong |
+|---|---|---|---|---|---|
+| Source-of-truth rules | Known unknown | UI changes may write invalid status | Discoverable | Inspect task-state contract and dashboard schema | Data drift |
+| "Useful" workflow | Unknown known | Design target depends on user's routine | User-required | Ask one workflow-ranking question | Pretty but unused UI |
+| Completion semantics | Unknown unknown | Done flow may mix planned and actual time | Discoverable | Inspect existing completion schema and work traces | Incorrect records |
+
+Highest-risk probe: inspect schema/writeback contract before asking for UI taste.
+Local probes: task-state contract, dashboard schema, current route structure.
+One user question: Which workflow should this optimize first: daily triage, project review, or completion writeback?
+Better next prompt / refined brief: "Improve dashboard daily triage without changing writeback semantics unless confirmed..."
+Carry-forward risk: visual preference remains open until after source-of-truth constraints are known.</code></pre>
 <h2>Depth Profiles</h2>
 <ul>
   <li>Quick: low-risk ambiguity, usually no more than 5 rounds.</li>
@@ -39,6 +80,10 @@ Out of scope:
 Confirmed facts:
 Assumptions:
 Decision boundaries:
+Unknown cards:
+Local probes:
+One user question:
+Carry-forward risk:
 Acceptance criteria:
 Residual risk:
 Recommended next step:</code></pre>

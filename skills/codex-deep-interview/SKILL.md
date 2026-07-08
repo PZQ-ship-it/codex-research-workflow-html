@@ -1,6 +1,6 @@
 ---
 name: codex-deep-interview
-description: Use when a task is ambiguous, underspecified, or likely to branch into multiple valid implementations; run a native Codex requirements interview that clarifies intent, unknowns, non-goals, decision boundaries, and acceptance criteria before planning or editing.
+description: Use when a task is ambiguous, underspecified, likely to branch into multiple implementations, or explicitly asks for unknowns, blindspots, assumptions, preflight, clarification, requirement interview, missing context, map-vs-territory checks, or risk discovery before planning/editing; run a native Codex requirements interview with a visible unknowns pass, unknown cards, non-goals, decision boundaries, and acceptance criteria.
 ---
 
 # Codex Deep Interview
@@ -19,17 +19,63 @@ Choose the lightest profile that makes the next step safe.
 
 The round caps are safeguards, not quotas. Stop early when the gates are satisfied.
 
-## Phase 0: Unknowns Pass
+## Phase 0: Visible Unknowns Pass
 
-Before asking the user, map the unknowns.
+Before asking the user, make the missing map visible. This is not just internal reasoning. For fuzzy, high-risk, long-running, workflow, UI, research, or user-requested "unknowns/blindspot" tasks, produce a compact visible unknowns pass before ordinary interview questions.
 
 1. Read obvious local context: `AGENTS.md`, README/design docs, task cards, contracts, prior decisions, relevant source files, and user-provided artifacts.
-2. Classify each gap:
+2. Run a map-vs-territory check:
+   - What does the prompt claim or imply?
+   - What can the repo/docs actually prove?
+   - What might be obvious to the user but absent from the repo?
+   - What constraint might nobody have thought to ask about?
+3. Classify each gap:
    - Discoverable fact: inspect files, run safe searches, or check official/live sources when freshness matters.
    - Human preference: ask only if the answer changes scope, risk, UX, policy, or acceptance.
    - Dangerous assumption: state the assumption and either verify it or ask.
-3. Check prompt size. If the initial context is too large to use safely, first ask for a concise prompt-safe summary with goal, constraints, non-goals, references, and known decisions.
-4. Preserve provenance in your own reasoning: `[from-user]`, `[from-code]`, `[from-doc]`, `[from-research]`, `[assumption]`.
+4. Use the unknowns taxonomy when it helps:
+   - Known known: explicit facts already in prompt/files.
+   - Known unknown: open question already visible.
+   - Unknown known: context likely obvious to the user but missing from the repo/prompt.
+   - Unknown unknown: hidden constraint, workflow expectation, edge case, or failure mode not yet represented.
+5. Emit 3-7 unknown cards when the task is not trivially clear. Each card should include:
+   - Category: one taxonomy bucket or `discoverable`, `user-required`, `assumption`, `probe`.
+   - Why it matters: what goes wrong if ignored.
+   - How to resolve: inspect locally, browse official source, ask user, prototype/mock, or carry as residual risk.
+   - Next probe: the exact file/search/question/experiment that would reduce uncertainty.
+6. Pick the highest-risk unknown and resolve it locally if cheap. Inspect or prototype only enough to reduce risk; do not start full implementation.
+7. Check prompt size. If the initial context is too large to use safely, first ask for a concise prompt-safe summary with goal, constraints, non-goals, references, and known decisions.
+8. Preserve provenance in your reasoning and handoff: `[from-user]`, `[from-code]`, `[from-doc]`, `[from-research]`, `[assumption]`.
+
+### Unknowns-Pass Output Contract
+
+For explicit unknowns/blindspot requests, or when ambiguity is material, show this before the first ordinary clarification question:
+
+```text
+Unknowns Pass
+- Map vs territory:
+- Known knowns:
+- Known unknowns:
+- Unknown knowns:
+- Unknown unknowns:
+
+Unknown cards
+| Unknown | Type | Why it matters | Discoverable or user-required | Next probe | Risk if wrong |
+|---|---|---|---|---|---|
+
+Highest-risk probe:
+Local probes:
+One user question:
+Better next prompt / refined brief:
+Carry-forward risk:
+```
+
+If the task is clear enough that this full structure would be heavy, still include a two-line mini pass:
+
+```text
+Unknowns mini-pass: <what is missing>; <how I will resolve or carry it>.
+Next question: <one focused user question if needed>.
+```
 
 ## Ambiguity Dimensions
 
@@ -54,6 +100,8 @@ Use these dimensions to decide the next question. Do not needlessly show a numer
 - Prefer questions that expose an example, hidden assumption, boundary, failure mode, terminology conflict, or expected behavior in a concrete scenario.
 - For brownfield work, ask evidence-backed questions: "I found X in Y; should this new work follow that pattern?"
 - Do not ask the user questions whose answers are discoverable from the repo or official sources with reasonable effort.
+- After an unknowns pass, ask only the highest-leverage user-required question; do not dump every unknown as a questionnaire.
+- Keep local probes separate from user questions so the user can see what Codex will inspect instead of asking them to do repo discovery.
 
 ## Closure Audit
 
@@ -65,6 +113,7 @@ Stop ordinary questioning once the active profile is clear enough, then run a cl
 - Acceptance criteria are testable or reviewable.
 - Key constraints, paths, source artifacts, and risks are named.
 - Residual uncertainty is either low-risk, explicitly accepted, or routed to a later verification step.
+- Unknown cards are resolved, deliberately deferred, or carried forward with owner/next probe.
 
 ## Handoff Brief
 
@@ -77,6 +126,7 @@ When the task is clear, produce a short brief:
 - Constraints and risks
 - Acceptance criteria
 - Decision boundaries
+- Unknown cards and carry-forward risk
 - Recommended next lane: normal execution, `$codex-consensus-plan`, `$codex-completion-loop`, `$codex-native-subagent-team` only when the user explicitly wants parallel delegation, or a durable goal/work-trace when the repo requires it.
 
 ## Stop Conditions

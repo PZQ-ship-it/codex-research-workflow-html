@@ -1,4 +1,4 @@
 interface:
   display_name: "Codex Deep Interview"
-  short_description: "Clarify unknowns, non-goals, boundaries, and acceptance"
-  default_prompt: "Use $codex-deep-interview to clarify this request before implementation."
+  short_description: "Run visible unknowns and requirement interview"
+  default_prompt: "Use $codex-deep-interview to run an unknowns pass and clarify this request before implementation."
