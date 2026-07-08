@@ -9,6 +9,11 @@ manifest.yaml
 source-search-log.md
 ai-use-log.md
 human-learning-lane.md
+group/group-brief.md
+group/professor-coverage-matrix.md
+group/professor-fit-draft.md
+learning/learning-plan.md
+learning/teachback-check.md
 direction/direction-card.md
 direction/survey-matrix.md
 direction/node-paper-graph.md
@@ -63,11 +68,12 @@ Constraints:
 
 Output:
 - source-search-log
+- contact-group context when applicable
 - direction-card v0
 - survey taxonomy
 - node-paper map
 - first-paper triage recommendation
 - human-learning-lane drill
+- learning-support routing
 - pending human gates
 ```
-
