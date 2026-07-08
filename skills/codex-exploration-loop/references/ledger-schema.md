@@ -75,8 +75,10 @@ Branch scheduling fields:
 - `rung`: rough probe depth; common values are `seed` and `fanout`.
 - `parked_reason`: why the branch left the active beam.
 - `resume_reason`: why a parked branch was reactivated.
+- `last_critic_checkpoint`: latest deterministic checkpoint recommendation, when recorded by the helper.
 
 Use `scripts/explore_ledger.py next-frontier --run-dir <run-dir> --include-parked` to recommend the next branch across active and parked branches. Add `--activate` to mark a parked branch active when a low-yield fanout should fall back to a stronger earlier branch.
+Use `scripts/explore_ledger.py critic-checkpoint --run-dir <run-dir> --record` to record when a branch needs adversarial review before further convergence or promotion.
 
 ## Round Record
 
@@ -161,6 +163,13 @@ Low-yield fanout fallback:
 - Treat a recent fanout as low-yield when every probed child is below the useful score threshold or all children remain low-evidence.
 - Default helper thresholds are `total < 2.5` or `evidence < 2`.
 - On low-yield fanout, resume the best parked branch outside the latest layer when it has stronger score/evidence/cost/risk.
+
+Critic checkpoint scoring:
+
+- High `promise` with low `evidence` is provisional, not promotion-ready.
+- A survived counterexample should lower `promise` or raise `risk`.
+- A concrete verification probe should raise `evidence` only after it is actually run.
+- A neglected challenger may receive an `exploration_bonus` only when it tests a materially different assumption.
 
 ## Recovery
 

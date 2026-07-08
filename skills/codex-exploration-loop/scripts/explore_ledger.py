@@ -725,6 +725,140 @@ def cmd_next_frontier(args: argparse.Namespace) -> int:
     return 0
 
 
+def records_for_branch(records: List[Dict[str, Any]], branch_id: str) -> List[Dict[str, Any]]:
+    return [record for record in records if str(record.get("branch_id")) == branch_id]
+
+
+def choose_checkpoint_branch(frontier: Dict[str, Any], branch_id: str) -> str:
+    branches = frontier.get("branches", {})
+    if branch_id:
+        if branch_id not in branches:
+            raise ValueError(f"unknown branch: {branch_id}")
+        return branch_id
+    active = [bid for bid, branch in branches.items() if branch.get("status") == "active"]
+    if active:
+        active.sort(key=lambda bid: branch_candidate_key(branches[bid]), reverse=True)
+        return active[0]
+    candidates = [bid for bid, branch in branches.items() if branch.get("status") in {"parked", "paused"}]
+    candidates.sort(key=lambda bid: branch_candidate_key(branches[bid]), reverse=True)
+    return candidates[0] if candidates else ""
+
+
+def evidence_from_record(record: Dict[str, Any]) -> int:
+    scores = record.get("scores") or {}
+    return int(scores.get("evidence", 0) or 0)
+
+
+def consecutive_continue_without_evidence_gain(records: List[Dict[str, Any]], window: int) -> bool:
+    if window <= 1 or len(records) < window:
+        return False
+    recent = records[-window:]
+    if any(record.get("decision") != "continue" for record in recent):
+        return False
+    evidence = [evidence_from_record(record) for record in recent]
+    return evidence[-1] <= evidence[0]
+
+
+def checkpoint_reasons(
+    frontier: Dict[str, Any],
+    records: List[Dict[str, Any]],
+    branch_id: str,
+    args: argparse.Namespace,
+) -> List[str]:
+    branches = frontier.get("branches", {})
+    branch = branches.get(branch_id, {})
+    scores = branch.get("last_scores") or {}
+    promise = int(scores.get("promise", 0) or 0)
+    evidence = int(scores.get("evidence", 0) or 0)
+    risk = int(scores.get("risk", 0) or 0)
+    branch_records = records_for_branch(records, branch_id)
+    active = [bid for bid, item in branches.items() if item.get("status") == "active"]
+    parked = [bid for bid, item in branches.items() if item.get("status") == "parked"]
+    reasons: List[str] = []
+    if args.force:
+        reasons.append("forced by controller")
+    if args.before_promote:
+        reasons.append("promotion gate requested")
+    if branch_records and branch_records[-1].get("decision") == "promote":
+        reasons.append("latest round promoted this branch; run adversarial check before handoff")
+    if promise >= int(args.promise_threshold) and evidence < int(args.min_evidence):
+        reasons.append(f"high promise ({promise}) with low evidence ({evidence})")
+    if consecutive_continue_without_evidence_gain(branch_records, int(args.continue_window)):
+        reasons.append(f"{args.continue_window} consecutive continue decisions without evidence gain")
+    if risk >= int(args.max_risk):
+        reasons.append(f"risk score is high ({risk}); require falsification before more budget")
+    if (args.after_beam or len(active) <= int(args.max_active)) and branch_id in active and parked:
+        reasons.append("frontier may be collapsing to one active lead while parked alternatives remain")
+    return reasons
+
+
+def cmd_critic_checkpoint(args: argparse.Namespace) -> int:
+    run_dir = Path(args.run_dir).resolve()
+    ensure_run_dir(run_dir)
+    frontier_path = run_dir / "frontier.json"
+    frontier = read_json(frontier_path, {})
+    branches = frontier.setdefault("branches", {})
+    records = list(iter_ledger(run_dir))
+    branch_id = choose_checkpoint_branch(frontier, args.branch_id)
+    if not branch_id:
+        result = {
+            "checkpoint_required": False,
+            "target_branch": "",
+            "reasons": ["no active, parked, or paused branches available"],
+            "created_at": now_iso(),
+        }
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0
+    branch = branches.get(branch_id, {})
+    branch_records = records_for_branch(records, branch_id)
+    reasons = checkpoint_reasons(frontier, records, branch_id, args)
+    candidates = [
+        bid
+        for bid, item in branches.items()
+        if item.get("status") in {"active", "parked", "paused"} and bid != branch_id
+    ]
+    candidates.sort(key=lambda bid: branch_candidate_key(branches[bid]), reverse=True)
+    latest = branch_records[-1] if branch_records else {}
+    prompt = (
+        f"Run a critic probe for {branch_id}: attack the current hypothesis, list the strongest "
+        "counterexample or missing evidence, compare the best challenger branch if relevant, "
+        "name one falsification or verification probe, and finish the round with revised scores. "
+        "Use continue/promote only if the critique adds evidence; otherwise pivot, branch, or prune."
+    )
+    result = {
+        "checkpoint_required": bool(reasons),
+        "target_branch": branch_id,
+        "hypothesis": branch.get("hypothesis", ""),
+        "latest_round": latest.get("round", 0),
+        "reasons": reasons or ["no checkpoint trigger met"],
+        "suggested_operator": "critic",
+        "suggested_probe": prompt,
+        "candidate_challengers": candidates[:5],
+        "score_hint": {
+            "recheck_promise": True,
+            "recheck_evidence": True,
+            "raise_risk_if_counterexample_survives": True,
+            "do_not_promote_low_evidence": True,
+        },
+        "created_at": now_iso(),
+    }
+    if args.record:
+        frontier["last_critic_checkpoint"] = result
+        write_json(frontier_path, frontier)
+        append_jsonl(
+            run_dir / "fanout.jsonl",
+            {
+                "event": "critic-checkpoint",
+                "target_branch": branch_id,
+                "checkpoint_required": bool(reasons),
+                "reasons": reasons,
+                "timestamp": result["created_at"],
+            },
+        )
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 0
+
+
 def cmd_init(args: argparse.Namespace) -> int:
     root = Path(args.root).resolve()
     root_display = args.root_label or str(root)
@@ -1663,6 +1797,20 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--low-yield-threshold", type=float, default=2.5)
     p.add_argument("--min-evidence", type=int, default=2)
     p.set_defaults(func=cmd_next_frontier)
+
+    p = sub.add_parser("critic-checkpoint")
+    p.add_argument("--run-dir", required=True)
+    p.add_argument("--branch-id", default="")
+    p.add_argument("--force", action="store_true")
+    p.add_argument("--record", action="store_true")
+    p.add_argument("--before-promote", action="store_true")
+    p.add_argument("--after-beam", action="store_true")
+    p.add_argument("--promise-threshold", type=int, default=4)
+    p.add_argument("--min-evidence", type=int, default=3)
+    p.add_argument("--continue-window", type=int, default=2)
+    p.add_argument("--max-active", type=int, default=1)
+    p.add_argument("--max-risk", type=int, default=4)
+    p.set_defaults(func=cmd_critic_checkpoint)
 
     p = sub.add_parser("prepare-worktree")
     p.add_argument("--run-dir", required=True)

@@ -8,7 +8,7 @@ Use branch operators as tools for exploration. Operator output must become a rou
 - `patch`: make a scratch edit to test a hypothesis.
 - `experiment`: run a focused command, test, benchmark, or probe.
 - `compare`: pit two branches or designs against each other.
-- `critic`: attack a promising lead before promotion.
+- `critic`: attack a promising lead before promotion or when frontier selection is converging without enough evidence.
 - `distill`: summarize evidence and compress branch memory.
 
 ## Skill Operators
@@ -31,6 +31,7 @@ Default frontier policy:
 - Keep 1 diversity branch when it has high novelty and low cost.
 - Keep parked branches in the global frontier; they are deferred options, not deleted failures.
 - When a new fanout layer is low-yield, compare it against all parked branches and resume the best earlier branch if it is stronger.
+- Before a high-promise/low-evidence branch dominates the frontier, run a critic checkpoint and consider a challenger branch.
 - Prune branches with two stale rounds and no new evidence.
 - Pivot when the top branch is blocked or low-evidence after repeated probes.
 
@@ -43,6 +44,7 @@ Tree-of-Thoughts fanout policy:
 - Park unselected branches so they can be resumed later.
 - Use `next-frontier --include-parked` after weak fanout results to recommend the next global frontier branch.
 - Use `next-frontier --include-parked --activate` to mark a parked branch active again.
+- Use `critic-checkpoint --after-beam --record` when beam selection would collapse to one weakly verified lead.
 - Let workers propose `proposed_branches`, but only the lead/controller updates `frontier.json`.
 
 Branch metadata:
@@ -57,7 +59,20 @@ Branch metadata:
 Promote only when:
 
 - the lead has concrete evidence;
+- a critic checkpoint, adversarial QA pass, or equivalent verification probe did not find a blocking counterexample;
 - the next action is no longer exploratory;
 - implementation, review, or write-up criteria are clear.
 
 Promoted leads should move to `codex-completion-loop`, `codex-adversarial-qa`, or a human decision.
+
+## Critic Output
+
+A `critic` probe should be concise and actionable:
+
+- strongest counterexample or missing evidence;
+- hidden assumption and how to falsify it;
+- score correction for `promise`, `evidence`, and `risk`;
+- best challenger branch, if any;
+- one next verification probe.
+
+If the critique cannot name evidence or a falsification probe, treat it as low-value reflection and do not let it block the controller.

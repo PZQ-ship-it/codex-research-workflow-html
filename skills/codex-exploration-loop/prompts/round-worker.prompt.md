@@ -33,9 +33,10 @@ Do:
 - run the smallest useful probe;
 - cite evidence paths or URLs;
 - score novelty, promise, evidence, risk, and cost from 0 to 5;
-- write a delta-oriented reflection;
+- write a delta-oriented reflection that names any hidden assumption, counterexample, or missing evidence when relevant;
 - choose one decision: continue, pivot, branch, prune, promote, or stop.
 - include proposed_branches only when decision is branch and the branch should split further.
+- avoid `promote` when evidence is low or the critique exposes an untested blocking assumption.
 
 Do not:
 - edit frontier.json, ledger.jsonl, runner state, or beam-selection artifacts;

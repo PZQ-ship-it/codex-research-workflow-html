@@ -31,6 +31,7 @@ Do not equate `max_rounds` with fanout layers. `max_rounds = 8` means eight tota
    - Do not beam-select early just because one branch finished first.
    - Import every worker result as a normal round record.
 4. Select the next beam.
+   - Run `critic-checkpoint --after-beam` first when one high-promise/low-evidence branch would dominate or when two branches are close but imply different next actions.
    - Run `beam-select`.
    - Keep top total-score branches.
    - Keep an extra diversity branch when novelty is high and cost is acceptable.
@@ -54,6 +55,7 @@ Example with `max_rounds = 8`:
 - Fan out when the current branch question is still broad and has independent plausible hypotheses.
 - Deepen when one branch has concrete evidence but needs another probe.
 - Compare when two retained branches are close in score or imply different next actions.
+- Criticize when a branch looks promising but is under-verified, has repeated `continue` decisions, or is about to be promoted.
 - Resume a parked branch when the latest fanout layer is low-yield and an earlier branch has higher score, stronger evidence, or lower cost.
 - Promote when the next step has become implementation, review, write-up, or human decision.
 - Stop when the remaining budget cannot improve the decision.
@@ -120,6 +122,7 @@ Selection rule:
 - ties: prefer higher evidence, then lower risk, then lower cost;
 - low-evidence branches should not be promoted even when novelty is high.
 - after a low-yield layer, compare selected children against parked branches from earlier layers before spending another round.
+- when a critique finds a plausible counterexample, treat the lead's score as provisional and spend the next probe on verification, comparison, or branch split rather than promotion.
 
 ## Safety
 

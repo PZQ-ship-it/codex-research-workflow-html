@@ -24,6 +24,7 @@ Run a bounded exploration loop for fuzzy work. The goal is leads, evidence, and 
    - continue one active branch for one concrete probe;
    - fan out one selected branch when breadth is needed;
    - resume a strong parked branch when the newest fanout layer is low-yield;
+   - run a critic checkpoint when the loop is about to over-commit to a weakly verified lead;
    - prune, pivot, promote, or stop.
 6. For a single-branch round:
    - select a branch from `frontier.json`;
@@ -37,10 +38,12 @@ Run a bounded exploration loop for fuzzy work. The goal is leads, evidence, and 
    - explore them in parallel with native subagents or `codex exec` workers when authorized;
    - count each sibling probe as one round record;
    - import each branch result;
+   - run `critic-checkpoint --after-beam` when one high-promise/low-evidence branch is about to dominate;
    - run `beam-select` to keep the best branches plus optional diversity.
 8. After beam selection, deepen or split only the retained branches. If all new children are weak, run `next-frontier --include-parked` and resume the best earlier parked branch instead of forcing another probe into weak children. Do not restart every remaining round as another same-layer fanout.
-9. Stop when the round budget is used, a lead is promoted, all branches are blocked/pruned/parked, or the user redirects.
-10. End with best leads, dead ends, parked branches, artifacts, and the recommended next lane.
+9. Before `promote`, run a critic checkpoint or `codex-adversarial-qa` unless the user explicitly asked for a lightweight scout.
+10. Stop when the round budget is used, a lead is promoted, all branches are blocked/pruned/parked, or the user redirects.
+11. End with best leads, dead ends, parked branches, artifacts, and the recommended next lane.
 
 ## Modes
 
@@ -83,8 +86,9 @@ Layer cycle:
 2. `parallel probe`: dispatch independent branches through native subagents or schema-backed `codex exec` workers.
 3. `evaluate`: import each branch result as a normal round record.
 4. `beam select`: keep top-scoring branches and optionally one high-novelty diversity branch.
-5. `iterate`: continue a retained branch, split a retained branch, compare retained branches, promote a lead, or stop.
-6. `fallback`: if the latest sibling layer is low-yield, resume the best earlier parked branch from the global frontier.
+5. `critic checkpoint`: when selection would collapse too early, attack the lead and require a falsification or verification probe.
+6. `iterate`: continue a retained branch, split a retained branch, compare retained branches, promote a lead, or stop.
+7. `fallback`: if the latest sibling layer is low-yield, resume the best earlier parked branch from the global frontier.
 
 Avoid this anti-pattern:
 
@@ -106,7 +110,30 @@ Every round must produce a decision:
 - `promote`: convert the lead into a completion/review task.
 - `stop`: budget done or no useful next probe.
 
-Reflection must be delta-oriented: say what changed, what failed, and what to try next.
+Reflection must be delta-oriented: say what changed, what failed, and what to try next. It is not enough to write a thoughtful paragraph; the reflection must either change `next_probe`, justify the score, or explain why the branch decision is still valid.
+
+## Critic Checkpoints
+
+Use critic checkpoints to prevent premature convergence on problems that need more thought, evidence, or verification. This is inspired by Tree-of-Thoughts self-evaluation/backtracking, Reflexion-style memory, Self-Refine feedback loops, LATS-style value updates with external feedback, and process supervision. Do not treat intrinsic self-correction as reliable by itself; require evidence, tests, counterexamples, source checks, or a concrete falsification probe.
+
+Trigger a checkpoint when any of these are true:
+
+- a branch is about to `promote`;
+- the top branch has high `promise` but low `evidence`;
+- the same branch receives two `continue` decisions without evidence gain;
+- `beam-select` would leave only one plausible active lead while parked alternatives remain;
+- two retained branches are close in score but imply different next actions;
+- the user asked for deeper thinking, verification, red-team review, or avoiding early convergence.
+
+A critic checkpoint must answer:
+
+- what assumption makes the current lead fragile;
+- what evidence would falsify or materially weaken it;
+- which parked or challenger branch deserves comparison;
+- whether to lower `promise`/`evidence`, raise `risk`, or add an `exploration_bonus` to a neglected challenger;
+- the next concrete verification probe.
+
+The checkpoint output must become a normal logged probe or controller event. Prefer a normal `finish-round` record when the critic runs tools, reads sources, or changes scores. Use `critic-checkpoint` only as a deterministic helper that recommends and optionally records that a critic round is needed. A checkpoint may lead to `continue`, `pivot`, `branch`, `prune`, or `promote`; do not introduce a new decision enum.
 
 ## Official Codex First
 
@@ -185,6 +212,7 @@ python <skill-dir>\scripts\explore_ledger.py beam-select `
 Summarize:
 
 ```powershell
+python <skill-dir>\scripts\explore_ledger.py critic-checkpoint --run-dir <run-dir> --record
 python <skill-dir>\scripts\explore_ledger.py next-frontier --run-dir <run-dir> --include-parked
 python <skill-dir>\scripts\explore_ledger.py frontier --run-dir <run-dir>
 python <skill-dir>\scripts\explore_ledger.py digest --run-dir <run-dir>
