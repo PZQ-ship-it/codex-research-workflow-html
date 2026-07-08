@@ -1,0 +1,6 @@
+interface:
+  display_name: "Claude Resume Kit"
+  short_description: "Researcher CVs from verified papers and projects"
+  default_prompt: "Use $claude-resume-kit to extract my paper/project evidence into a provenance-aware academic CV workflow."
+policy:
+  allow_implicit_invocation: true

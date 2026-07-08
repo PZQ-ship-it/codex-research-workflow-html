@@ -57,6 +57,24 @@ This file records third-party skill snapshots vendored into this repository.
 - License: Apache-2.0
 - Install note: installed globally as `C:\Users\Administrator\.codex\skills\frontend-design-codex` and mirrored as a full runnable bundle.
 
+## Claude Resume Kit
+
+- Skill directory: `skills/claude-resume-kit/`
+- Upstream: `https://github.com/ARPeeketi/claude-resume-kit`
+- Upstream path: repository root
+- Commit: `69930e9de21d5595f9b8c9427adc9c51a9fcbc0e`
+- License: MIT
+- Install note: installed as a Codex-native wrapper around the upstream Claude slash-skill project. The upstream snapshot is preserved under `assets/upstream-project/`; the top-level `SKILL.md` and `scripts/init_claude_resume_project.py` provide Codex routing and scaffold initialization.
+
+## Resume Tailoring
+
+- Skill directory: `skills/resume-tailoring/`
+- Upstream: `https://github.com/varunr89/resume-tailoring-skill`
+- Upstream path: `skills/resume-tailoring` plus root reference files
+- Commit: `9a4a0f20f5983d1b533627b8c5191acd1ca0cd89`
+- License: MIT
+- Install note: adapted to a Codex-native wrapper that preserves the upstream skill and matching/discovery references under `references/upstream/`.
+
 ## External Crawler Adapters
 
 These sources are not vendored into this repository. Repo-local skills only store wrappers, setup helpers, and output contracts.

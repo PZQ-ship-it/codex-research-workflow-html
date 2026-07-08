@@ -1,0 +1,6 @@
+interface:
+  display_name: "Resume Tailoring"
+  short_description: "Truthful JD matching for resumes and CVs"
+  default_prompt: "Use $resume-tailoring to tailor my resume or academic CV to this opportunity while preserving factual integrity."
+policy:
+  allow_implicit_invocation: true
