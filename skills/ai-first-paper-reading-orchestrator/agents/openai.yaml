@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI-first Paper Scout"
+  short_description: "Orchestrate AI-first paper reading scout."
+  default_prompt: "Run an AI-first paper reading scout for this seed. Produce source logs, direction recon, taxonomy, node-paper recommendations, triage recommendation, human learning lane, and pending human gates."
