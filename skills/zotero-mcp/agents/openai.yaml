@@ -1,0 +1,4 @@
+interface:
+  display_name: "Zotero MCP"
+  short_description: "Connect Codex to Zotero via local MCP"
+  default_prompt: "Use $zotero-mcp to search my Zotero library and summarize relevant papers."

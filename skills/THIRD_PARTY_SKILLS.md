@@ -75,6 +75,15 @@ This file records third-party skill snapshots vendored into this repository.
 - License: MIT
 - Install note: adapted to a Codex-native wrapper that preserves the upstream skill and matching/discovery references under `references/upstream/`.
 
+## Zotero MCP
+
+- Skill directory: `skills/zotero-mcp/`
+- Upstream: `https://github.com/54yyyu/zotero-mcp`
+- Upstream path: repository root
+- Commit: `f4eb88a2ee463cbddd4b83c9f38cc12d1263968a`
+- License: MIT
+- Install note: installed as a Codex-native wrapper around the upstream MCP server. The upstream checkout and isolated venv are intentionally kept outside Git under `%LOCALAPPDATA%\Codex\zotero-mcp`; the skill stores setup/status helpers, routing rules, local-read Codex MCP configuration, and provenance only.
+
 ## External Crawler Adapters
 
 These sources are not vendored into this repository. Repo-local skills only store wrappers, setup helpers, and output contracts.
