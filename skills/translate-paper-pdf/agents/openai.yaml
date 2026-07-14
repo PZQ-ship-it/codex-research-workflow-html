@@ -1,0 +1,4 @@
+interface:
+  display_name: "Translate Paper PDF"
+  short_description: "Translate academic PDFs with BabelDOC and QA"
+  default_prompt: "Use $translate-paper-pdf to translate this academic PDF into Chinese, preserve its layout, and report fidelity risks."

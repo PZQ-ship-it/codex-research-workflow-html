@@ -1,0 +1,4 @@
+source,target,notes
+MethodName,MethodName,keep the paper's method name unchanged
+Large Language Model,大语言模型,preferred technical translation
+Chain-of-Thought,思维链,keep the English term in parentheses on first use if helpful
