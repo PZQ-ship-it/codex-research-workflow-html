@@ -1,0 +1,9 @@
+{
+  "reviewer": "quality_judge",
+  "dimension_scores": {},
+  "confidence": 0.0,
+  "calibration": {"human_anchored": false, "leniency": null, "agreement": {}},
+  "evidence": [],
+  "counterexamples": [],
+  "revision_actions": []
+}

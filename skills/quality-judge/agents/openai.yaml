@@ -1,0 +1,4 @@
+interface:
+  display_name: "Quality Judge"
+  short_description: "Calibrated dual-review quality gates for complex artifacts"
+  default_prompt: "Use $quality-judge to evaluate this artifact against a human-anchored quality gate."

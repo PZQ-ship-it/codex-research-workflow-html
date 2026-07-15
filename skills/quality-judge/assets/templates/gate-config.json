@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "rubric_version": "1.0",
+  "dimensions": ["intent_fit", "correctness", "completeness", "usability"],
+  "weights": {"intent_fit": 0.3, "correctness": 0.3, "completeness": 0.2, "usability": 0.2},
+  "scale": {"min": 1, "max": 5},
+  "comparison_mode": "hybrid",
+  "reference_margin": 0.2,
+  "critical_dimensions": ["intent_fit", "correctness"],
+  "critical_floor": 3.0,
+  "min_confidence": 0.8,
+  "require_human_reference": true,
+  "require_calibration": true,
+  "max_abs_leniency": 0.25,
+  "require_quality_evidence": true,
+  "require_both_reviewers": true
+}

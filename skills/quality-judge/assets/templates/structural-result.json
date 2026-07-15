@@ -1,0 +1,7 @@
+{
+  "reviewer": "structural_reviewer",
+  "pass": false,
+  "critical_failures": ["replace-me"],
+  "evidence": [],
+  "fixes": []
+}
