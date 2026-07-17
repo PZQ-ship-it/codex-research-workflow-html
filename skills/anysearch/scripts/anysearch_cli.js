@@ -9,19 +9,13 @@ process.stdout.setDefaultEncoding && process.stdout.setDefaultEncoding("utf-8");
 
 const ENDPOINT = "https://api.anysearch.com/mcp";
 
+// BEGIN GENERATED:CONSTANTS
 const AVAILABLE_DOMAINS = [
-  "code","tech","fashion","travel","home","ecommerce",
-  "gaming","film","music","finance","academic","legal",
-  "business","ip","security","education","health","religion",
-  "geo","environment","energy","ugc",
+  "general","resource","social_media","finance","academic","legal",
+  "health","business","security","ip","code","energy",
+  "environment","agriculture","travel","film","gaming",
 ];
-
-const CONTENT_TYPES = [
-  "web","news","code","doc","academic","data","image","video","audio",
-];
-
-const FRESHNESS_VALUES = ["day","week","month","year"];
-const ZONES = ["cn","intl"];
+// END GENERATED:CONSTANTS
 
 function loadEnv() {
   const envPaths = [path.join(__dirname, ".env"), path.join(__dirname, "..", ".env")];
@@ -34,7 +28,7 @@ function loadEnv() {
         const idx = line.indexOf("=");
         const key = line.substring(0, idx).trim();
         let val = line.substring(idx + 1).trim().replace(/^["']|["']$/g, "");
-        if (!(key in process.env)) process.env[key] = val;
+        process.env[key] = val;
       }
     }
   }
@@ -137,10 +131,7 @@ async function cmdSearch(opts) {
     }
   }
 
-  if (opts.contentTypes) args.content_types = parseJsonList(opts.contentTypes);
-  if (opts.zone) args.zone = opts.zone;
-  if (opts.maxResults !== undefined) args.max_results = opts.maxResults;
-  if (opts.freshness) args.freshness = opts.freshness;
+  if (opts.maxResults !== undefined) args.max_results = Math.min(opts.maxResults, 10);
 
   const result = await callApi("search", args, opts.apiKey);
   console.log(result);
@@ -157,7 +148,7 @@ async function cmdListDomains(opts) {
     process.exit(1);
   }
 
-  const result = await callApi("list_domains", args, opts.apiKey);
+  const result = await callApi("get_sub_domains", args, opts.apiKey);
   console.log(result);
 }
 
@@ -277,245 +268,25 @@ async function cmdBatchSearch(opts) {
   console.log(result);
 }
 
+// BEGIN GENERATED:DOC_SPEC
+function renderDoc() {
+  const shared = path.join(__dirname, "shared");
+  let tpl = fs.readFileSync(path.join(shared, "doc_spec.md"), "utf-8");
+  const c = JSON.parse(fs.readFileSync(path.join(shared, "constants.json"), "utf-8"));
+  tpl = tpl.replace(/\{\{LANG_NAME\}\}/g, "Node.js");
+  tpl = tpl.replace(/\{\{LANG_CODEBLOCK\}\}/g, "");
+  tpl = tpl.replace(/\{\{LANG_INVOKE\}\}/g, "node scripts/anysearch_cli.js");
+  tpl = tpl.replace(/\{\{DOMAINS_SPACE\}\}/g, c.available_domains.join(" "));
+  return tpl;
+}
+// END GENERATED:DOC_SPEC
+
 function cmdDoc() {
-  console.log(`# AnySearch Interface Specification (for AI Agent)
-
-## Protocol
-- Endpoint: POST https://api.anysearch.com/mcp
-- Format: JSON-RPC 2.0, method = "tools/call"
-- Auth: Header "Authorization: Bearer <API_KEY>" (optional, anonymous has lower rate limits)
-
-## CLI Invocation (Node.js)
-
-\`\`\`
-node <skill_dir>/scripts/anysearch_cli.js <command> [options]
-\`\`\`
-
-## Available Commands
-
-### 1. search — Single query search
-Two modes: general (omit --domain) and vertical (requires --domain + --sub_domain).
-
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| query | string | YES | Search query (positional). Vertical search MUST follow query_format from list_domains |
-| --domain, -d | string | no | Vertical domain: code tech fashion travel home ecommerce gaming film music finance academic legal business ip security education health religion geo environment energy ugc |
-| --sub_domain, -s | string | no | Sub-domain routing key (e.g. finance.us_stock). REQUIRED for vertical search |
-| --sub_domain_params | JSON | no | Extra params per sub_domain schema from list_domains |
-| --content_types, -t | string | no | Comma-separated or JSON array: web news code doc academic data image video audio |
-| --zone, -z | string | no | cn / intl. Required when list_domains marks zone=CN |
-| --max_results, -m | int | no | 1-100, default 10 |
-| --freshness, -f | string | no | day / week / month / year |
-
-### 2. list_domains — Query vertical domain directory
-MUST be called before vertical search to discover available sub_domains and query formats.
-
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| --domain | string | choose one | Single domain to query |
-| --domains | string | choose one | Batch up to 5 domains (comma-separated). Takes precedence over --domain |
-
-Returns a Markdown table with columns: domain, sub_domain, description, query_format, params_schema, zone.
-
-IMPORTANT: Cache list_domains results per domain within a session. Do NOT call repeatedly.
-
-### 3. batch_search — Execute 2-5 search queries in parallel
-Single failure does not block others; results are merged.
-
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| --query | string | YES (x1-5) | Repeatable single-query shorthand. Up to 5 |
-| --queries, -q | JSON | YES | JSON array of query objects, or @file.json to read from file |
-
-Each query object supports: query (required), domain, sub_domain, content_types, zone, max_results, freshness.
-
-### 4. extract — Fetch full page content as Markdown
-Truncated at 50,000 chars. HTML pages only.
-
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| url | string | YES | Target URL (positional or via --url / -u) |
-
----
-
-## Decision Flow
-
-\`\`\`
-User query
-  |
-  +-- Has structured identifiers? (Stock:/CVE:/DOI:/IATA:/patent etc.)
-  |     YES -> 1) node scripts/anysearch_cli.js list_domains --domain X
-  |             2) read query_format from result -> construct query accordingly
-  |             3) node scripts/anysearch_cli.js search "<query>" --domain X --sub_domain Y --zone cn
-  |
-  +-- Multiple independent intents?
-  |     YES -> node scripts/anysearch_cli.js batch_search --query "..." --query "..."
-  |
-  +-- Need deeper content than snippets?
-        YES -> node scripts/anysearch_cli.js extract "https://example.com/article"
-
-  Otherwise -> node scripts/anysearch_cli.js search "<general query>"
-\`\`\`
-
----
-
-## Vertical Search Semantic Constraints
-
-Before performing vertical search, you MUST call list_domains for the target domain
-and strictly obey the returned semantic constraints:
-
-1. **query_format**: Describes exactly how to structure the query string for that sub_domain.
-   Example: "直接输入股票代码（如 AAPL）、公司名称、货币对（如 EUR_USD）、商品（如 WTICO_USD）"
-   -> This means you pass the raw ticker/name/pair directly, NOT a natural language sentence.
-
-2. **params_schema**: JSON schema for optional extra parameters.
-   Example: {"type":"object","properties":{"period":{"type":"string","enum":["1d","1w","1m","3m","1y"]}}}
-   -> You can pass --sub_domain_params '{"period":"1w"}' to narrow results.
-
-3. **zone**: If "CN", you MUST set --zone cn in the search call.
-
-4. **sub_domain selection**: Match the user's intent to the best sub_domain description.
-
----
-
-## Scenario Examples (all runnable CLI commands)
-
-### Scenario 1: General web search — look up a factual question
-
-\`\`\`bash
-node scripts/anysearch_cli.js search "What is the capital of France"
-\`\`\`
-
-\`\`\`bash
-node scripts/anysearch_cli.js search "quantum computing breakthroughs 2025" --max_results 5 --freshness month
-\`\`\`
-
-### Scenario 2: Search with content type filter — find video or image results
-
-\`\`\`bash
-node scripts/anysearch_cli.js search "how to bake sourdough bread" --content_types video --max_results 3
-\`\`\`
-
-\`\`\`bash
-node scripts/anysearch_cli.js search "Mount Everest" --content_types image --max_results 5
-\`\`\`
-
-### Scenario 3: Vertical search — stock market data (structured identifier)
-
-Step 1: Discover available sub_domains for finance:
-
-\`\`\`bash
-node scripts/anysearch_cli.js list_domains --domain finance
-\`\`\`
-
-Step 2: Search with the correct sub_domain and query format:
-
-\`\`\`bash
-node scripts/anysearch_cli.js search "AAPL" --domain finance --sub_domain finance.us_stock --zone cn --max_results 5
-\`\`\`
-
-### Scenario 4: Vertical search — academic paper lookup
-
-\`\`\`bash
-node scripts/anysearch_cli.js list_domains --domain academic
-\`\`\`
-
-\`\`\`bash
-node scripts/anysearch_cli.js search "10.1038/s41586-020-2649-2" --domain academic --sub_domain academic.doi --max_results 3
-\`\`\`
-
-### Scenario 5: Vertical search — security vulnerability (CVE)
-
-\`\`\`bash
-node scripts/anysearch_cli.js list_domains --domain security
-\`\`\`
-
-\`\`\`bash
-node scripts/anysearch_cli.js search "CVE-2024-3094" --domain security --sub_domain security.cve --max_results 3
-\`\`\`
-
-### Scenario 6: Batch search — multiple independent queries in one call
-
-\`\`\`bash
-node scripts/anysearch_cli.js batch_search --query "AAPL stock price" --query "TSLA earnings 2025" --query "GOOG market cap"
-\`\`\`
-
-With full query objects:
-
-\`\`\`bash
-node scripts/anysearch_cli.js batch_search --queries '[{"query":"AAPL","domain":"finance","sub_domain":"finance.us_stock"},{"query":"python async http","domain":"code","sub_domain":"code.general"}]'
-\`\`\`
-
-### Scenario 7: Extract full page content
-
-\`\`\`bash
-node scripts/anysearch_cli.js extract "https://en.wikipedia.org/wiki/Quantum_computing"
-\`\`\`
-
-### Scenario 8: News search with time filter
-
-\`\`\`bash
-node scripts/anysearch_cli.js search "AI regulation" --content_types news --freshness day --max_results 5
-\`\`\`
-
-### Scenario 9: Search with API key
-
-\`\`\`bash
-node scripts/anysearch_cli.js search "climate change policy 2025" --api_key <your_api_key> --max_results 3
-\`\`\`
-
-### Scenario 10: China-specific vertical search (requires zone=cn)
-
-\`\`\`bash
-node scripts/anysearch_cli.js search "600519" --domain finance --sub_domain finance.cn_stock --zone cn --max_results 5
-\`\`\`
-
----
-
-## Rate Limit Handling
-- On rate limit error with auto_registered api_key in response: present key to user for approval, then save to .env and retry
-- On anonymous quota exhausted: inform user that a key provides higher limits; suggest configuring one via .env or environment variable`);
+  console.log(renderDoc());
 }
 
 function usage() {
-  console.log(`AnySearch CLI - Unified real-time search client.
-
-Usage: anysearch.js <command> [options]
-
-Commands:
-  search <query>         Search the web (general or vertical domain search)
-  list_domains           Query domain directory for available sub_domains
-  extract <url>          Fetch full page content from a URL
-  batch_search           Execute 2-5 search queries in parallel
-  doc                    Print AI-facing interface specification
-
-Global Options:
-  --api_key <key>        API key for authentication
-
-Search Options:
-  --domain, -d           Vertical domain
-  --sub_domain, -s       Sub-domain routing key
-  --sub_domain_params    Additional params as JSON
-  --content_types, -t    Content filter (web,news,code,...)
-  --zone, -z             Region: cn / intl
-  --max_results, -m      Max results (default 10, max 100)
-  --freshness, -f        Time filter: day/week/month/year
-
-List-Domains Options:
-  --domain               Single domain to query
-  --domains              Batch domains (comma-separated or JSON array)
-
-Batch-Search Options:
-  --queries, -q          JSON array of query objects (or @file.json)
-  --query                Repeatable single-query shorthand
-
-Examples:
-  anysearch.js search "quantum computing"
-  anysearch.js search "AAPL" --domain finance --sub_domain finance.us_stock
-  anysearch.js list_domains --domain finance
-  anysearch.js extract https://example.com
-  anysearch.js batch_search --query AAPL --query GOOG
-  anysearch.js batch_search --queries '[{"query":"AAPL"},{"query":"GOOG"}]'`);
+  cmdDoc();
 }
 
 function parseArgs(argv) {
@@ -551,10 +322,7 @@ function parseArgs(argv) {
           case "--domain": case "-d": opts.domain = shiftVal(); break;
           case "--sub_domain": case "-s": opts.subDomain = shiftVal(); break;
           case "--sub_domain_params": opts.subDomainParams = shiftVal(); break;
-          case "--content_types": case "-t": opts.contentTypes = shiftVal(); break;
-          case "--zone": case "-z": opts.zone = shiftVal(); break;
           case "--max_results": case "-m": opts.maxResults = parseInt(shiftVal(), 10); break;
-          case "--freshness": case "-f": opts.freshness = shiftVal(); break;
           case "--api_key": opts.apiKey = shiftVal(); break;
           default: console.error(`Unknown flag: ${flag}`); usage(); process.exit(1);
         }
@@ -566,7 +334,7 @@ function parseArgs(argv) {
       return { action: "search", opts };
     }
 
-    case "list_domains": {
+    case "get_sub_domains": {
       while (rest.length > 0) {
         const flag = rest.shift();
         switch (flag) {

@@ -45,20 +45,13 @@ def _load_env():
 _load_env()
 
 
+# BEGIN GENERATED:CONSTANTS
 AVAILABLE_DOMAINS = [
-    "code", "tech", "fashion", "travel", "home", "ecommerce",
-    "gaming", "film", "music", "finance", "academic", "legal",
-    "business", "ip", "security", "education", "health", "religion",
-    "geo", "environment", "energy", "ugc",
+    "general", "resource", "social_media", "finance", "academic", "legal",
+    "health", "business", "security", "ip", "code", "energy",
+    "environment", "agriculture", "travel", "film", "gaming",
 ]
-
-CONTENT_TYPES = [
-    "web", "news", "code", "doc", "academic",
-    "data", "image", "video", "audio",
-]
-
-FRESHNESS_VALUES = ["day", "week", "month", "year"]
-ZONES = ["cn", "intl"]
+# END GENERATED:CONSTANTS
 
 
 def _build_headers(api_key: str) -> dict:
@@ -130,19 +123,13 @@ def cmd_search(args):
                 print("Error: --sub_domain_params must be valid JSON", file=sys.stderr)
                 sys.exit(1)
 
-    if args.content_types:
-        arguments["content_types"] = _parse_json_list(args.content_types)
-    if args.zone:
-        arguments["zone"] = args.zone
     if args.max_results is not None:
-        arguments["max_results"] = args.max_results
-    if args.freshness:
-        arguments["freshness"] = args.freshness
+        arguments["max_results"] = min(args.max_results, 10)
 
     print(_call_api("search", arguments, args.api_key))
 
 
-def cmd_list_domains(args):
+def cmd_get_sub_domains(args):
     """List available sub_domains for given domain(s)."""
     arguments = {}
     if args.domains:
@@ -153,7 +140,7 @@ def cmd_list_domains(args):
         print("Error: provide --domain or --domains", file=sys.stderr)
         sys.exit(1)
 
-    print(_call_api("list_domains", arguments, args.api_key))
+    print(_call_api("get_sub_domains", arguments, args.api_key))
 
 
 def cmd_extract(args):
@@ -287,244 +274,25 @@ def cmd_batch_search(args):
     print(_call_api("batch_search", arguments, args.api_key))
 
 
-DOC_SPEC = """\
-# AnySearch Interface Specification (for AI Agent)
-
-## Protocol
-- Endpoint: POST https://api.anysearch.com/mcp
-- Format: JSON-RPC 2.0, method = "tools/call"
-- Auth: Header "Authorization: Bearer <API_KEY>" (optional, anonymous has lower rate limits)
-
-## CLI Invocation (Python)
-
-```
-python <skill_dir>/scripts/anysearch_cli.py <command> [options]
-```
-
-## Available Commands
-
-### 1. search — Single query search
-Two modes: general (omit --domain) and vertical (requires --domain + --sub_domain).
-
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| query | string | YES | Search query (positional). Vertical search MUST follow query_format from list_domains |
-| --domain, -d | string | no | Vertical domain: code tech fashion travel home ecommerce gaming film music finance academic legal business ip security education health religion geo environment energy ugc |
-| --sub_domain, -s | string | no | Sub-domain routing key (e.g. finance.us_stock). REQUIRED for vertical search |
-| --sub_domain_params | JSON | no | Extra params per sub_domain schema from list_domains |
-| --content_types, -t | string | no | Comma-separated or JSON array: web news code doc academic data image video audio |
-| --zone, -z | string | no | cn / intl. Required when list_domains marks zone=CN |
-| --max_results, -m | int | no | 1-100, default 10 |
-| --freshness, -f | string | no | day / week / month / year |
-
-### 2. list_domains — Query vertical domain directory
-MUST be called before vertical search to discover available sub_domains and query formats.
-
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| --domain | string | choose one | Single domain to query |
-| --domains | string | choose one | Batch up to 5 domains (comma-separated). Takes precedence over --domain |
-
-Returns a Markdown table with columns: domain, sub_domain, description, query_format, params_schema, zone.
-
-IMPORTANT: Cache list_domains results per domain within a session. Do NOT call repeatedly.
-
-### 3. batch_search — Execute 2-5 search queries in parallel
-Single failure does not block others; results are merged.
-
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| --query | string | YES (x1-5) | Repeatable single-query shorthand. Up to 5 |
-| --queries, -q | JSON | YES | JSON array of query objects, or @file.json to read from file |
-
-Each query object supports: query (required), domain, sub_domain, content_types, zone, max_results, freshness.
-
-### 4. extract — Fetch full page content as Markdown
-Truncated at 50,000 chars. HTML pages only.
-
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| url | string | YES | Target URL (positional or via --url / -u) |
-
----
-
-## Decision Flow
-
-```
-User query
-  |
-  +-- Has structured identifiers? (Stock:/CVE:/DOI:/IATA:/patent etc.)
-  |     YES -> 1) python scripts/anysearch_cli.py list_domains --domain X
-  |             2) read query_format from result -> construct query accordingly
-  |             3) python scripts/anysearch_cli.py search "<query>" --domain X --sub_domain Y --zone cn
-  |
-  +-- Multiple independent intents?
-  |     YES -> python scripts/anysearch_cli.py batch_search --query "..." --query "..."
-  |
-  +-- Need deeper content than snippets?
-        YES -> python scripts/anysearch_cli.py extract "https://example.com/article"
-
-  Otherwise -> python scripts/anysearch_cli.py search "<general query>"
-```
-
----
-
-## Vertical Search Semantic Constraints
-
-Before performing vertical search, you MUST call list_domains for the target domain
-and strictly obey the returned semantic constraints:
-
-1. **query_format**: Describes exactly how to structure the query string for that sub_domain.
-   Example: "直接输入股票代码（如 AAPL）、公司名称、货币对（如 EUR_USD）、商品（如 WTICO_USD）"
-   -> This means you pass the raw ticker/name/pair directly, NOT a natural language sentence.
-
-2. **params_schema**: JSON schema for optional extra parameters.
-   Example: {"type":"object","properties":{"period":{"type":"string","enum":["1d","1w","1m","3m","1y"]}}}
-   -> You can pass --sub_domain_params '{"period":"1w"}' to narrow results.
-
-3. **zone**: If "CN", you MUST set --zone cn in the search call.
-
-4. **sub_domain selection**: Match the user's intent to the best sub_domain description.
-   Example: for "AAPL earnings report", prefer finance.us_stock over finance.forex.
-
----
-
-## Scenario Examples (all runnable CLI commands)
-
-### Scenario 1: General web search — look up a factual question
-
-```bash
-python scripts/anysearch_cli.py search "What is the capital of France"
-```
-
-```bash
-python scripts/anysearch_cli.py search "quantum computing breakthroughs 2025" --max_results 5 --freshness month
-```
-
-### Scenario 2: Search with content type filter — find video or image results
-
-```bash
-python scripts/anysearch_cli.py search "how to bake sourdough bread" --content_types video --max_results 3
-```
-
-```bash
-python scripts/anysearch_cli.py search "Mount Everest" --content_types image --max_results 5
-```
-
-### Scenario 3: Vertical search — stock market data (structured identifier)
-
-Step 1: Discover available sub_domains for finance:
-
-```bash
-python scripts/anysearch_cli.py list_domains --domain finance
-```
-
-Step 2: Search with the correct sub_domain and query format (e.g. US stock):
-
-```bash
-python scripts/anysearch_cli.py search "AAPL" --domain finance --sub_domain finance.us_stock --zone cn --max_results 5
-```
-
-### Scenario 4: Vertical search — academic paper lookup
-
-Step 1: Discover sub_domains for academic:
-
-```bash
-python scripts/anysearch_cli.py list_domains --domain academic
-```
-
-Step 2: Search by DOI:
-
-```bash
-python scripts/anysearch_cli.py search "10.1038/s41586-020-2649-2" --domain academic --sub_domain academic.doi --max_results 3
-```
-
-### Scenario 5: Vertical search — security vulnerability (CVE)
-
-```bash
-python scripts/anysearch_cli.py list_domains --domain security
-```
-
-```bash
-python scripts/anysearch_cli.py search "CVE-2024-3094" --domain security --sub_domain security.cve --max_results 3
-```
-
-### Scenario 6: Vertical search — legal document or case
-
-```bash
-python scripts/anysearch_cli.py list_domains --domain legal
-```
-
-```bash
-python scripts/anysearch_cli.py search "contract dispute damages" --domain legal --sub_domain legal.case_law --max_results 5
-```
-
-### Scenario 7: Vertical search — code search
-
-```bash
-python scripts/anysearch_cli.py search "python async http client" --domain code --sub_domain code.general --max_results 5
-```
-
-### Scenario 8: Batch search — multiple independent queries in one call
-
-```bash
-python scripts/anysearch_cli.py batch_search --query "AAPL stock price" --query "TSLA earnings 2025" --query "GOOG market cap"
-```
-
-With full query objects (vertical domain + parameters):
-
-```bash
-python scripts/anysearch_cli.py batch_search --queries '[{"query":"AAPL","domain":"finance","sub_domain":"finance.us_stock","zone":"cn"},{"query":"python async http","domain":"code","sub_domain":"code.general"}]'
-```
-
-From a JSON file:
-
-```bash
-python scripts/anysearch_cli.py batch_search --queries @queries.json
-```
-
-### Scenario 9: Extract full page content — read beyond search snippets
-
-```bash
-python scripts/anysearch_cli.py extract "https://en.wikipedia.org/wiki/Quantum_computing"
-```
-
-```bash
-python scripts/anysearch_cli.py extract --url "https://example.com/news/article-12345"
-```
-
-### Scenario 10: News search with time filter
-
-```bash
-python scripts/anysearch_cli.py search "AI regulation" --content_types news --freshness day --max_results 5
-```
-
-### Scenario 11: Search with API key
-
-```bash
-python scripts/anysearch_cli.py search "climate change policy 2025" --api_key <your_api_key> --max_results 3
-```
-
-### Scenario 12: China-specific vertical search (requires zone=cn)
-
-```bash
-python scripts/anysearch_cli.py list_domains --domain finance
-```
-
-```bash
-python scripts/anysearch_cli.py search "600519" --domain finance --sub_domain finance.cn_stock --zone cn --max_results 5
-```
-
----
-
-## Rate Limit Handling
-- On rate limit error with auto_registered api_key in response: present key to user for approval, then save to .env and retry
-- On anonymous quota exhausted: inform user that a key provides higher limits; suggest configuring one via .env or environment variable
-"""
+# BEGIN GENERATED:DOC_SPEC
+def _render_doc():
+    import json as _json
+    _dir = os.path.dirname(os.path.abspath(__file__))
+    _shared = os.path.join(_dir, "shared")
+    with open(os.path.join(_shared, "doc_spec.md"), "r", encoding="utf-8") as _f:
+        _tpl = _f.read()
+    with open(os.path.join(_shared, "constants.json"), "r", encoding="utf-8") as _f:
+        _c = _json.load(_f)
+    _tpl = _tpl.replace("{{LANG_NAME}}", "Python")
+    _tpl = _tpl.replace("{{LANG_CODEBLOCK}}", "")
+    _tpl = _tpl.replace("{{LANG_INVOKE}}", "python scripts/anysearch_cli.py")
+    _tpl = _tpl.replace("{{DOMAINS_SPACE}}", " ".join(_c["available_domains"]))
+    return _tpl
+# END GENERATED:DOC_SPEC
 
 
 def cmd_doc(args):
-    print(DOC_SPEC)
+    print(_render_doc())
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -541,7 +309,7 @@ def build_parser() -> argparse.ArgumentParser:
             "examples:\n"
             "  anysearch search \"quantum computing\"\n"
             "  anysearch search \"AAPL\" --domain finance --sub_domain finance.us_stock\n"
-            "  anysearch list_domains --domain finance\n"
+            "  anysearch get_sub_domains --domain finance\n"
             "  anysearch extract --url https://example.com\n"
             "  anysearch batch_search --queries '[{\"query\":\"AAPL\"},{\"query\":\"GOOG\"}]'\n"
         ),
@@ -564,12 +332,12 @@ def build_parser() -> argparse.ArgumentParser:
             "Two modes:\n"
             "  General search:   omit --domain (open-ended natural language queries)\n"
             "  Vertical search:  specify --domain and --sub_domain for structured queries\n\n"
-            "For vertical search, run 'list_domains' first to discover available\n"
+            "For vertical search, run 'get_sub_domains' first to discover available\n"
             "sub_domains and their required query formats."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    search_p.add_argument("query", help="Search query string. For vertical search, follow the format returned by list_domains.")
+    search_p.add_argument("query", help="Search query string. For vertical search, follow the format returned by get_sub_domains.")
     search_p.add_argument(
         "--domain", "-d",
         choices=AVAILABLE_DOMAINS,
@@ -580,38 +348,21 @@ def build_parser() -> argparse.ArgumentParser:
     )
     search_p.add_argument(
         "--sub_domain", "-s",
-        help="Sub-domain routing key (e.g. finance.us_stock). Required for vertical search; obtain via list_domains.",
+        help="Sub-domain routing key (e.g. finance.us_stock). Required for vertical search; obtain via get_sub_domains.",
     )
     search_p.add_argument(
         "--sub_domain_params",
-        help="Additional sub_domain parameters as JSON string. Schema depends on the sub_domain (see list_domains output).",
-    )
-    search_p.add_argument(
-        "--content_types", "-t",
-        help=(
-            "Content type filter(s). Comma-separated or JSON array.\n"
-            f"Available: {', '.join(CONTENT_TYPES)}"
-        ),
-    )
-    search_p.add_argument(
-        "--zone", "-z",
-        choices=ZONES,
-        help="Region zone: 'cn' for China, 'intl' for international. Required when list_domains marks CN.",
+        help="Additional sub_domain parameters as JSON string. Schema depends on the sub_domain (see get_sub_domains output).",
     )
     search_p.add_argument(
         "--max_results", "-m",
         type=int,
-        help="Maximum number of results to return (default 10, max 100).",
-    )
-    search_p.add_argument(
-        "--freshness", "-f",
-        choices=FRESHNESS_VALUES,
-        help="Time-based filter: day, week, month, year.",
+        help="Maximum number of results to return (1-10, default 10).",
     )
     search_p.set_defaults(func=cmd_search)
 
     ld_p = subparsers.add_parser(
-        "list_domains",
+        "get_sub_domains",
         help="Query domain directory for available sub_domains",
         description=(
             "List available sub_domains, query formats, and parameter schemas\n"
@@ -636,7 +387,7 @@ def build_parser() -> argparse.ArgumentParser:
             "Takes precedence over --domain."
         ),
     )
-    ld_p.set_defaults(func=cmd_list_domains)
+    ld_p.set_defaults(func=cmd_get_sub_domains)
 
     ext_p = subparsers.add_parser(
         "extract",
@@ -662,8 +413,7 @@ def build_parser() -> argparse.ArgumentParser:
             "Each query follows the same parameter structure as the 'search' command.\n"
             "A single query failure does not block others; results are merged.\n\n"
             "Queries are provided as a JSON array of objects. Each object supports\n"
-            "the same fields as 'search': query, domain, sub_domain, content_types,\n"
-            "zone, max_results, freshness."
+            "the same fields as 'search': query, domain, sub_domain, max_results."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
@@ -680,7 +430,7 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             'JSON array of search query objects (1-5 items). '
             'Tolerates PowerShell quote-stripping automatically.\n'
-            'Each object supports: query (required), domain, sub_domain, content_types, zone, max_results, freshness.\n'
+            'Each object supports: query (required), domain, sub_domain, sub_domain_params, max_results.\n'
             'Example: \'[{"query":"AAPL"},{"query":"GOOG"}]\''
         ),
     )
@@ -709,7 +459,7 @@ def main():
     parser = build_parser()
     args = parser.parse_args()
     if args.command is None:
-        parser.print_help()
+        print(_render_doc())
         sys.exit(0)
     args.func(args)
 

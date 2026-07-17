@@ -48,6 +48,15 @@ This file records third-party skill snapshots vendored into this repository.
 - License: MIT
 - Install note: moved the upstream `argument-hint` and `user-invocable` frontmatter fields under `metadata` to satisfy the local Codex skill validator while preserving the trigger metadata.
 
+## AnySearch
+
+- Skill directory: `skills/anysearch/`
+- Upstream: `https://github.com/anysearch-ai/anysearch-skill`
+- Upstream path: repository root
+- Tag: `v2.1.0`
+- Commit: `6ff6aa958ad9747659d669b5e9984f07c896f2aa`
+- Install note: moved upstream `version`, `authors`, and `credentials` frontmatter fields under `metadata` to satisfy the local Codex skill validator while preserving their values. Local `.env` credentials are excluded from the repository mirror.
+
 ## Frontend Design Codex
 
 - Skill directory: `skills/frontend-design-codex/`
