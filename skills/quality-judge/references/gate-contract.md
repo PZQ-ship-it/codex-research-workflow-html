@@ -1,38 +1,113 @@
 # Gate Contract
 
-Use JSON so the deterministic gate has no third-party runtime dependency.
+Use JSON so deterministic gating has no third-party runtime dependency.
 
-## `gate-config.json`
+## Commands
+
+```powershell
+python scripts\quality_gate.py init --out <run-dir>
+python scripts\quality_gate.py reference-mode --run-dir <run-dir>
+python scripts\quality_gate.py validate --run-dir <run-dir>
+python scripts\quality_gate.py gate --run-dir <run-dir> --out <run-dir>\gate-result.json
+```
+
+`reference-mode` runs before reviewers and returns `human_graded`,
+`retrieved_provisional`, `retrieve_required`, or
+`reference_free_diagnostic`.
+
+## Core Files
+
+`gate-config.json` schema 1.2 freezes absolute and relative policies:
 
 ```json
 {
-  "schema_version": "1.0",
-  "rubric_version": "1.0",
-  "dimensions": ["intent_fit", "correctness", "completeness", "usability"],
-  "weights": {"intent_fit": 0.3, "correctness": 0.3, "completeness": 0.2, "usability": 0.2},
-  "scale": {"min": 1, "max": 5},
-  "comparison_mode": "hybrid",
-  "reference_margin": 0.2,
-  "critical_dimensions": ["intent_fit", "correctness"],
-  "critical_floor": 3.0,
-  "min_confidence": 0.8,
-  "require_human_reference": true,
-  "require_calibration": true,
-  "max_abs_leniency": 0.25,
-  "require_quality_evidence": true,
-  "require_both_reviewers": true
+  "schema_version": "1.2",
+  "absolute_quality_floor": 4.0,
+  "dimension_floors": {"intent_fit": 3.5},
+  "reference_fallback": {
+    "auto_retrieve_when_human_missing": true,
+    "min_queries": 2,
+    "min_references": 1,
+    "max_references": 5,
+    "max_snapshot_bytes": 5000000,
+    "allowed_mime_types": ["text/plain"],
+    "anchor_panel": {
+      "preferred_min": 3,
+      "preferred_max": 5,
+      "required_bands": ["low", "boundary", "high"],
+      "min_score_separation": 0.2,
+      "allow_one_shot": true
+    },
+    "provisional_policy": "report_only"
+  }
 }
 ```
 
-`comparison_mode` is one of:
+The existing comparison modes remain `weighted_overall`, `all_dimensions`, and
+`hybrid`. `reference_margin`, weights, floors, confidence, calibration, and
+dual-review requirements remain versioned policy inputs.
 
-- `weighted_overall`: weighted candidate score must exceed weighted reference
-  score plus `reference_margin`;
-- `all_dimensions`: every configured dimension must exceed its reference by the
-  margin;
-- `hybrid`: weighted overall comparison plus every critical dimension floor.
+`task-contract.json` is the normative source for the rubric. `rubric.json`
+freezes task-specific soft-quality dimensions, their task traces, lane owner,
+scale anchors, example audit, and structural-overlap audit. Retrieved mode
+stores its run-relative locator and SHA-256 in `reference-set.json`.
 
-## `human-reference.json`
+`structural-result.json` keeps:
+
+```json
+{
+  "reviewer": "structural_reviewer",
+  "pass": true,
+  "critical_failures": [],
+  "evidence": [],
+  "fixes": []
+}
+```
+
+`quality-result.json` adds retrieved pairwise evidence:
+
+```json
+{
+  "reviewer": "quality_judge",
+  "scoring_lane": "quality-judge-001",
+  "dimension_scores": {},
+  "confidence": 0.0,
+  "calibration": {"human_anchored": false, "leniency": null, "agreement": {}},
+  "evidence": [],
+  "reference_comparisons": [
+    {
+      "reference_id": "ref-001",
+      "candidate_first": ["candidate", "candidate", "candidate"],
+      "reference_first": ["candidate", "candidate", "candidate"],
+      "bias_audit": {
+        "verbosity_relation": "similar",
+        "format_relation": "none",
+        "source_family_overlap": false,
+        "judge_family_overlap": "unknown",
+        "suspected_confounds": [],
+        "unresolved": false
+      }
+    }
+  ],
+  "structural_concerns": [],
+  "counterexamples": [],
+  "revision_actions": []
+}
+```
+
+Outcomes are `candidate`, `reference`, or `tie`. Arrays must match the frozen
+`trials_per_order`. Retrieved reference scores and provenance live in
+`reference-set.json`; see `retrieval-reference-contract.md`.
+
+Schema 1.2 intentionally supports exactly one frozen scoring lane. The lane ID
+must match `quality-result.json.scoring_lane` and every reference dimension's
+`judge_id`. Configure multiple independent lanes only in a future schema that
+stores candidate and reference scores per lane.
+
+## Human Compatibility
+
+If a valid `human-reference.json` exists, it takes precedence over retrieved
+state. Existing schema `1.0` runs continue to use the original formal gate:
 
 ```json
 {
@@ -40,45 +115,27 @@ Use JSON so the deterministic gate has no third-party runtime dependency.
   "graded_by": "human",
   "grader_count": 2,
   "rubric_version": "1.0",
-  "dimension_scores": {"intent_fit": 4.0, "correctness": 4.5, "completeness": 3.5, "usability": 4.0},
+  "dimension_scores": {},
   "notes": "Independent human scores reconciled before use as a gate."
 }
 ```
 
-`graded_by` must be `human` for a blocking gate. `model`, `claude`, or
-`synthetic` references may be retained for smoke tests but must cause
-`needs_human` when `require_human_reference` is true.
+## Result Status And Exit Codes
 
-## `structural-result.json`
+| Status | Meaning | Exit |
+|---|---|---:|
+| `accepted` | Formal human-calibrated gate passed | 0 |
+| `provisional_outperforms_retrieved` | Retrieved frontier passed | 4 |
+| `provisional_shortfall` | Absolute floor or stable frontier comparison fell short | 5 |
+| `anchored_diagnostic` | Anchors calibrated the scale, but no eligible frontier existed | 6 |
+| `needs_human` | Evidence, consistency, or calibration insufficient | 2 |
+| `blocked` | Structural or formal human gate failure | 2 |
+| invalid input | Schema, hash, or provenance failure | 3 |
 
-```json
-{
-  "reviewer": "structural_reviewer",
-  "pass": true,
-  "critical_failures": [],
-  "evidence": [{"claim": "required artifact exists", "locator": "artifact/index.html"}],
-  "fixes": []
-}
-```
+`gate-result.json` includes hashes plus `reference_mode`, `reference_tiers`,
+`reference_set_hash`, absolute-floor evidence, anchor-panel coverage and
+ordering, frontier IDs, `comparison_pass`, `order_consistent`, per-frontier
+comparison summaries, and `provisional_reason` when applicable.
 
-## `quality-result.json`
-
-```json
-{
-  "reviewer": "quality_judge",
-  "dimension_scores": {"intent_fit": 4.5, "correctness": 4.5, "completeness": 4.0, "usability": 4.2},
-  "confidence": 0.86,
-  "calibration": {"human_anchored": true, "leniency": 0.05, "agreement": {"spearman": 0.82}},
-  "evidence": [{"dimension": "intent_fit", "locator": "artifact/summary.md", "claim": "covers the stated decision"}],
-  "counterexamples": ["A polished section still omits the requested boundary."],
-  "revision_actions": ["Add the missing boundary and re-run the same rubric."]
-}
-```
-
-## `gate-result.json`
-
-The script emits `status` in `{accepted, blocked, needs_human}`, scores, input
-SHA-256 hashes, the comparison basis, and a flat `reasons` list. `accepted` is
-valid only when the structural result passes with no critical failures, the
-quality result passes every configured check, and required quality evidence is
-present.
+Schema 1.1 retrieved runs remain supported with their original all-frontier
+contract. New runs initialize as schema 1.2.

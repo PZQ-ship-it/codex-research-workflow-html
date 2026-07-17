@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.2",
+  "rubric_version": "1.2",
+  "generation": {
+    "authority": "task_contract",
+    "task_contract_locator": "task-contract.json",
+    "task_contract_sha256": "replace-me",
+    "candidate_seen_during_drafting": false,
+    "example_audit": {
+      "performed": false,
+      "reference_ids": [],
+      "dimension_proposals": [],
+      "rubric_refrozen_after_audit": false
+    }
+  },
+  "quality_lane_contract": {
+    "structural_result_hidden_until_scoring": true,
+    "hard_checks_excluded": ["required artifact presence", "schema compliance", "factual verification", "citation validity", "test execution"]
+  },
+  "dimensions": {
+    "intent_fit": {"description": "replace-me", "scale_anchors": {"1": "replace-me", "3": "replace-me", "5": "replace-me"}, "origin": "task_contract", "lane_owner": "quality_judge", "task_trace": "replace-me", "structural_overlap_check": "passed", "gating": true},
+    "judgment_quality": {"description": "replace-me", "scale_anchors": {"1": "replace-me", "3": "replace-me", "5": "replace-me"}, "origin": "task_contract", "lane_owner": "quality_judge", "task_trace": "replace-me", "structural_overlap_check": "passed", "gating": true},
+    "coherence": {"description": "replace-me", "scale_anchors": {"1": "replace-me", "3": "replace-me", "5": "replace-me"}, "origin": "task_contract", "lane_owner": "quality_judge", "task_trace": "replace-me", "structural_overlap_check": "passed", "gating": true},
+    "usability": {"description": "replace-me", "scale_anchors": {"1": "replace-me", "3": "replace-me", "5": "replace-me"}, "origin": "task_contract", "lane_owner": "quality_judge", "task_trace": "replace-me", "structural_overlap_check": "passed", "gating": true},
+    "finishedness": {"description": "replace-me", "scale_anchors": {"1": "replace-me", "3": "replace-me", "5": "replace-me"}, "origin": "task_contract", "lane_owner": "quality_judge", "task_trace": "replace-me", "structural_overlap_check": "passed", "gating": true}
+  }
+}

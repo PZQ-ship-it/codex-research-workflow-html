@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.2",
+  "mode": "auto",
+  "task_fingerprint": {
+    "artifact_type": "replace-me",
+    "audience": "replace-me",
+    "fingerprint_minimized": false,
+    "outbound_query_safe": false,
+    "contains_private_data": true,
+    "rubric_version": "1.2",
+    "critical_dimensions": ["intent_fit", "judgment_quality", "usability"]
+  },
+  "evaluation_policy": {
+    "policy_version": "1.2",
+    "policy_sha256": "replace-me",
+    "rubric_version": "1.2",
+    "rubric_locator": "rubric.json",
+    "rubric_sha256": "replace-me",
+    "reference_margin": 0.2,
+    "absolute_quality_floor": 4.0,
+    "dimensions": {
+      "intent_fit": {"weight": 0.25, "floor": 3.5, "critical": true},
+      "judgment_quality": {"weight": 0.25, "floor": 3.5, "critical": true},
+      "coherence": {"weight": 0.2, "floor": 3.0, "critical": false},
+      "usability": {"weight": 0.2, "floor": 3.5, "critical": true},
+      "finishedness": {"weight": 0.1, "floor": 3.0, "critical": false}
+    },
+    "scoring_lanes": []
+  },
+  "retrieval": {
+    "status": "not_started",
+    "provider": "replace-me",
+    "queries": [],
+    "searched_at": "replace-me",
+    "selector_blinded_to_candidate": false,
+    "pool_size": 0,
+    "reference_set_frozen": false,
+    "candidate_pool_ledger": {
+      "locator": "candidate-pool-ledger.json",
+      "sha256": "replace-me",
+      "entry_count": 0
+    },
+    "selector": {
+      "selector_id": "replace-me",
+      "model": "replace-me",
+      "prompt_sha256": "replace-me",
+      "independence": "prompt_only"
+    }
+  },
+  "references": [],
+  "aggregation": {
+    "method": "anchor_panel_plus_frontier",
+    "anchor_panel": {
+      "preferred_min": 3,
+      "preferred_max": 5,
+      "required_bands": ["low", "boundary", "high"],
+      "min_score_separation": 0.2,
+      "allow_one_shot": true
+    },
+    "pairwise_order_swap": true,
+    "require_no_critical_regression": true,
+    "artifact_level": {
+      "trials_per_order": 3,
+      "decision_rule": "unanimous_across_orders_and_trials",
+      "confidence_intervals": false
+    }
+  }
+}

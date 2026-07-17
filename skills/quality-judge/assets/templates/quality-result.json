@@ -1,9 +1,12 @@
 {
   "reviewer": "quality_judge",
+  "scoring_lane": "replace-me",
   "dimension_scores": {},
   "confidence": 0.0,
   "calibration": {"human_anchored": false, "leniency": null, "agreement": {}},
   "evidence": [],
+  "reference_comparisons": [],
+  "structural_concerns": [],
   "counterexamples": [],
   "revision_actions": []
 }
