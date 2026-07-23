@@ -1,4 +1,4 @@
 ﻿interface:
-  display_name: "PDF Single To Two Column"
-  short_description: "Batch rebuild one-column PDFs as auditable two-column PDFs"
-  default_prompt: "Rebuild the selected one-column PDFs as two-column PDFs. Run a pilot, check Word or parser backends, preserve originals, and report fidelity risks before batching."
+  display_name: "PDF Docling Two Column"
+  short_description: "Rebuild PDFs with Docling and XeLaTeX"
+  default_prompt: "Use $pdf-single-to-two-column to rebuild the selected PDFs with Docling Markdown, preserved picture assets, and a reviewed XeLaTeX two-column PDF pilot."

@@ -1,118 +1,129 @@
 ---
 name: pdf-single-to-two-column
-description: Use when a user asks to permanently reconstruct one-column PDFs as two-column PDFs, especially in batch. Distinguish real layout reconstruction from reader reflow, zoom, or 2-up printing; preserve originals, run a representative pilot, choose a backend, and report fidelity risks for formulas, tables, figures, OCR, and reading order.
+description: Reconstruct one-column PDF files as searchable two-column PDFs, with Docling Markdown (referenced picture assets) followed by Pandoc and XeLaTeX as the default PDF-only workflow. Use for permanent layout reconstruction or batch conversion when preserving figures, reading order, originals, manifests, and visual QA matters; do not use for reader reflow, zoom, or 2-up printing.
 ---
 
 # PDF Single To Two Column
 
 ## Goal and boundary
 
-This skill creates new, searchable two-column PDFs. It is not reader Reflow, zoom, or 2-up printing. A PDF usually has no reversible "change one column to two" layout model, so text flow and pages must be reconstructed. Academic PDFs can lose formulas, tables, figures, footnotes, bilingual fonts, or reading order during reconstruction; every batch must pass a representative pilot first.
+Create a new, searchable two-column PDF. Do not call reader Reflow, zoom, booklet printing, 2-up, or page slicing a reconstruction. Never overwrite the source. Work in a new run directory, keep the intermediate Markdown and picture assets, append `_2col` to the PDF name, and write `manifest.json`.
 
-Never overwrite an original. Use a separate output directory, append `_2col` to output names, and write a JSON manifest. Stop the full run when the pilot fails.
+The default PDF-only backend is:
 
-## Backend decision
+```text
+Docling PDF parse (OCR off, table-structure off, picture images on)
+  -> referenced Markdown + assets/
+  -> Pandoc Markdown-to-LaTeX
+  -> XeLaTeX classoption=twocolumn
+  -> pdftotext/layout + pdftoppm visual QA
+```
 
-Use this order:
+This is a reconstruction, not a guarantee of the source's original pagination. Figures are preserved as extracted images when Docling can identify them, but figure order, captions, formulas, title/author blocks, and page breaks remain review items.
 
-1. If the original DOCX, LaTeX, or publishing source exists, change its column setting and export again. This is the preferred path for paper-grade fidelity.
-2. If an editable DOCX exists and Word is available on Windows, use `scripts/word_com_batch.py`. The Word API is `Section.PageSetup.TextColumns.SetCount(2)`, followed by `Document.ExportAsFixedFormat(..., 17)`; this route was verified locally.
-3. If only PDF exists, inspect whether it is text-based and reliably parseable. Word PDF import can be tested explicitly with `--allow-pdf-import`, but headless import may block in the Office PDF converter and is not a default promise. Layout-aware parsers such as Docling, pdf2docx, or Marker may be evaluated as separate backends with pinned versions and representative-page checks.
-4. If BabelDOC is installed in a pinned Python environment, the opt-in `babeldoc-il-typesetting` backend may be piloted for born-digital PDFs. It reuses BabelDOC's IL, layout parser, font mapper, formula/form/curve objects, and PDFCreater. It does not call a translation service and does not overwrite the source. This backend is experimental because it uses BabelDOC 0.6.2 internal APIs.
-5. If the PDF is scanned, OCR and layout analysis must come first. Do not feed raw OCR text to Pandoc. `pdftotext -> Pandoc -> Word` is a `lossy` diagnostic baseline only; formulas, author blocks, abstracts, and paragraph order can be damaged.
+## Backend policy
 
-An Office MCP only exposes Word to Codex; it does not automatically provide PDF two-column reconstruction. `word-mcp-live` can connect over stdio and call Word, but its current tools have no body-text `TextColumns/SetCount` operation; table-column tools are different. Microsoft Work IQ Word MCP is a cloud OneDrive/SharePoint preview requiring tenant, license, and admin governance; it is not local desktop Word automation. Do not use a server exposing arbitrary `RunPython` as the default backend.
+1. If an authoritative DOCX, LaTeX, or publishing source exists and must remain paper-grade, change its column setting at the source and export again.
+2. For PDF-only input, use `scripts/docling_latex_backend.py` as the default and pin the tested Docling environment. Do not silently switch to Word, `pdf2docx`, or a text-only conversion after a Docling failure.
+3. Use Word COM only for an actual editable DOCX. Headless Word PDF import is an explicit diagnostic experiment, not a default backend.
+4. Treat `pdftotext -> Pandoc -> Word` as a lossy diagnostic baseline. It is not acceptable for a paper batch because it can scramble reading order, formulas, author blocks, and figures.
+5. Scanned PDFs need an explicit OCR contract. The default Docling pipeline sets `do_ocr=False`; do not claim scanned-PDF support without recording OCR language, engine, confidence, and manual-review pages.
+
+## Prerequisites and version contract
+
+The validated pilot used:
+
+- Python 3.11.15 in an isolated environment;
+- Docling 2.114.0;
+- Pandoc 1.19.2.1;
+- XeLaTeX from TeX Live 2025;
+- Poppler `pdfinfo`, `pdftotext`, and `pdftoppm`.
+
+Check the environment before conversion:
+
+```powershell
+$skill = "C:\Users\Administrator\.codex\skills\pdf-single-to-two-column"
+$py = "D:\path\to\.venvs\docling-two-column\Scripts\python.exe"
+& $py "$skill\scripts\docling_latex_backend.py" doctor
+```
+
+If the doctor reports a missing dependency, install it in an isolated environment and record the actual versions. Do not silently upgrade Docling for a production batch; rerun the pilot after any version change.
 
 ## Standard workflow
 
-### 1. Inventory and pilot
+### 1. Freeze a pilot
 
-- Record input location, PDF page count, fonts, text extractability, source DOCX/TeX availability, Word version, and parser versions.
-- Choose 3-5 representative pages covering title/author blocks, body text, formulas, tables, figures, footnotes, and the densest page. Work on a copied sample.
-- Check the environment:
+- Record the absolute source path, SHA-256, page count, page size, text extractability, and whether the source is born-digital or scanned.
+- Copy 3-5 representative pages into a separate pilot input: title/author, dense body, formula/table, figure/caption, and footnote pages. Do not modify the original.
+- Use the same pilot input for every backend comparison.
 
-```powershell
-python scripts/doctor.py
-```
+### 2. Run Docling reconstruction
 
-### 2. Editable-source Word COM route
-
-Run on a DOCX directory without changing the source:
+Run one file into a fresh directory. The script writes Markdown, `assets/`, `pandoc.log`, a layout text dump, rendered PNGs, the PDF, and `manifest.json`.
 
 ```powershell
-python scripts/word_com_batch.py `
-  --input D:\papers\docx `
-  --output D:\papers\two-column-pilot `
-  --max-files 3
+$skill = "C:\Users\Administrator\.codex\skills\pdf-single-to-two-column"
+$py = "D:\path\to\.venvs\docling-two-column\Scripts\python.exe"
+$input = "D:\papers\pilot\sample-pages.pdf"
+$run = "D:\papers\runs\sample-docling-2col"
+
+& $py "$skill\scripts\docling_latex_backend.py" convert `
+  --input $input `
+  --output-dir $run `
+  --render-pages 1,2,3 `
+  --cjk-font "Microsoft YaHei"
+if ($LASTEXITCODE -ne 0) { throw "Docling reconstruction failed; inspect $run\manifest.json and pandoc.log" }
 ```
 
-To explicitly test Word PDF import, use only a small copied sample:
+Keep `--render-pages` targeted to representative pages. Use `--no-render` only for a deliberate text-only diagnostic run. Use `--overwrite` only when the run directory is disposable and the replacement is explicit.
+
+### 3. Apply the quality gate
+
+Do not batch until all of these are true for the pilot:
+
+- `manifest.json` is `status: ok`, records input/output hashes, actual versions, the Pandoc command, rendered pages, and `review_gate: pending_manual_visual_review`.
+- `pdfinfo` confirms a non-empty PDF, expected page size, and a plausible page count.
+- `pdftotext -layout` shows title, authors, abstract, section order, and page numbers in left-column top-to-bottom then right-column order.
+- Rendered PNGs show no clipped text, overlap, black blocks, missing images, font substitution, incoherent blank regions, or cross-column mixing.
+- Figures and captions are in a defensible order; formulas, tables, footnotes, and symbols are readable; text remains selectable.
+- Compare the reconstructed pilot against the source page by page. A PDF being openable, searchable, or two columns wide is not sufficient.
+
+Record a human decision beside the manifest as `pilot_passed`, `pilot_rejected`, or `needs_review`. Keep rejected outputs for diagnosis; do not feed them into the batch.
+
+### 4. Batch only after approval
+
+Use a new output directory and one manifest per input. Stop on the first failure or unexpected version. Example:
 
 ```powershell
-python scripts/word_com_batch.py `
-  --input D:\papers\pdf-pilot `
-  --output D:\papers\two-column-pilot `
-  --allow-pdf-import `
-  --max-files 1
+$skill = "C:\Users\Administrator\.codex\skills\pdf-single-to-two-column"
+$py = "D:\path\to\.venvs\docling-two-column\Scripts\python.exe"
+$inputDir = "D:\papers\incoming"
+$outputRoot = "D:\papers\runs\two-column"
+
+Get-ChildItem $inputDir -Filter *.pdf | Sort-Object Name | ForEach-Object {
+  $run = Join-Path $outputRoot $_.BaseName
+  & $py "$skill\scripts\docling_latex_backend.py" convert `
+    --input $_.FullName `
+    --output-dir $run `
+    --render-pages 1
+  if ($LASTEXITCODE -ne 0) { throw "Batch stopped at $($_.FullName)" }
+}
 ```
 
-This switch cannot bypass Office conversion dialogs or licensing. If the process times out, produces no output, or leaves Word running, stop and switch to a layout-aware parser.
-
-### 3. Quality gate
-
-At minimum check:
-
-- `pdfinfo` page count, page size, and non-empty output;
-- `pdftotext -layout` title, authors, abstract, section order, and page numbers;
-- rendered screenshots of the first page, the densest body page, and formula/table/figure pages;
-- true left-column top-to-bottom then right-column flow, with no cross-column mixing, overlap, clipping, blank regions, or font substitution;
-- text coverage, page-count change, formula/table integrity, and manual comparison against the source.
-
-Only after the pilot passes should `--max-files` be removed for the full batch. A PDF being openable or having a changed page count is not sufficient evidence of success.
-
-### 4. BabelDOC IL pilot
-
-Check the dedicated interpreter first. Do not install BabelDOC into the global Python only for a one-off conversion:
-
-```powershell
-python scripts/babeldoc_column_backend.py doctor `
-  --python D:\path\to\pdf2zh-reflexion\Scripts\python.exe
-```
-
-Run a representative page pilot into a new directory:
-
-```powershell
-python scripts/babeldoc_column_backend.py convert `
-  --input D:\papers\sample.pdf `
-  --output D:\papers\two-column-pilot `
-  --python D:\path\to\pdf2zh-reflexion\Scripts\python.exe `
-  --pages 1-3 `
-  --render-pages 1,2,3
-```
-
-The input must be the unprocessed born-digital source PDF. Do not pass a PDF already generated by BabelDOC, including names such as `*.no_watermark.zh.mono.pdf`; BabelDOC's metadata guard rejects its own outputs with `InputFileGeneratedByBabelDOCError`. For the ReAct sample, use the sibling `_translation-sources\01-react-synergizing-reasoning-and-acting.pdf`, not the translated `01-react-synergizing-reasoning-and-acting.no_watermark.zh.mono.pdf`. This is an input-contract failure, not a retry condition.
-
-The command writes `<stem>_2col.pdf`, `manifest.json`, and rendered pages. The default font scale is `0.90`; try `--font-scale 1.0` only when the pilot has enough vertical capacity. The first page stays full-width by default. Pass `--include-first-page` only after separately reviewing title/author/abstract flow.
-
-This backend performs page-level column flow for `plain text` and safe `title` regions. Pages with figures, tables, equations, or figure captions remain passthrough pages while still being rebuilt by BabelDOC so non-text objects are preserved. If a safe page does not fit, the whole page falls back to the original positions and the manifest records the reason. Treat `manifest.json` as a hard review gate; `two_column_pages` is not a claim that the complete document is publication-ready.
+Review a sample of full-batch manifests and rendered pages again. Do not overwrite or replace the source directory.
 
 ## Failure handling
 
-- If Word COM is unavailable, report the Word version and COM error and name an alternative parser; do not silently downgrade.
-- If direct PDF import blocks, terminate that Word instance, preserve the copy and logs, and do not retry the whole directory.
-- If reading order or math is damaged, mark the result `lossy` and return to DOCX/LaTeX or a layout-aware parser.
-- If BabelDOC raises `InputFileGeneratedByBabelDOCError`, select the original born-digital source PDF. Do not strip metadata or bypass the guard merely to process a prior BabelDOC output.
-- If the BabelDOC backend reports `page-flow-failed`, `passthrough_pages`, missing output, or a version other than the recorded one, stop the batch and review the pilot. Do not silently upgrade BabelDOC internal APIs.
-- Object-level reconstruction can preserve drawing resources while still changing selectable-space or CMap behavior. Always inspect `pdftotext -layout` and a rendered page before accepting a batch.
-- For scans, record OCR engine, language, confidence, and manual-review pages.
-- For MCP failures, check `codex mcp list`, the stdio command, dependencies, and Word COM separately. A successful MCP handshake does not prove that a two-column tool exists.
+- If Docling cannot parse the PDF, preserve its manifest/log and report the exact version and error. Do not silently fall back to text-only Pandoc.
+- If `assets/` is empty for a document that visibly contains figures, mark the pilot as failed and inspect Docling's picture extraction before batching.
+- If title/author blocks, formulas, figure order, captions, or reading order are damaged, mark `pilot_rejected` or `needs_review`; do not describe the output as publication-ready.
+- If Pandoc/XeLaTeX fails, inspect `pandoc.log`, the selected CJK font, and the Markdown/image paths. Keep the Markdown as the debugging artifact.
+- If page count changes substantially or a right column is blank, treat it as a layout decision requiring review, not automatic success.
+- If input is a BabelDOC-generated PDF, Docling may still parse it, but do not use it as evidence that the BabelDOC IL backend can process its own output. Keep backend experiments separate.
+- For Word/MCP questions, consult `references/backends.md`. An Office MCP connection does not imply a PDF reconstruction tool.
 
-## References
+## Bundled resources
 
-- Codex MCP: https://developers.openai.com/codex/mcp
-- Word text columns: https://learn.microsoft.com/en-us/office/vba/api/word.textcolumns.setcount
-- Word fixed-format export: https://learn.microsoft.com/en-us/office/vba/api/word.document.exportasfixedformat
-- Microsoft Work IQ Word MCP: https://learn.microsoft.com/en-us/microsoft-copilot-studio/mcp-word-work-iq
-- word-mcp-live: https://github.com/ykarapazar/word-mcp-live
-
-See `references/backends.md` for the backend audit and evidence boundary.
+- `scripts/docling_latex_backend.py`: deterministic single-file Docling -> Markdown/assets -> Pandoc/XeLaTeX conversion, manifest, text dump, and rendering.
+- `scripts/doctor.py`: environment inventory; reports `docling-markdown-xelatex` as the recommended backend when ready.
+- `references/backends.md`: tested backend comparison and evidence limits.

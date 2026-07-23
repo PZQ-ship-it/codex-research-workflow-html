@@ -74,9 +74,17 @@ def main() -> int:
     else:
         report["word"] = {"available": False, "reason": "Windows + pywin32 required"}
 
-    print(json.dumps(report, ensure_ascii=False, indent=2))
+    docling_ok = bool(report["python_modules"].get("docling")) and all(
+        report["commands"][name]["available"]
+        for name in ("pandoc", "xelatex", "pdfinfo", "pdftotext", "pdftoppm")
+    )
     word_ok = bool(report.get("word", {}).get("available"))
-    return 0 if word_ok else 2
+    report["recommended_backend"] = (
+        "docling-markdown-xelatex" if docling_ok else ("word-com" if word_ok else None)
+    )
+    report["docling_backend_ready"] = docling_ok
+    print(json.dumps(report, ensure_ascii=False, indent=2))
+    return 0 if docling_ok or word_ok else 2
 
 
 if __name__ == "__main__":
