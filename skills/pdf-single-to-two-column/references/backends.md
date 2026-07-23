@@ -19,7 +19,7 @@
 
 ## 样例 PDF 验证边界
 
-样例：`01-react-synergizing-reasoning-and-acting.no_watermark.zh.mono.pdf`，33 页 Letter，BabelDOC 翻译输出，含嵌入字体和公式/学术排版。
+用户可见样例 `01-react-synergizing-reasoning-and-acting.no_watermark.zh.mono.pdf` 是 33 页 Letter 的 BabelDOC 翻译输出，含嵌入字体和公式/学术排版。它适合验证 Word/PDF 导入边界，但不能再次作为 BabelDOC IL 后端的输入；BabelDOC 会用元数据守卫抛出 `InputFileGeneratedByBabelDOCError`。
 
 - Word COM 的 DOCX→PDF 路线在本机 Word 16.0.20131 上通过：1 个 section 的 `TextColumns` 从 1 变为 2，导出 PDF 成功，输出页数发生变化，页面尺寸保持 Letter。
 - Word COM 直接打开这个 PDF 在无界面自动化中卡在 `Documents.Open` 的 PDF 导入阶段，不能当作成功路径；不同 Office 安装可能不同，因此脚本将 PDF 导入设为显式 `--allow-pdf-import`。
@@ -28,6 +28,7 @@
 ## BabelDOC IL 后端（实验）
 
 - 本机可用解释器：`D:\hkust-gz-ra-paper-reading\.venvs\pdf2zh-reflexion\Scripts\python.exe`；`pdf2zh-next 2.9.0` 搭配 `babeldoc 0.6.2`。
+- BabelDOC 后端的输入必须是未经过 BabelDOC 的 born-digital 原 PDF。ReAct 试跑使用 `_translation-sources\01-react-synergizing-reasoning-and-acting.pdf`，不是同目录的 `*.no_watermark.zh.mono.pdf`；不要删除元数据或绕过守卫来重复处理 BabelDOC 产物。
 - 可迁移的架构：native parser 建立 Page/Paragraph/Character/Formula/Figure/Form/Curve IL，LayoutParser 识别版面，Typesetting 做行布局，PDFCreater 复用页面尺寸和原 PDF 的资源/非文本对象。
 - 本 skill 的适配器只启用 `skip_translation=True`，不会调用翻译器或写入密钥；使用 page-level column flow，默认跳过首屏，含图表/公式/图注的页默认 passthrough。
 - 代表性 1--3 页试跑已产出独立 PDF、manifest 和 PNG render；页 2 的图形对象保留，页 2--3 的安全正文进入两栏，源文件 SHA-256 保持可核对。该结果仍需人工检查词间空格、阅读顺序和字符映射，不能作为论文出版级保证。
