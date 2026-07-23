@@ -18,7 +18,8 @@ Use this order:
 1. If the original DOCX, LaTeX, or publishing source exists, change its column setting and export again. This is the preferred path for paper-grade fidelity.
 2. If an editable DOCX exists and Word is available on Windows, use `scripts/word_com_batch.py`. The Word API is `Section.PageSetup.TextColumns.SetCount(2)`, followed by `Document.ExportAsFixedFormat(..., 17)`; this route was verified locally.
 3. If only PDF exists, inspect whether it is text-based and reliably parseable. Word PDF import can be tested explicitly with `--allow-pdf-import`, but headless import may block in the Office PDF converter and is not a default promise. Layout-aware parsers such as Docling, pdf2docx, or Marker may be evaluated as separate backends with pinned versions and representative-page checks.
-4. If the PDF is scanned, OCR and layout analysis must come first. Do not feed raw OCR text to Pandoc. `pdftotext -> Pandoc -> Word` is a `lossy` diagnostic baseline only; formulas, author blocks, abstracts, and paragraph order can be damaged.
+4. If BabelDOC is installed in a pinned Python environment, the opt-in `babeldoc-il-typesetting` backend may be piloted for born-digital PDFs. It reuses BabelDOC's IL, layout parser, font mapper, formula/form/curve objects, and PDFCreater. It does not call a translation service and does not overwrite the source. This backend is experimental because it uses BabelDOC 0.6.2 internal APIs.
+5. If the PDF is scanned, OCR and layout analysis must come first. Do not feed raw OCR text to Pandoc. `pdftotext -> Pandoc -> Word` is a `lossy` diagnostic baseline only; formulas, author blocks, abstracts, and paragraph order can be damaged.
 
 An Office MCP only exposes Word to Codex; it does not automatically provide PDF two-column reconstruction. `word-mcp-live` can connect over stdio and call Word, but its current tools have no body-text `TextColumns/SetCount` operation; table-column tools are different. Microsoft Work IQ Word MCP is a cloud OneDrive/SharePoint preview requiring tenant, license, and admin governance; it is not local desktop Word automation. Do not use a server exposing arbitrary `RunPython` as the default backend.
 
@@ -69,11 +70,37 @@ At minimum check:
 
 Only after the pilot passes should `--max-files` be removed for the full batch. A PDF being openable or having a changed page count is not sufficient evidence of success.
 
+### 4. BabelDOC IL pilot
+
+Check the dedicated interpreter first. Do not install BabelDOC into the global Python only for a one-off conversion:
+
+```powershell
+python scripts/babeldoc_column_backend.py doctor `
+  --python D:\path\to\pdf2zh-reflexion\Scripts\python.exe
+```
+
+Run a representative page pilot into a new directory:
+
+```powershell
+python scripts/babeldoc_column_backend.py convert `
+  --input D:\papers\sample.pdf `
+  --output D:\papers\two-column-pilot `
+  --python D:\path\to\pdf2zh-reflexion\Scripts\python.exe `
+  --pages 1-3 `
+  --render-pages 1,2,3
+```
+
+The command writes `<stem>_2col.pdf`, `manifest.json`, and rendered pages. The default font scale is `0.90`; try `--font-scale 1.0` only when the pilot has enough vertical capacity. The first page stays full-width by default. Pass `--include-first-page` only after separately reviewing title/author/abstract flow.
+
+This backend performs page-level column flow for `plain text` and safe `title` regions. Pages with figures, tables, equations, or figure captions remain passthrough pages while still being rebuilt by BabelDOC so non-text objects are preserved. If a safe page does not fit, the whole page falls back to the original positions and the manifest records the reason. Treat `manifest.json` as a hard review gate; `two_column_pages` is not a claim that the complete document is publication-ready.
+
 ## Failure handling
 
 - If Word COM is unavailable, report the Word version and COM error and name an alternative parser; do not silently downgrade.
 - If direct PDF import blocks, terminate that Word instance, preserve the copy and logs, and do not retry the whole directory.
 - If reading order or math is damaged, mark the result `lossy` and return to DOCX/LaTeX or a layout-aware parser.
+- If the BabelDOC backend reports `page-flow-failed`, `passthrough_pages`, missing output, or a version other than the recorded one, stop the batch and review the pilot. Do not silently upgrade BabelDOC internal APIs.
+- Object-level reconstruction can preserve drawing resources while still changing selectable-space or CMap behavior. Always inspect `pdftotext -layout` and a rendered page before accepting a batch.
 - For scans, record OCR engine, language, confidence, and manual-review pages.
 - For MCP failures, check `codex mcp list`, the stdio command, dependencies, and Word COM separately. A successful MCP handshake does not prove that a two-column tool exists.
 

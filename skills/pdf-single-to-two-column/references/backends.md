@@ -25,6 +25,14 @@
 - Word COM 直接打开这个 PDF 在无界面自动化中卡在 `Documents.Open` 的 PDF 导入阶段，不能当作成功路径；不同 Office 安装可能不同，因此脚本将 PDF 导入设为显式 `--allow-pdf-import`。
 - 有损基线 `pdftotext -layout → Pandoc DOCX → Word COM` 确实生成了双栏 PDF，但首屏出现作者/摘要/正文顺序和断行损坏；这证明纯文本重排只能用于诊断，不适合论文默认批处理。
 
+## BabelDOC IL 后端（实验）
+
+- 本机可用解释器：`D:\hkust-gz-ra-paper-reading\.venvs\pdf2zh-reflexion\Scripts\python.exe`；`pdf2zh-next 2.9.0` 搭配 `babeldoc 0.6.2`。
+- 可迁移的架构：native parser 建立 Page/Paragraph/Character/Formula/Figure/Form/Curve IL，LayoutParser 识别版面，Typesetting 做行布局，PDFCreater 复用页面尺寸和原 PDF 的资源/非文本对象。
+- 本 skill 的适配器只启用 `skip_translation=True`，不会调用翻译器或写入密钥；使用 page-level column flow，默认跳过首屏，含图表/公式/图注的页默认 passthrough。
+- 代表性 1--3 页试跑已产出独立 PDF、manifest 和 PNG render；页 2 的图形对象保留，页 2--3 的安全正文进入两栏，源文件 SHA-256 保持可核对。该结果仍需人工检查词间空格、阅读顺序和字符映射，不能作为论文出版级保证。
+- 内部 API 不稳定。manifest 必须记录 BabelDOC 版本和 `font_scale`；版本漂移、`page-flow-failed`、重叠或文字不可选时停止全量。
+
 ## 验收建议
 
 先对代表性 3--5 页做截图和文本顺序抽查，再做全量。需要保留公式、表格、图片和脚注时，优先回到 DOCX/LaTeX 或安装并锁定布局感知解析器；不要以文件能打开或页数变化作为唯一成功标准。

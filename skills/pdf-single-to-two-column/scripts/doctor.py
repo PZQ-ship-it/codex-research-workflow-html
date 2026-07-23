@@ -5,7 +5,9 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import os
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -13,6 +15,26 @@ from pathlib import Path
 def command_info(name: str) -> dict[str, object]:
     path = shutil.which(name)
     return {"available": path is not None, "path": path}
+
+
+def babeldoc_info() -> dict[str, object]:
+    candidates = [os.environ.get("BABELDOC_PYTHON"), sys.executable]
+    for candidate in candidates:
+        if not candidate:
+            continue
+        path = shutil.which(candidate) or candidate
+        if not Path(path).exists():
+            continue
+        probe = subprocess.run(
+            [path, "-c", "import babeldoc; print(babeldoc.__version__)"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        if probe.returncode == 0:
+            return {"available": True, "python": str(Path(path).resolve()), "version": probe.stdout.strip()}
+    return {"available": False, "python": os.environ.get("BABELDOC_PYTHON")}
 
 
 def main() -> int:
@@ -29,8 +51,9 @@ def main() -> int:
         },
         "python_modules": {
             name: importlib.util.find_spec(name) is not None
-            for name in ("win32com", "pythoncom", "fitz", "docling", "pdf2docx", "marker")
+            for name in ("win32com", "pythoncom", "fitz", "docling", "pdf2docx", "marker", "babeldoc")
         },
+        "babeldoc": babeldoc_info(),
     }
 
     if sys.platform == "win32" and report["python_modules"]["win32com"]:
