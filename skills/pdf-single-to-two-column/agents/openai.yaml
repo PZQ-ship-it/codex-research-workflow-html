@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "PDF Single To Two Column"
+  short_description: "Batch rebuild one-column PDFs as auditable two-column PDFs"
+  default_prompt: "Rebuild the selected one-column PDFs as two-column PDFs. Run a pilot, check Word or parser backends, preserve originals, and report fidelity risks before batching."
