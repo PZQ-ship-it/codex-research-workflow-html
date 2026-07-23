@@ -1,0 +1,4 @@
+interface:
+  display_name: "Content Research Writer"
+  short_description: "Research, synthesize, draft, and polish sourced content"
+  default_prompt: "Use $content-research-writer to turn these sources into a clear, well-supported article."

@@ -84,6 +84,15 @@ This file records third-party skill snapshots vendored into this repository.
 - License: MIT
 - Install note: adapted to a Codex-native wrapper that preserves the upstream skill and matching/discovery references under `references/upstream/`.
 
+## Content Research Writer
+
+- Skill directory: `skills/content-research-writer/`
+- Upstream inspiration: `https://github.com/ComposioHQ/awesome-claude-skills`
+- Upstream path: `content-research-writer`
+- Reviewed commit: `044d48b594f060c164f3b20fac9ea01374721bca`
+- Upstream license: not declared when reviewed on 2026-07-23.
+- Install note: independently rewritten as a Codex-native skill for summarization, multi-source synthesis, evidence-backed drafting, voice-preserving revision, citation verification, and final QA. No upstream instructional text is vendored because the upstream repository did not declare a license.
+
 ## Zotero MCP
 
 - Skill directory: `skills/zotero-mcp/`
