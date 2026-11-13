@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/hugohe3/ppt-master",
+  "commit": "01fe549371b98f44be22cd337bbc911013452f09",
+  "upstream_path": "skills/ppt-master",
+  "installed_at": "2026-11-13",
+  "metadata_repairs": [],
+  "runtime": "D:/research-stdio/.venv/Scripts/python.exe",
+  "launcher": "D:/research-stdio/Start-ResearchStudio.ps1"
+}

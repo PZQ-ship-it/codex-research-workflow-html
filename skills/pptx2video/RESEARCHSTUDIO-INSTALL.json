@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/ai-nuts/pptx2video",
+  "commit": "3c4343136cceb78268dfa629135c6ee3bb5be427",
+  "upstream_path": "skills/pptx2video",
+  "installed_at": "2026-11-13",
+  "metadata_repairs": [],
+  "runtime": "D:/research-stdio/.venv/Scripts/python.exe",
+  "launcher": "D:/research-stdio/Start-ResearchStudio.ps1"
+}

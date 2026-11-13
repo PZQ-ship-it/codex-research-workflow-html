@@ -2,6 +2,21 @@
 
 This file records third-party skill snapshots vendored into this repository.
 
+## Microsoft ResearchStudio and required video skills (2026-11-13)
+
+- Upstream: `https://github.com/microsoft/ResearchStudio`
+- Commit: `063f10088af49909e1a4a7ea8d29efe19633f34e`
+- License: MIT (included in each top-level installed bundle).
+- Installed directories: `idea-spark`, `paper-search`, `scoop-check`, `idea-quality`, `paper2assets`, `paper2poster`, `paper2video`, `paper2blog`, `paper2reel`.
+- `idea-quality` comes from `ResearchStudio-Idea/evaluation/idea_quality`; the other Idea skills come from `ResearchStudio-Idea/skills`, and Reel skills from `ResearchStudio-Reel/skills`.
+- Nested `paper2poster/html2pptx` is preserved with its scripts and resources.
+- Metadata adaptation: quote the upstream invalid YAML description for `paper2assets`; remove angle brackets from that description; shorten the nested `html2pptx` description to the Codex validator limit. Preserve original descriptions in `metadata.upstream_description`. Workflow bodies and scripts are unchanged.
+- Required video dependency: `skills/ppt-master`, from `https://github.com/hugohe3/ppt-master`, path `skills/ppt-master`, commit `01fe549371b98f44be22cd337bbc911013452f09`, MIT. Full skill bundle retained, including attribution/sponsor resources, scripts and templates.
+- Required video dependency: `skills/pptx2video`, from `https://github.com/ai-nuts/pptx2video`, path `skills/pptx2video`, commit `3c4343136cceb78268dfa629135c6ee3bb5be427`, MIT. The separate Python runtime is installed from that full source checkout.
+- Per-bundle `RESEARCHSTUDIO-INSTALL.json` records the exact upstream path, commit, local runtime, and metadata changes.
+- Verification: all 12 SKILL.md entries validated in both global and repository copies; all 13,427 bundle files matched by SHA-256. Credentials, `.env`, Python bytecode and caches excluded.
+- Local runtime and manual configuration: [ResearchStudio Windows setup](../docs/researchstudio-windows-setup.md).
+
 ## Academic Research Suite
 
 - Skill directory: `skills/academic-research-suite/`

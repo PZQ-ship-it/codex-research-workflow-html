@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/microsoft/ResearchStudio",
+  "commit": "063f10088af49909e1a4a7ea8d29efe19633f34e",
+  "upstream_path": "ResearchStudio-Idea/skills/scoop_check",
+  "installed_at": "2026-11-13",
+  "metadata_repairs": [],
+  "runtime": "D:/research-stdio/.venv/Scripts/python.exe",
+  "launcher": "D:/research-stdio/Start-ResearchStudio.ps1"
+}
