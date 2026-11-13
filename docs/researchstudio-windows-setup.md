@@ -2,6 +2,8 @@
 
 核对日期：2026-11-13。完整本机指南：[D:/research-stdio/SETUP.zh-CN.md](D:/research-stdio/SETUP.zh-CN.md)。
 
+同日检索修复：`paper-search` 已支持 OpenAlex 语义失败后显式切换关键词、DBLP 官方 SPARQL 标题词检索，以及无需登录的 OpenReview 公开搜索。相同主题实测返回 8 / 7 / 8 条原始记录；未据此声称文献筛选完成。OpenReview 账号登录仍待人工核对；独立 Idea orchestrator 的认证 gate 未修改。模式与覆盖差异见 [连接器修复说明](../skills/paper-search/references/connector-recovery.md)。
+
 - 主仓库：[microsoft/ResearchStudio](https://github.com/microsoft/ResearchStudio)，`063f10088af49909e1a4a7ea8d29efe19633f34e`，本机 `D:\research-stdio\ResearchStudio`。
 - 视频依赖完整克隆在 `D:\research-stdio\components\ppt-master` 和 `pptx2video`；commit 与许可记录见 [第三方来源](../skills/THIRD_PARTY_SKILLS.md)。
 - 全局安装：`C:\Users\Administrator\.codex\skills`。同步：本仓库 `skills/`。11 个顶层技能加嵌套 `html2pptx`，保留完整可运行脚本、模板、引用资源和许可。

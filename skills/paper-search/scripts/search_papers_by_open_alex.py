@@ -3,7 +3,10 @@
 
 import argparse
 import os
+import sys
 import time
+
+import requests
 
 from _http_runtime import create_session, request
 
@@ -29,12 +32,16 @@ def search_papers_by_open_alex(
     url = "https://api.openalex.org/works"
     papers: list[dict] = []
     page = 1
-    per_page = min(200, max_results)  # API max per request is 200
+    mode = os.environ.get('PAPER_SEARCH_OPENALEX_MODE', 'auto').lower()
+    if mode not in {'auto', 'semantic', 'keyword'}:
+        raise ValueError('PAPER_SEARCH_OPENALEX_MODE must be auto, semantic or keyword')
+    search_mode = 'keyword' if mode == 'keyword' else 'semantic'
+    per_page = min(50 if search_mode == 'semantic' else 200, max_results)
     session = create_session("PaperSearch/1.0")
 
     while len(papers) < max_results:
         params = {
-            "search.semantic": query,
+            "search" if search_mode == 'keyword' else "search.semantic": query,
             "filter": f"publication_year:{start_year}-{end_year}",
             "sort": "relevance_score:desc",
             "page": page,
@@ -43,9 +50,22 @@ def search_papers_by_open_alex(
         }
         headers = {"Authorization": f"Bearer {API_KEY}"} if API_KEY else {}
 
-        response = request(
-            session, "GET", url, source="open_alex", params=params, headers=headers
-        )
+        try:
+            response = request(
+                session, "GET", url, source="open_alex", params=params, headers=headers
+            )
+        except (requests.Timeout, requests.ConnectionError):
+            if mode != 'auto' or search_mode != 'semantic' or papers:
+                raise
+            response = None
+        if (response is None or response.status_code in {500, 502, 503, 504}) and mode == 'auto' and search_mode == 'semantic' and not papers:
+            status = response.status_code if response is not None else 'network timeout/connection failure'
+            print(f'[open_alex] Semantic search unavailable ({status}); using keyword search. Retrieval semantics differ.', file=sys.stderr)
+            search_mode, page = 'keyword', 1
+            per_page = min(200, max_results)
+            if response is not None:
+                response.close()
+            continue
         response.raise_for_status()
         data = response.json()
 
@@ -64,19 +84,23 @@ def search_papers_by_open_alex(
                 "year": work.get("publication_year"),
                 "abstract": _reconstruct_abstract(work.get("abstract_inverted_index")),
                 "url": work.get("doi") or work.get("id", ""),
-                "venue": (work.get("primary_location", {}).get("source") or {}).get("display_name", ""),
+                "venue": ((work.get("primary_location") or {}).get("source") or {}).get("display_name", ""),
                 "citation_count": work.get("cited_by_count", 0),
                 "publication_date": work.get("publication_date", ""),
                 "source": "open_alex",
                 "doi": (work.get("doi") or "").replace("https://doi.org/", "") or None,
                 "arxiv_id": None,
+                "retrieval_method": f"openalex_{search_mode}",
             })
 
-        page += 1
         total_count = data.get("meta", {}).get("count", 0)
-
-        if page * per_page >= total_count:
+        if page * per_page >= total_count or len(results) < per_page:
             break
+        if search_mode == 'semantic':
+            if len(papers) < max_results:
+                print('[open_alex] Semantic search is limited to 50 results per query; use PAPER_SEARCH_OPENALEX_MODE=keyword for pagination.', file=sys.stderr)
+            break
+        page += 1
 
         time.sleep(1)  # Be polite to the API
 

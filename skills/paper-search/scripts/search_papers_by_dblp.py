@@ -2,17 +2,50 @@
 """Search for academic papers using the DBLP API."""
 
 import argparse
+import json
+import os
 import re
+import sys
 import time
 
 from _http_runtime import create_session, request
 
 
-def search_papers_by_dblp(
+class DBLPResponseError(RuntimeError):
+    """The REST endpoint returned a non-JSON response, not zero papers."""
+
+
+def search_papers_by_dblp(query, start_year, end_year, max_results=10):
+    if max_results <= 0:
+        return []
+    backend = os.environ.get('PAPER_SEARCH_DBLP_BACKEND', 'auto').lower()
+    if backend not in {'auto', 'rest', 'sparql'}:
+        raise ValueError('PAPER_SEARCH_DBLP_BACKEND must be auto, rest or sparql')
+    session = create_session('PaperSearch/1.0')
+    if backend == 'sparql':
+        papers = _search_sparql(query, start_year, end_year, max_results, session)
+    else:
+        try:
+            papers = _search_rest(query, start_year, end_year, max_results, session)
+        except DBLPResponseError as exc:
+            if backend == 'rest':
+                raise
+            print(f'[dblp] {exc}; using the official public SPARQL API with title-token matching (not REST ranking). No browser challenge is executed.', file=sys.stderr)
+            papers = _search_sparql(query, start_year, end_year, max_results, session)
+    for paper in papers:
+        abstract = _fetch_abstract_from_doi(paper.get('url', ''), session=session)
+        if abstract:
+            paper['abstract'] = abstract
+        time.sleep(0.5)
+    return papers
+
+
+def _search_rest(
     query: str,
     start_year: int,
     end_year: int,
     max_results: int = 10,
+    session=None,
 ) -> list[dict]:
     """Search for papers on DBLP.
 
@@ -29,7 +62,7 @@ def search_papers_by_dblp(
     papers: list[dict] = []
     offset = 0
     limit = min(1000, max_results)  # DBLP max per request is 1000
-    session = create_session("PaperSearch/1.0")
+    session = session or create_session("PaperSearch/1.0")
 
     while len(papers) < max_results:
         params = {
@@ -41,7 +74,17 @@ def search_papers_by_dblp(
 
         response = request(session, "GET", url, source="dblp", params=params)
         response.raise_for_status()
-        data = response.json()
+        content_type = response.headers.get('Content-Type', '').lower()
+        if response.status_code != 200 or 'json' not in content_type:
+            challenge = 'anubis' in response.text.lower()
+            kind = 'Anubis browser verification' if challenge else 'non-JSON response'
+            raise DBLPResponseError(f'REST HTTP {response.status_code}: {kind}')
+        try:
+            data = response.json()
+        except ValueError as exc:
+            raise DBLPResponseError('REST returned malformed JSON') from exc
+        if not isinstance(data, dict) or not isinstance(data.get('result'), dict):
+            raise DBLPResponseError('REST returned an unexpected JSON schema')
 
         hits = data.get("result", {}).get("hits", {})
         total = int(hits.get("@total", 0))
@@ -76,6 +119,7 @@ def search_papers_by_dblp(
                 "source": "dblp",
                 "doi": info.get("doi"),
                 "arxiv_id": None,
+                "retrieval_method": "dblp_rest",
             })
 
         offset += limit
@@ -85,15 +129,56 @@ def search_papers_by_dblp(
 
         time.sleep(1)  # Be polite to the API
 
-    # Fetch abstracts for papers that have a DOI
-    papers = papers[:max_results]
-    for paper in papers:
-        abstract = _fetch_abstract_from_doi(paper.get("url", ""), session=session)
-        if abstract:
-            paper["abstract"] = abstract
-        time.sleep(0.5)  # Be polite to the Crossref API
+    return papers[:max_results]
 
-    return papers
+
+def _search_sparql(query, start_year, end_year, max_results, session):
+    # This public endpoint is independently documented by DBLP. Do not solve or
+    # replay the REST endpoint's Anubis challenge, cookies, or browser identity.
+    # REST field/boolean syntax is not silently translated to a different query.
+    if not query.strip() or re.search(r'[^\w\s-]', query) or any(t in {'AND', 'OR', 'NOT'} for t in query.split()):
+        raise ValueError('DBLP SPARQL title search accepts plain words only; use the REST backend for advanced DBLP syntax')
+    terms = list(dict.fromkeys(query.lower().split()))
+    filters = ' && '.join(f'CONTAINS(LCASE(STR(?title)), {json.dumps(t, ensure_ascii=False)})' for t in terms)
+    sparql = f'''PREFIX dblp: <https://dblp.org/rdf/schema#>
+SELECT ?pub ?title ?year ?venue ?doi ?url ?author ?ordinal WHERE {{
+ {{ SELECT DISTINCT ?pub ?title ?year WHERE {{
+    ?pub dblp:title ?title ; dblp:yearOfPublication ?year .
+    FILTER({filters})
+    FILTER(STR(?year) >= "{int(start_year)}" && STR(?year) <= "{int(end_year)}")
+ }} ORDER BY DESC(?year) ?pub LIMIT {int(max_results)} }}
+ OPTIONAL {{ ?pub dblp:publishedIn ?venue }}
+ OPTIONAL {{ ?pub dblp:doi ?doi }}
+ OPTIONAL {{ ?pub dblp:primaryDocumentPage ?url }}
+ OPTIONAL {{ ?pub dblp:hasSignature ?sig .
+   ?sig a dblp:AuthorSignature ; dblp:signatureDblpName ?author ; dblp:signatureOrdinal ?ordinal . }}
+}} ORDER BY DESC(?year) ?pub ?ordinal'''
+    response = request(session, 'GET', 'https://sparql.dblp.org/sparql', source='dblp', params={'query': sparql}, headers={'Accept':'application/sparql-results+json'})
+    response.raise_for_status()
+    data = response.json()
+    rows = data.get('results', {}).get('bindings')
+    if not isinstance(rows, list):
+        raise DBLPResponseError('SPARQL returned an unexpected JSON schema')
+    papers, authors = {}, {}
+    for row in rows:
+        value = lambda k: row.get(k, {}).get('value', '')
+        pub = value('pub')
+        if pub not in papers:
+            doi = value('doi').replace('https://doi.org/', '') or None
+            papers[pub] = {
+                'title':value('title'), 'authors':[], 'year':int(value('year')),
+                'abstract':'', 'url':value('doi') or value('url') or pub,
+                'venue':value('venue'), 'citation_count':0,
+                'publication_date':value('year')+'-01-01', 'source':'dblp',
+                'doi':doi, 'arxiv_id':None, 'dblp_url':pub,
+                'retrieval_method':'dblp_sparql_title_tokens',
+            }
+            authors[pub] = {}
+        if value('author'):
+            authors[pub][int(value('ordinal'))] = value('author')
+    for pub, paper in papers.items():
+        paper['authors'] = [name for _, name in sorted(authors[pub].items())]
+    return list(papers.values())
 
 
 def _fetch_abstract_from_doi(url: str, session=None) -> str:

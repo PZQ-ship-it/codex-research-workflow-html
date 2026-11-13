@@ -273,9 +273,9 @@ following sections, in this exact order:
 ## Dependencies & failure modes
 
 - **arXiv**: uses the arXiv API.
-- **DBLP**: uses DBLP API.
-- **OpenAlex**: uses OpenAlex API.
-- **OpenReview**: requires `pip install openreview-py`.
+- **DBLP**: tries its REST API; if it returns a non-JSON/browser-verification page, uses DBLP's separately documented public SPARQL API. The fallback matches plain title tokens and has different ranking/coverage; it does not execute verification challenges.
+- **OpenAlex**: uses semantic search by default; after bounded server-error retries or a network failure on the first page, switches to keyword search with an explicit warning and per-paper `retrieval_method`. Authentication and rate-limit errors do not trigger this switch.
+- **OpenReview**: defaults to the public search API without login. Configured credentials do not gate public literature search. `PAPER_SEARCH_OPENREVIEW_AUTH=required` uses authenticated venue retrieval and requires `openreview-py`; failed authentication remains an error, not a zero-hit search.
 - **Semantic Scholar**: uses Semantic Scholar API.
 - **Crossref**: uses Crossref API.
 - **Model knowledge**: no API call. Papers are recalled from the model's own
@@ -286,6 +286,8 @@ following sections, in this exact order:
 HTTP 429/500/502/503/504 responses use bounded retries. If a source still fails,
 its worker prints the error and the other source workers continue. Surface those
 errors to the user.
+
+Connector modes, coverage differences, account troubleshooting and offline regression commands are documented in [references/connector-recovery.md](references/connector-recovery.md). Consult it when one of these sources fails. A recovered API does not retroactively complete a previous literature review; save a new search result and separately assess newly found candidates.
 
 ### HTTP timeout configuration
 

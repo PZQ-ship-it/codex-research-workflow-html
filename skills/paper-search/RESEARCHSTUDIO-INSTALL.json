@@ -4,6 +4,14 @@
   "upstream_path": "ResearchStudio-Idea/skills/paper_search",
   "installed_at": "2026-11-13",
   "metadata_repairs": [],
+  "local_runtime_repairs": [
+    {
+      "date": "2026-11-13",
+      "scope": "OpenAlex bounded keyword recovery and pagination; DBLP response validation and official SPARQL alternative; OpenReview public search independent of account login",
+      "reference": "references/connector-recovery.md",
+      "regression_test": "scripts/selftest_connectors.py"
+    }
+  ],
   "runtime": "D:/research-stdio/.venv/Scripts/python.exe",
   "launcher": "D:/research-stdio/Start-ResearchStudio.ps1"
 }
